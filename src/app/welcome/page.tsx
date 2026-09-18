@@ -41,11 +41,10 @@ export default function WelcomePage() {
     <main className="relative isolate flex min-h-dvh overflow-hidden bg-canvas">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden opacity-50"
       >
-        <div className="absolute -left-20 top-[12%] h-40 w-48 rotate-[-8deg] rounded-[3rem] bg-sun/75" />
-        <div className="absolute -right-20 top-[34%] h-64 w-44 rotate-[11deg] rounded-[3rem] bg-blue-soft" />
-        <div className="absolute bottom-[-5rem] left-[38%] size-44 rotate-12 rounded-[2.5rem] bg-accent-soft" />
+        <div className="absolute -left-24 -top-24 size-96 rounded-full bg-sun-soft/60 blur-3xl" />
+        <div className="absolute -right-24 top-1/3 size-96 rounded-full bg-blue-soft/60 blur-3xl" />
       </div>
 
       <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 pb-8 pt-5 sm:px-8 lg:px-12 lg:py-8">
@@ -55,7 +54,7 @@ export default function WelcomePage() {
             aria-label="PetHub, início"
             className="group inline-flex min-h-11 items-center gap-2 rounded-full text-ink transition-opacity hover:opacity-80"
           >
-            <span className="flex size-9 rotate-[-3deg] items-center justify-center rounded-[12px] bg-blue text-white shadow-[3px_3px_0_var(--color-sun)]">
+            <span className="flex size-9 items-center justify-center rounded-[12px] bg-blue text-white">
               <PawPrint aria-hidden="true" className="size-4" />
             </span>
             <span className="font-semibold tracking-tight">PetHub</span>
@@ -69,7 +68,7 @@ export default function WelcomePage() {
 
         <div className="grid flex-1 items-center gap-12 py-12 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,28rem)] lg:gap-20 lg:py-16">
           <section className="max-w-2xl">
-            <p className="mb-5 inline-flex rotate-[-1deg] items-center gap-2 rounded-md bg-sun px-3 py-1 text-meta font-extrabold uppercase tracking-[0.13em] text-ink">
+            <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-warning/30 bg-sun-soft px-3.5 py-1 text-meta font-bold text-warning-ink">
               <span
                 className="size-2 rounded-full bg-accent"
                 aria-hidden="true"
@@ -89,7 +88,7 @@ export default function WelcomePage() {
                 href="/onboarding"
                 variant="blue"
                 size="lg"
-                className="group w-full shadow-[4px_4px_0_var(--color-ink)] sm:w-auto"
+                className="group w-full sm:w-auto"
               >
                 Criar meu espaço
                 <ArrowUpRight
@@ -128,53 +127,44 @@ export default function WelcomePage() {
             aria-label="Prévia do cuidado"
             className="relative mx-auto w-full max-w-md lg:mx-0 lg:justify-self-end"
           >
-            <div className="relative overflow-hidden rounded-[2rem_2rem_3.5rem_2rem] border-2 border-ink/10 bg-blue p-5 text-white shadow-[8px_8px_0_var(--color-accent)] sm:p-7">
-              <div
-                className="absolute -right-14 -top-16 size-44 rotate-12 rounded-[2.5rem] bg-sun"
-                aria-hidden="true"
-              />
-
+            <div className="relative overflow-hidden rounded-[28px] border border-blue-deep/30 bg-blue p-5 text-white shadow-soft sm:p-7">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-meta font-medium text-white/70">
+                  <p className="text-meta font-medium text-white/75">
                     Seu espaço de cuidado
                   </p>
                   <p className="mt-1 text-lg font-semibold tracking-tight text-white">
                     Começa simples.
                   </p>
                 </div>
-                <span className="relative flex size-10 items-center justify-center rounded-2xl bg-sun text-ink">
+                <span className="relative flex size-10 items-center justify-center rounded-2xl bg-white/20 text-white backdrop-blur-xs">
                   <ShieldCheck aria-hidden="true" className="size-5" />
                 </span>
               </div>
 
-              <div className="relative mx-auto my-10 flex size-52 rotate-[-3deg] items-center justify-center rounded-[4.25rem_2rem_4.25rem_2rem] bg-accent">
-                <div
-                  className="absolute inset-3 rounded-[3.6rem_1.5rem_3.6rem_1.5rem] border-2 border-white/70"
-                  aria-hidden="true"
-                />
-                <span className="relative flex size-24 rotate-[3deg] items-center justify-center rounded-[2rem] bg-white text-blue shadow-[5px_5px_0_var(--color-sun)]">
+              <div className="relative mx-auto my-8 flex size-44 items-center justify-center rounded-3xl border border-white/20 bg-blue-deep/40">
+                <span className="flex size-24 items-center justify-center rounded-2xl bg-white text-blue shadow-soft">
                   <PawPrint
                     aria-hidden="true"
                     className="size-10"
                     strokeWidth={1.6}
                   />
                 </span>
-                <span className="absolute bottom-4 rotate-[3deg] rounded-md bg-lime px-3 py-1 text-meta font-bold text-ink shadow-card">
+                <span className="absolute -bottom-2 rounded-full bg-sun px-3 py-0.5 text-meta font-bold text-ink shadow-sm">
                   Tudo no seu ritmo
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-2xl bg-sun p-3">
-                  <p className="text-meta text-ink/70">Hoje</p>
-                  <p className="mt-1 text-sm font-semibold text-ink">
+                <div className="rounded-2xl bg-white/15 p-3 backdrop-blur-xs">
+                  <p className="text-meta text-white/75">Hoje</p>
+                  <p className="mt-1 text-sm font-semibold text-white">
                     Próximo cuidado
                   </p>
                 </div>
-                <div className="rounded-2xl bg-lime p-3">
-                  <p className="text-meta text-ink/70">História</p>
-                  <p className="mt-1 text-sm font-semibold text-ink">
+                <div className="rounded-2xl bg-white/15 p-3 backdrop-blur-xs">
+                  <p className="text-meta text-white/75">História</p>
+                  <p className="mt-1 text-sm font-semibold text-white">
                     Sempre por perto
                   </p>
                 </div>

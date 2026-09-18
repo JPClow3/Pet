@@ -24,29 +24,21 @@ const NAV_ITEMS = [
     href: "/",
     label: "Hoje",
     icon: House,
-    active: "bg-sun-soft text-ink",
-    marker: "bg-sun text-ink",
   },
   {
     href: "/reminders",
     label: "Cuidados",
     icon: CalendarHeart,
-    active: "bg-mint text-teal-ink",
-    marker: "bg-mint text-teal-ink",
   },
   {
     href: "/explore",
     label: "Descobrir",
     icon: Compass,
-    active: "bg-blue-soft text-blue-deep",
-    marker: "bg-blue-soft text-blue-deep",
   },
   {
     href: "/profile",
     label: "Perfil",
     icon: UserRound,
-    active: "bg-accent-soft text-accent-deep",
-    marker: "bg-accent-soft text-accent-deep",
   },
 ];
 
@@ -66,7 +58,7 @@ function isActive(pathname: string, href: string): boolean {
 function Brand() {
   return (
     <Link href="/" className="flex min-h-12 items-center gap-2.5">
-      <span className="relative flex size-10 rotate-[-3deg] items-center justify-center rounded-[13px] bg-blue text-white shadow-[3px_3px_0_var(--color-sun)]">
+      <span className="relative flex size-10 items-center justify-center rounded-[13px] bg-blue text-white">
         <PawPrint aria-hidden="true" className="size-5" />
       </span>
       <span className="text-xl font-extrabold tracking-[-0.04em] text-ink">
@@ -130,16 +122,21 @@ export function AppShell({ children }: { children: ReactNode }) {
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex min-h-13 items-center justify-center gap-3 rounded-2xl px-3 text-[0.95rem] font-semibold transition-colors lg:justify-start",
-                active ? item.active : "text-ink-soft hover:bg-surface",
+                active
+                  ? "bg-surface text-ink font-bold"
+                  : "text-ink-soft hover:bg-surface/70",
               )}
             >
-              <Icon aria-hidden="true" className="size-5" />
+              <Icon
+                aria-hidden="true"
+                className={cn("size-5", active ? "text-teal-ink" : "text-muted")}
+              />
               <span className="sr-only lg:not-sr-only">{item.label}</span>
             </Link>
           );
         })}
-        <div className="mt-auto hidden rotate-[-1deg] rounded-[18px] border-2 border-ink/10 bg-sun-soft p-4 shadow-[4px_4px_0_var(--color-ink)] lg:block">
-          <ShieldCheck className="mb-3 size-5 text-blue" aria-hidden="true" />
+        <div className="mt-auto hidden rounded-[18px] border border-line/80 bg-surface/60 p-4 shadow-none lg:block">
+          <ShieldCheck className="mb-2 size-5 text-teal-ink" aria-hidden="true" />
           <p className="text-sm font-semibold text-ink">
             Um cuidado de cada vez.
           </p>
@@ -148,9 +145,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </p>
           <Link
             href="/profile"
-            className="mt-2 flex min-h-11 items-center gap-2 text-xs font-bold text-blue-deep"
+            className="mt-2 flex min-h-11 items-center gap-1.5 text-xs font-bold text-teal-ink hover:text-teal-deep"
           >
-            Seus dados e privacidade <ArrowUpRight className="size-4" />
+            Seus dados e privacidade <ArrowUpRight className="size-3.5" />
           </Link>
         </div>
       </aside>
@@ -199,7 +196,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <nav
           aria-label="Navegação principal"
-          className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-white/95 shadow-[0_-8px_24px_rgb(23_33_58/0.06)] backdrop-blur safe-bottom md:hidden"
+          className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-white/95 shadow-[0_-4px_16px_rgb(23_33_58/0.04)] backdrop-blur safe-bottom md:hidden"
         >
           <ul className="mx-auto flex w-full max-w-lg items-stretch justify-between px-2 pt-1">
             {NAV_ITEMS.map((item) => {
@@ -212,13 +209,15 @@ export function AppShell({ children }: { children: ReactNode }) {
                     aria-current={active ? "page" : undefined}
                     className={cn(
                       "flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl text-[0.7rem] font-semibold transition-colors",
-                      active ? "text-ink" : "text-muted",
+                      active ? "text-ink font-bold" : "text-muted",
                     )}
                   >
                     <span
                       className={cn(
                         "flex h-7 w-12 items-center justify-center rounded-full transition-[background-color,transform]",
-                        active && `${item.marker} -translate-y-0.5`,
+                        active
+                          ? "bg-surface-subtle text-teal-ink -translate-y-0.5"
+                          : "text-muted",
                       )}
                     >
                       <Icon aria-hidden="true" className="size-5" />

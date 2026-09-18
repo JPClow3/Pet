@@ -1,9 +1,9 @@
 "use client";
 
 import { Check, PackageOpen, SlidersHorizontal, Sparkles } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { DiscoveryTabs } from "@/components/discovery-tabs";
 import { PageHeader } from "@/components/page-header";
 import { ProductCard } from "@/components/product-card";
 import { Button, ButtonLink } from "@/components/ui/button";
@@ -24,61 +24,6 @@ const categories = [
   { id: "saude", label: "Saúde" },
   { id: "enriquecimento", label: "Enriquecimento" },
 ] as const;
-
-function DiscoveryTabs({
-  active,
-}: {
-  active: "locais" | "comunidade" | "produtos";
-}) {
-  const tabs = [
-    {
-      id: "locais" as const,
-      label: "Locais",
-      href: "/explore",
-      hint: "Encontrar lugares",
-    },
-    {
-      id: "comunidade" as const,
-      label: "Comunidade",
-      href: "/community",
-      hint: "Trocar experiências",
-    },
-    {
-      id: "produtos" as const,
-      label: "Produtos",
-      href: "/products",
-      hint: "Ver parceiros",
-    },
-  ];
-
-  return (
-    <nav
-      aria-label="Seções de Descobrir"
-      className="flex overflow-x-auto rounded-2xl border border-line bg-surface/70 p-1 no-scrollbar"
-    >
-      {tabs.map((tab) => {
-        const selected = active === tab.id;
-        return (
-          <Link
-            key={tab.id}
-            href={tab.href}
-            aria-current={selected ? "page" : undefined}
-            className={`flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center rounded-xl px-1 text-center transition-[background-color,color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 ${
-              selected
-                ? "bg-white text-teal-ink shadow-[0_2px_8px_rgb(23_50_77/0.08)]"
-                : "text-muted hover:bg-white/70 hover:text-ink"
-            }`}
-          >
-            <span className="text-[0.82rem] font-semibold">{tab.label}</span>
-            <span className="hidden text-[0.65rem] leading-4 opacity-80 sm:block">
-              {tab.hint}
-            </span>
-          </Link>
-        );
-      })}
-    </nav>
-  );
-}
 
 export default function ProductsPage() {
   const ready = useHydrated();
@@ -143,19 +88,19 @@ export default function ProductsPage() {
       />
       <DiscoveryTabs active="produtos" />
 
-      <section className="relative overflow-hidden rounded-[26px] border border-sun/45 bg-sun-soft p-5">
-        <div className="relative flex items-start gap-3">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-sun text-ink shadow-[0_5px_12px_rgb(233_185_73/0.2)]">
+      <section className="rounded-[24px] border border-line bg-white p-5">
+        <div className="flex items-start gap-3">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-surface-subtle text-teal-ink">
             <Sparkles aria-hidden="true" className="size-5" />
           </span>
           <div>
-            <p className="text-[0.7rem] font-bold uppercase tracking-[0.14em] text-warning-ink">
+            <p className="text-[0.7rem] font-bold uppercase tracking-[0.14em] text-teal-ink">
               Recomendações transparentes
             </p>
             <h2 className="mt-1 text-[1.22rem] font-semibold leading-tight text-ink">
               Você escolhe com contexto.
             </h2>
-            <p className="mt-1.5 max-w-[42ch] text-[0.9rem] leading-relaxed text-ink-soft/80">
+            <p className="mt-1.5 max-w-[42ch] text-[0.9rem] leading-relaxed text-muted">
               Cada item explica se combina com espécie, porte, fase de vida ou
               rotina de {pet.name}.
             </p>
@@ -244,13 +189,13 @@ export default function ProductsPage() {
         </ul>
       )}
 
-      <Card className="border-blue/20 bg-blue-soft p-4">
+      <Card className="border-line/80 bg-surface-subtle p-4">
         <div className="flex items-start gap-3">
           <Check
             aria-hidden="true"
-            className="mt-0.5 size-4 shrink-0 text-blue-deep"
+            className="mt-0.5 size-4 shrink-0 text-teal-ink"
           />
-          <div className="text-meta leading-relaxed text-ink-soft/80">
+          <div className="text-meta leading-relaxed text-muted">
             <p className="font-semibold text-ink">
               A transparência vem antes do clique.
             </p>

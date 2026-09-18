@@ -32,7 +32,7 @@ export function ProductCard({
   const meta = categoryMeta[product.category];
 
   return (
-    <Card className="overflow-hidden p-0 shadow-[0_6px_20px_rgb(23_50_77/0.06)] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgb(23_50_77/0.11)]">
+    <Card className="overflow-hidden p-0 shadow-none border border-line/80 transition-colors duration-150 hover:border-teal/40">
       <div
         className={`relative flex min-h-32 items-end overflow-hidden border-l-[6px] ${meta.className} p-4`}
       >

@@ -43,7 +43,7 @@ export function PlaceCard({
     <Link
       href={`/explore/${place.id}`}
       aria-label={`Ver detalhes de ${place.name}, ${placeCategoryMeta[place.category].label}`}
-      className="group flex min-h-[15.25rem] flex-col overflow-hidden rounded-[24px] border border-line bg-white shadow-[0_6px_20px_rgb(23_50_77/0.06)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-teal/35 hover:shadow-[0_12px_28px_rgb(23_50_77/0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 active:translate-y-0"
+      className="group flex min-h-[15.25rem] flex-col overflow-hidden rounded-[24px] border border-line/80 bg-white shadow-none transition-[border-color,background-color] duration-150 hover:border-teal/50 hover:bg-surface/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
     >
       <div
         className={`relative flex h-28 items-end overflow-hidden border-l-[6px] ${visualThemes[place.category].surface} ${visualThemes[place.category].rail} p-4`}

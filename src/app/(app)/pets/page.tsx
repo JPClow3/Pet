@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { CareTabs } from "@/components/care-tabs";
@@ -39,7 +38,6 @@ import { useActivePet, useHydrated, usePetRecords } from "@/lib/store/hooks";
 
 export default function MyPetPage() {
   const ready = useHydrated();
-  const router = useRouter();
   const pet = useActivePet();
   const records = usePetRecords(pet?.id ?? null);
   const diary = useAppStore((state) => state.diary);
@@ -81,22 +79,12 @@ export default function MyPetPage() {
             Perfil do pet
           </h1>
         </div>
-        <PetContextSwitcher
-          scope={pet.id}
-          onScopeChange={(scope) => {
-            if (scope !== "todos" && scope !== pet.id)
-              router.push(`/pets/${scope}`);
-          }}
-        />
+        <PetContextSwitcher scope={pet.id} />
       </div>
 
       <CareTabs active={null} pet={pet} />
 
-      <section className="relative flex flex-col items-center gap-3 overflow-hidden rounded-[26px] border border-accent/25 bg-gradient-to-br from-accent-soft via-canvas to-info-soft p-6 text-center">
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute -left-10 -top-12 size-32 rounded-full bg-warning-soft blur-2xl"
-        />
+      <section className="flex flex-col items-center gap-3 rounded-[24px] border border-line bg-white p-6 text-center">
         <CareHalo
           pet={pet}
           records={records}

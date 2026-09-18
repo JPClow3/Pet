@@ -63,7 +63,7 @@ export default function ProfilePage() {
         subtitle="Conta, preferências e privacidade."
       />
 
-      <Card className="flex flex-col gap-4 border-blue/20 bg-blue-soft/70">
+      <Card className="flex flex-col gap-4">
         <CardTitle>Sua conta</CardTitle>
         <Field label="Nome" htmlFor="tutor-name">
           <Input
@@ -95,7 +95,6 @@ export default function ProfilePage() {
           />
         </Field>
         <Button
-          variant="blue"
           onClick={() => {
             updateTutor({
               name: name.trim() || "Tutor",
@@ -118,7 +117,7 @@ export default function ProfilePage() {
         ) : null}
       </Card>
 
-      <Card className="flex flex-col gap-2 border-0 bg-sun-soft">
+      <Card className="flex flex-col gap-3">
         <CardTitle>Seus pets</CardTitle>
         {pets.length === 0 ? (
           <p className="text-meta text-muted">Nenhum pet cadastrado ainda.</p>
@@ -153,61 +152,65 @@ export default function ProfilePage() {
         </ButtonLink>
       </Card>
 
-      <Card className="flex flex-col gap-1 border-l-4 border-l-violet">
+      <Card className="flex flex-col gap-3">
         <CardTitle>O que você quer receber</CardTitle>
         <p className="text-meta text-muted">
           A regra é simples: um cuidado, uma chamada para ação. Você controla
           cada tipo.
         </p>
-        {notificationKinds.map((kind) => (
-          <CheckboxRow
-            key={kind}
-            id={`notify-${kind}`}
-            label={notificationKindMeta[kind].label}
-            description={
-              kind === "comercial"
-                ? `${notificationKindMeta[kind].description} (conteúdo identificado como comercial)`
-                : notificationKindMeta[kind].description
-            }
-            checked={settings.notifications[kind]}
-            onChange={(checked) =>
-              updateSettings({
-                notifications: { ...settings.notifications, [kind]: checked },
-              })
-            }
-          />
-        ))}
+        <div className="flex flex-col gap-1">
+          {notificationKinds.map((kind) => (
+            <CheckboxRow
+              key={kind}
+              id={`notify-${kind}`}
+              label={notificationKindMeta[kind].label}
+              description={
+                kind === "comercial"
+                  ? `${notificationKindMeta[kind].description} (conteúdo identificado como comercial)`
+                  : notificationKindMeta[kind].description
+              }
+              checked={settings.notifications[kind]}
+              onChange={(checked) =>
+                updateSettings({
+                  notifications: { ...settings.notifications, [kind]: checked },
+                })
+              }
+            />
+          ))}
+        </div>
       </Card>
 
-      <Card className="flex flex-col gap-1 border-0 bg-lime-soft">
+      <Card className="flex flex-col gap-3">
         <CardTitle>Privacidade</CardTitle>
-        <CheckboxRow
-          id="marketing-opt-in"
-          label="Aceito receber ofertas de parceiros"
-          description="Opt-in explícito. Sem isso, nenhuma comunicação comercial é criada."
-          checked={tutor?.marketingOptIn ?? false}
-          onChange={(checked) => updateTutor({ marketingOptIn: checked })}
-        />
-        <CheckboxRow
-          id="precise-location"
-          label="Usar minha localização precisa"
-          description="Mostra distâncias reais no Explorar. Você pode desligar quando quiser."
-          checked={settings.usePreciseLocation}
-          onChange={(checked) =>
-            updateSettings({ usePreciseLocation: checked })
-          }
-        />
-        <p className="flex items-start gap-2 pt-2 text-meta text-muted">
+        <div className="flex flex-col gap-1">
+          <CheckboxRow
+            id="marketing-opt-in"
+            label="Aceito receber ofertas de parceiros"
+            description="Opt-in explícito. Sem isso, nenhuma comunicação comercial é criada."
+            checked={tutor?.marketingOptIn ?? false}
+            onChange={(checked) => updateTutor({ marketingOptIn: checked })}
+          />
+          <CheckboxRow
+            id="precise-location"
+            label="Usar minha localização precisa"
+            description="Mostra distâncias reais no Explorar. Você pode desligar quando quiser."
+            checked={settings.usePreciseLocation}
+            onChange={(checked) =>
+              updateSettings({ usePreciseLocation: checked })
+            }
+          />
+        </div>
+        <p className="flex items-start gap-2 pt-1 text-meta text-muted">
           <Lock aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
           Dados de saúde ficam separados do conteúdo social. Nada do diário é
           publicado automaticamente na comunidade.
         </p>
-        <div className="flex flex-wrap gap-2 pt-2">
-          <Chip tone="mint">
+        <div className="flex flex-wrap gap-2 pt-1">
+          <Chip tone="muted">
             <ShieldCheck aria-hidden="true" className="size-3.5" />
             Perfil público separado
           </Chip>
-          <Chip tone="mint">
+          <Chip tone="muted">
             <BadgeCheck aria-hidden="true" className="size-3.5" />
             Contato sob seu controle
           </Chip>

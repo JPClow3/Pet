@@ -266,7 +266,7 @@ export function PetShareStudio({
                     key={value}
                     className={`flex min-h-[4.35rem] cursor-pointer flex-col justify-center rounded-2xl border px-2.5 text-left transition-[border-color,background-color,box-shadow] ${
                       checked
-                        ? "border-blue bg-blue-soft text-blue-deep shadow-[0_4px_14px_rgb(52_87_213/0.12)]"
+                        ? "border-blue bg-blue-soft text-blue-deep shadow-sm"
                         : "border-line bg-white text-ink hover:bg-surface"
                     }`}
                   >

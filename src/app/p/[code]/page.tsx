@@ -68,9 +68,9 @@ export default async function PublicCardPage({ params }: { params: Params }) {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-5 py-10">
-      <section className="flex flex-col items-center gap-3 rounded-[2rem_2rem_3.5rem_2rem] border-2 border-ink/10 bg-blue-soft p-6 text-center shadow-[6px_6px_0_var(--color-sun)]">
-        <span className="flex size-20 rotate-[-4deg] items-center justify-center rounded-[1.75rem] bg-accent shadow-[4px_4px_0_var(--color-blue)]">
-          <PawPrint aria-hidden="true" className="size-9 text-ink" />
+      <section className="flex flex-col items-center gap-3 rounded-[24px] border border-line/80 bg-white p-6 text-center shadow-card">
+        <span className="flex size-20 items-center justify-center rounded-2xl bg-blue-soft text-blue-deep">
+          <PawPrint aria-hidden="true" className="size-9" />
         </span>
         <div>
           <h1 className="text-2xl font-semibold text-ink">{card.name}</h1>
@@ -121,7 +121,7 @@ export default async function PublicCardPage({ params }: { params: Params }) {
         {card.contact ? (
           <a
             href={`tel:${card.contact.replace(/[^\d+]/g, "")}`}
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-teal-ink px-5 font-medium text-white"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-teal-ink px-5 font-semibold text-white transition-colors hover:bg-teal-deep"
           >
             <Phone aria-hidden="true" className="size-4" />
             Falar com o tutor
@@ -141,7 +141,7 @@ export default async function PublicCardPage({ params }: { params: Params }) {
 
       <Link
         href="/welcome"
-        className="mx-auto inline-flex min-h-11 items-center justify-center rounded-full border border-line px-5 text-[0.9rem] font-medium text-ink hover:bg-surface"
+        className="mx-auto inline-flex min-h-11 items-center justify-center rounded-[14px] border border-line px-5 text-[0.9rem] font-semibold text-ink transition-colors hover:bg-surface"
       >
         Criar a carteirinha do meu pet
       </Link>

@@ -13,6 +13,7 @@ import {
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { DiscoveryTabs } from "@/components/discovery-tabs";
 import { PageHeader } from "@/components/page-header";
 import { PostCard } from "@/components/post-card";
 import { Button, ButtonLink } from "@/components/ui/button";
@@ -32,61 +33,6 @@ import { useAppStore, MY_AUTHOR } from "@/lib/store/app-store";
 import { useHydrated } from "@/lib/store/hooks";
 
 const types = Object.keys(postTypeMeta) as PostType[];
-
-function DiscoveryTabs({
-  active,
-}: {
-  active: "locais" | "comunidade" | "produtos";
-}) {
-  const tabs = [
-    {
-      id: "locais" as const,
-      label: "Locais",
-      href: "/explore",
-      hint: "Encontrar lugares",
-    },
-    {
-      id: "comunidade" as const,
-      label: "Comunidade",
-      href: "/community",
-      hint: "Trocar experiências",
-    },
-    {
-      id: "produtos" as const,
-      label: "Produtos",
-      href: "/products",
-      hint: "Ver parceiros",
-    },
-  ];
-
-  return (
-    <nav
-      aria-label="Seções de Descobrir"
-      className="flex overflow-x-auto rounded-2xl border border-line bg-surface/70 p-1 no-scrollbar"
-    >
-      {tabs.map((tab) => {
-        const selected = active === tab.id;
-        return (
-          <Link
-            key={tab.id}
-            href={tab.href}
-            aria-current={selected ? "page" : undefined}
-            className={`flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center rounded-xl px-1 text-center transition-[background-color,color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 ${
-              selected
-                ? "bg-white text-teal-ink shadow-[0_2px_8px_rgb(23_50_77/0.08)]"
-                : "text-muted hover:bg-white/70 hover:text-ink"
-            }`}
-          >
-            <span className="text-[0.82rem] font-semibold">{tab.label}</span>
-            <span className="hidden text-[0.65rem] leading-4 opacity-80 sm:block">
-              {tab.hint}
-            </span>
-          </Link>
-        );
-      })}
-    </nav>
-  );
-}
 
 type FeedMode = "para_voce" | "perto" | "seguindo";
 
@@ -175,19 +121,19 @@ export default function CommunityPage() {
 
       <DiscoveryTabs active="comunidade" />
 
-      <section className="relative overflow-hidden rounded-[26px] border border-blue/30 bg-blue-soft p-5">
-        <div className="relative flex items-start gap-3">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-blue text-white shadow-[0_5px_12px_rgb(52_87_213/0.2)]">
+      <section className="rounded-[24px] border border-line bg-white p-5">
+        <div className="flex items-start gap-3">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-surface-subtle text-teal-ink">
             <Radio aria-hidden="true" className="size-5" />
           </span>
           <div>
-            <p className="text-[0.7rem] font-bold uppercase tracking-[0.14em] text-blue-deep">
+            <p className="text-[0.7rem] font-bold uppercase tracking-[0.14em] text-teal-ink">
               Prévia da comunidade
             </p>
             <h2 className="mt-1 text-[1.22rem] font-semibold leading-tight text-ink">
               Troque o que você aprendeu.
             </h2>
-            <p className="mt-1.5 max-w-[42ch] text-[0.9rem] leading-relaxed text-ink-soft/80">
+            <p className="mt-1.5 max-w-[42ch] text-[0.9rem] leading-relaxed text-muted">
               Perguntas, recomendações e encontros aparecem por tema. Pessoas e
               horários desta tela são exemplos locais.
             </p>
@@ -288,13 +234,13 @@ export default function CommunityPage() {
         </div>
       </div>
 
-      <section className="border-l-4 border-l-accent bg-accent-soft px-4 py-3">
+      <section className="rounded-2xl border border-line/80 bg-surface-subtle px-4 py-3">
         <div className="flex items-start gap-3">
           <ShieldAlert
             aria-hidden="true"
-            className="mt-0.5 size-4 shrink-0 text-accent-deep"
+            className="mt-0.5 size-4 shrink-0 text-teal-ink"
           />
-          <p className="text-meta leading-relaxed text-ink-soft/85">
+          <p className="text-meta leading-relaxed text-muted">
             Experiências da comunidade não são orientação veterinária. Em caso
             de dúvida ou sintomas, procure um médico-veterinário.
           </p>
@@ -381,7 +327,7 @@ export default function CommunityPage() {
                   setGroupId(groupId === group.id ? null : group.id);
                   setOnlyMine(false);
                 }}
-                className={`min-w-[12rem] shrink-0 border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 ${groupId === group.id ? "border-blue bg-blue-soft" : "border-line bg-surface hover:bg-white"}`}
+                className={`min-w-[12rem] shrink-0 rounded-2xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2 ${groupId === group.id ? "border-teal-ink/40 bg-surface-subtle" : "border-line bg-surface hover:bg-white"}`}
               >
                 <p className="line-clamp-1 text-[0.88rem] font-semibold text-ink">
                   {group.name}

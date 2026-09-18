@@ -4,14 +4,14 @@ export function Skeleton({ className }: { className?: string }) {
   return (
     <div
       aria-hidden="true"
-      className={cn("animate-pulse rounded-2xl bg-blue-soft/70", className)}
+      className={cn("animate-pulse rounded-2xl bg-line/60 dark:bg-line/40", className)}
     />
   );
 }
 
 export function SkeletonCard() {
   return (
-    <div className="flex flex-col gap-3 rounded-[1.5rem_1.5rem_2.5rem_1.5rem] border border-line bg-white p-4">
+    <div className="flex flex-col gap-3 rounded-[20px] border border-line/80 bg-white p-4">
       <Skeleton className="h-4 w-24" />
       <Skeleton className="h-5 w-3/4" />
       <Skeleton className="h-4 w-1/2" />

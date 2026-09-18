@@ -1,0 +1,698 @@
+                                            PETHUB
+                             Product & App Design Document
+
+                               “Tudo sobre a vida do seu pet, em um só lugar.”
+DOCUMENTO
+Especificação de produto, UX/UI, MVP, modelo de negócio, arquitetura funcional, dados, métricas, segurança e roadmap.
+Versão 1.0 — setembro de 2026.
+
+
+
+
+                                    Status: conceito estruturado / pronto para prototipação
+
+
+
+
+                                        PetHub — Product & App Design Document • v1.0 • 2026
+1. Resumo executivo
+PetHub é um aplicativo mobile pensado como o “hub da vida do pet”: uma combinação de identidade digital, carteira de
+saúde, diário, descoberta local e comunidade. O produto deve reduzir a fragmentação atual, em que informações do animal
+ficam espalhadas entre cadernetas, conversas de WhatsApp, clínicas, fotos, calendários e aplicativos diferentes.
+A tese central do produto é simples: o tutor não quer apenas registrar vacinas. Ele quer lembrar, cuidar, descobrir,
+compartilhar e resolver tarefas relacionadas ao animal com o mínimo de atrito.
+    NORTH STAR
+    Tornar o PetHub o lugar padrão onde o tutor consulta “o que está acontecendo com meu pet?” e decide “o que fazer a seguir?”.
+
+
+
+
+1.1 Objetivos do produto
+     Centralizar dados essenciais de cada pet.
+     Transformar dados em lembretes e próximos passos acionáveis.
+     Criar utilidade recorrente com diário, comunidade e descoberta local.
+     Permitir monetização sem transformar a experiência em um catálogo de anúncios.
+     Construir uma base que possa evoluir para serviços B2B, parceiros e integrações.
+
+1.2 Não objetivos do MVP
+     Diagnóstico veterinário ou prescrição.
+     E-commerce próprio completo.
+     Marketplace transacional de grande escala.
+     Rede social com algoritmo sofisticado.
+     Prontuário clínico substituindo sistemas profissionais de clínicas.
+
+
+
+2. Problema e oportunidade
+O problema não é ausência de informação; é fragmentação. O tutor possui dados sobre vacinas, consultas, antiparasitários,
+peso, exames, fotos, rotina e serviços, mas geralmente não possui uma visão única e contextualizada.
+    Problema                                     Impacto                                       Oportunidade no PetHub
+    Calendário disperso                          Esquecimento de vacinas e cuidados            Linha do tempo + lembretes
+    Fotos sem contexto                           Memórias ficam separadas da rotina            Diário vinculado ao pet
+    Descoberta local ruim                        Dificuldade para saber onde ir                Mapa + avaliações específicas para pets
+    Recomendações genéricas                      Compra pouco orientada                        Recomendações por perfil e rotina
+    Comunidade dispersa                          Perguntas se perdem em grupos                 Comunidades estruturadas
+    Identificação fraca                          Dificuldade após perda do animal              Perfil público + QR Code
+
+
+
+
+3. Posicionamento
+Categoria proposta: Pet Life Platform. O produto não deve se apresentar como “agenda de vacinação”, “rede social de
+cachorros” ou “pet shop”. Esses elementos são componentes de uma experiência maior.
+    Produto percebido                            Promessa                                      Emoção desejada
+    Meu Pet                                      Eu sei tudo sobre ele                         Controle
+    Saúde                                        Eu não esqueço cuidados importantes           Segurança
+    Vida                                         Eu registro e acompanho a história dele       Afeto
+    Explorar                                     Eu descubro lugares e serviços adequados      Liberdade
+    Comunidade                                   Eu encontro outros tutores como eu            Pertencimento
+    Descobrir                                    Eu encontro produtos relevantes               Praticidade
+
+
+
+                                             PetHub — Product & App Design Document • v1.0 • 2026
+4. Público-alvo e personas
+4.1 Persona primária — Tutor organizado
+Idade: 20–45. Possui 1–3 pets, usa smartphone diariamente e já utiliza calendário, notas ou aplicativos de compras. Valoriza
+lembretes, histórico, praticidade e uma visão bonita do animal.
+
+4.2 Persona secundária — Tutor social
+Procura parques, restaurantes e atividades, gosta de postar fotos, participar de comunidades e descobrir outros animais. Pode
+ser a principal força de crescimento orgânico do produto.
+
+4.3 Persona secundária — Tutor “correria”
+Ama o pet, mas esquece detalhes. Precisa de notificações, rotinas predefinidas e automações para reduzir esforço cognitivo.
+
+4.4 Persona B2B futura — Negócio pet local
+Veterinários, pet shops, hotéis, banho/tosa, adestradores, passeadores, restaurantes e parques privados. Quer visibilidade local
+e aquisição mensurável.
+
+
+
+5. Jobs To Be Done
+     Quando recebo ou adoto um pet, quero criar um registro completo para ter tudo organizado desde o início.
+     Quando uma vacina ou antiparasitário está vencendo, quero ser avisado antes do prazo.
+     Quando vou sair com meu pet, quero descobrir lugares realmente adequados para ele.
+     Quando tenho uma dúvida, quero encontrar outros tutores com contexto semelhante.
+     Quando compro um produto, quero saber se ele faz sentido para o perfil do meu pet.
+     Quando meu pet se perde, quero uma forma rápida e confiável de identificação.
+
+
+
+6. Princípios de produto
+1. Pet-first: O objeto principal da experiência é o animal, não o tutor.
+2. Action over data: Dados só ganham valor quando ajudam o tutor a agir.
+3. Low cognitive load: Registrar uma informação deve ser rápido; editar pode ser detalhado.
+4. Trust by design: Saúde, localização e recomendações devem mostrar contexto e limites.
+5. Local relevance: Quanto mais próximo da realidade do tutor, mais valiosa a descoberta.
+6. Progressive disclosure: O MVP não deve parecer um ERP de animais.
+7. Warm, not childish: Visual afetivo, mas com credibilidade e boa hierarquia.
+
+
+
+7. Arquitetura de informação
+    Área                                          Responsabilidade                              Objetos principais
+    Início                                        Visão do dia                                  Alertas, próximos eventos, resumo, atalhos
+    Meu Pet                                       Identidade e histórico                        Perfil, saúde, diário, documentos
+    Explorar                                      Mundo físico                                  Mapa, locais, serviços, avaliações
+    Comunidade                                    Interação social                              Feed, grupos, posts, perguntas
+    Perfil                                        Conta e preferências                          Tutor, notificações, privacidade, assinaturas
+
+
+    REGRA DE NAVEGAÇÃO
+    Cinco destinos principais no mobile. Funções profundas devem abrir a partir do contexto do pet, e não criar novas abas.
+
+                                              PetHub — Product & App Design Document • v1.0 • 2026
+8. Mapa de telas
+ Fluxo                                       Tela(s)                                       Prioridade
+                                             Boas-vindas → conta → primeiro pet →
+ Onboarding                                                                                P0
+                                             preferências
+                                             Resumo → editar → saúde → diário →
+ Pet                                                                                       P0
+                                             documentos
+                                             Vacinas → medicações → antiparasitários →
+ Saúde                                                                                     P0
+                                             consultas
+ Lembretes                                   Lista → detalhe → concluir/adiar              P0
+ Carteirinha                                 Perfil público → QR → modo perdido            P0
+ Explorar                                    Mapa → filtros → detalhe do local → rota      P1
+ Comunidade                                  Feed → post → comentários → grupos            P1
+                                             Descobrir → categoria → recomendação →
+ Produtos                                                                                  P2
+                                             parceiro
+                                             Perfil do negócio → oferta → conversão →
+ B2B                                                                                       P3
+                                             analytics
+
+
+
+
+9. UX detalhada — onboarding
+9.1 Meta
+Criar o primeiro pet em menos de 2 minutos, com sensação de personalização imediata. O onboarding deve evitar
+formulários longos e separar “essencial agora” de “completar depois”.
+
+9.2 Sequência
+1.     Boas-vindas: “Organize a vida de quem faz parte da sua família.”
+2.     Criar conta: Apple/Google/e-mail.
+3.     Adicionar primeiro pet: foto, nome, espécie, sexo, data aproximada de nascimento, raça.
+4.     Pergunta opcional: “O que você quer acompanhar?” Saúde / rotina / lugares / comunidade.
+5.     Resumo: pet criado + primeiro lembrete sugerido + convite para completar perfil.
+ UX RULE
+ Nunca bloquear a entrada por campos não essenciais. Dados ausentes devem aparecer como oportunidades de completar perfil.
+
+
+
+
+10. UX detalhada — Home / Início
+A Home deve responder a três perguntas em 5 segundos: quem é o meu pet, o que exige atenção e o que posso fazer agora.
+ Bloco                                       Conteúdo                                      Comportamento
+ Header                                      Pet ativo + avatar + seletor de pets          Troca contexto global
+ Saúde                                       Próximos cuidados                             Alerta por urgência
+ Hoje                                        Eventos, rotina e diário                      Ações rápidas
+ Perto de você                               2–3 descobertas locais                        Abre Explorar
+ Comunidade                                  1–2 posts relevantes                          Abre post/feed
+ CTA flutuante                               Adicionar registro                            Vacina, foto, peso, consulta etc.
+
+
+
+
+                                         PetHub — Product & App Design Document • v1.0 • 2026
+11. UX detalhada — Perfil do pet
+O perfil é o coração do produto. Deve ser visualmente forte e modular, permitindo que o tutor enxergue rapidamente
+identidade, saúde e atividade.
+    Módulo                                        Exibe                                         Ação
+    Hero                                          Foto, nome, idade, raça, sexo                 Editar
+    Saúde                                         Status de vacinas e próximos eventos          Abrir saúde
+    Peso                                          Último peso + tendência                       Registrar novo peso
+    Diário                                        Últimos momentos                              Adicionar foto/texto
+    Documentos                                    Exames, carteira, documentos                  Anexar/visualizar
+    Carteirinha                                   QR + dados públicos                           Compartilhar
+
+
+
+
+12. Saúde e prevenção
+O módulo de saúde deve ser orientado por eventos e histórico. O usuário não deve precisar entender uma taxonomia
+complexa para registrar um cuidado.
+
+12.1 Tipos de registro P0
+     Vacina
+     Vermífugo
+     Antiparasitário
+     Medicamento
+     Consulta
+     Exame
+     Peso
+     Observação livre
+
+12.2 Modelo de lembrete
+    Campo                                                                Exemplo
+    Tipo                                                                 Vacina
+    Data do evento                                                       20/09/2026
+    Próximo vencimento                                                   20/09/2027
+    Aviso                                                                30 dias antes
+    Observação                                                           Reforço anual
+    Anexo                                                                Foto da carteirinha
+
+
+    LIMITE CLÍNICO
+    O produto organiza informações fornecidas pelo tutor e parceiros. Não deve inferir diagnóstico, prescrever tratamento ou apresentar
+    recomendação clínica como fato.
+
+
+
+
+13. Diário do pet
+O diário transforma o app de uma ferramenta utilitária ocasional em um produto com retorno emocional. Cada entrada deve
+poder conter foto, texto, data, local opcional, peso, atividade e tags.
+
+13.1 Exemplos de entradas
+     “Primeiro banho no novo pet shop.”
+     “31,4 kg — controle mensal.”
+     “Passeio no parque.”
+
+                                              PetHub — Product & App Design Document • v1.0 • 2026
+     “Hoje aprendeu a sentar.”
+     “Começou medicação X — 7 dias.”
+
+13.2 Privacidade
+O diário é privado por padrão. O tutor escolhe o que publicar na comunidade. Informações de saúde nunca devem ser
+compartilhadas automaticamente em posts.
+
+
+
+14. Carteirinha e QR Code
+A carteirinha funciona como identidade digital compacta. O QR Code abre uma página pública controlada pelo tutor.
+    Visível sem login                                                     Controlado pelo tutor
+    Nome do pet                                                           Mostrar/ocultar raça
+    Foto                                                                  Contato preferido
+    Cidade aproximada                                                     Informações de saúde sensíveis
+    “Pet perdido” quando ativado                                          Dados de identificação adicionais
+
+
+Modo perdido deve ter ativação explícita, registro de data/hora e controles contra exposição desnecessária de dados pessoais.
+
+
+
+15. Explorar — mapa e descoberta local
+A função Explorar deve ser útil mesmo para quem não participa da comunidade. O mapa combina descoberta geográfica com
+atributos que realmente importam para pets.
+    Categoria                                                             Atributos
+    Parques                                                               Aceita cães, área cercada, água, sombra
+    Restaurantes/Cafés                                                    Área externa, água, regras de porte
+    Veterinários                                                          Especialidades, horário, emergência
+    Banho/Tosa                                                            Serviços, porte, avaliações
+    Hospedagem                                                            Porte aceito, áreas, regras
+    Passeadores/Adestradores                                              Especialidade, agenda, avaliações
+
+
+    DIFERENCIAL
+    As avaliações devem ser estruturadas para pets, não apenas estrelas. Ex.: “aceita cães grandes”, “boa área externa”, “equipe paciente”,
+    “ruído alto”.
+
+
+
+
+16. Comunidade
+A comunidade deve começar focada em utilidade e contexto, evitando tentar competir diretamente com redes sociais
+generalistas.
+
+16.1 Tipos de publicação
+     Pergunta
+     Recomendação
+     Diário público
+     Pet perdido/encontrado
+     Evento/encontro
+     Dica da comunidade
+
+16.2 Grupos
+     Por espécie
+                                              PetHub — Product & App Design Document • v1.0 • 2026
+     Por raça
+     Por cidade/região
+     Por interesse
+     Por atividade
+
+16.3 Reputação
+Reputação deve privilegiar contribuições úteis: respostas marcadas como úteis, avaliações confirmadas, denúncias corretas e
+histórico de comportamento. Evitar gamificação agressiva no MVP.
+
+
+
+17. Recomendações de produtos
+A recomendação de produtos deve partir do perfil do pet e da intenção do tutor, não de publicidade genérica. O usuário deve
+entender por que um produto apareceu.
+    Sinal                                                                  Exemplo de recomendação
+    Espécie + porte                                                        Produtos compatíveis com porte
+    Idade                                                                  Itens relacionados à fase de vida
+    Rotina                                                                 Passeio, higiene, enriquecimento
+    Histórico de compra                                                    Reposição prevista
+    Localização                                                            Disponibilidade em lojas próximas
+
+
+Monetização inicial recomendada: links afiliados e parceiros. A prioridade é medir intenção e conversão antes de construir
+checkout próprio.
+
+
+
+18. IA / Assistente futuro
+O assistente deve atuar como camada de organização e recuperação de informação, e não como veterinário artificial.
+    Pedido do usuário                                                      Resposta desejada
+    “O que tenho esta semana?”                                             Resumo de eventos e lembretes
+    “Quando preciso comprar antipulgas?”                                   Basear-se no registro do produto/data inseridos
+    “Mostre o histórico do peso.”                                          Gerar resumo e gráfico simples
+    “Encontre um lugar para levar o pet sábado.”                           Filtrar Explorar por regras disponíveis
+
+
+Guardrail: qualquer conteúdo potencialmente clínico deve ser enquadrado como informação geral e indicar busca de
+avaliação profissional quando apropriado.
+
+
+
+19. Design visual
+Direção visual: premium acessível, afetiva sem ser infantil, com bastante espaço, fotografias grandes e UI semelhante a
+produtos modernos de consumo.
+
+19.1 Paleta proposta
+    Token                                          Uso                                             Hex
+    Ink / Navy                                     Texto forte, navegação, confiança               #17324D
+    Teal                                           Ações, links, estados positivos                 #2AA198
+    Mint                                           Superfícies e destaques leves                   #E8F7F4
+    Neutral 900                                    Texto principal                                 #23313F
+    Neutral 500                                    Texto secundário                                #667788
+    Surface                                        Cards e áreas neutras                           #F3F6F8
+    Warning                                        Atenção                                         #F4B942
+    Danger                                         Risco/erro                                      #D95D5D
+
+
+
+
+                                               PetHub — Product & App Design Document • v1.0 • 2026
+19.2 Tipografia
+Recomendação: família sans-serif contemporânea. Hierarquia baseada em peso e espaçamento, evitando muitos tamanhos.
+Títulos 24–32 px, subtítulos 16–20 px, corpo 14–16 px, metadados 12–13 px.
+
+19.3 Componentes
+     Pet Avatar
+     Pet Selector
+     Health Status Chip
+     Reminder Card
+     Timeline Item
+     Place Card
+     Community Post
+     Product Card
+     Bottom Sheet
+     Empty State
+     Toast
+     QR Identity Card
+
+
+
+20. Wireframes conceituais
+Os wireframes abaixo descrevem composição funcional; o visual final deve ser desenvolvido em Figma com componentes
+reutilizáveis.
+    Tela                                                        Estrutura vertical
+                                                                Header do pet → alerta principal → próximos eventos → hoje →
+    Home
+                                                                perto de você → comunidade
+    Pet                                                         Hero → saúde → peso → diário → documentos → carteirinha
+    Saúde                                                       Resumo → lista temporal → filtros → adicionar registro
+    Explorar                                                    Busca → chips de categoria → mapa/lista → detalhe
+    Comunidade                                                  Filtros → feed → post → comentários
+
+
+
+
+21. Estados de interface
+    Estado                                                      Comportamento
+    Loading                                                     Skeleton de cards; nunca tela branca
+    Empty                                                       Explicar valor + CTA de primeira ação
+    Erro                                                        Mensagem humana + retry + fallback
+    Offline                                                     Mostrar dados cacheados e fila de registros quando possível
+    Permissão negada                                            Explicar benefício + caminho para configurações
+    Conta nova                                                  Onboarding contextual e tarefas sugeridas
+
+
+
+
+22. Notificações
+Notificações precisam ser poucas e relevantes. A regra padrão deve ser “um cuidado, uma chamada para ação”.
+    Tipo                                                        Exemplo
+    Prevenção                                                   “A vacina de Thor vence em 14 dias.”
+    Rotina                                                      “Hora do medicamento registrado para hoje.”
+    Social                                                      “Ana respondeu à sua pergunta.”
+    Local                                                       “Há 3 lugares pet-friendly salvos perto de você.”
+    Comercial                                                   “Encontramos uma oferta compatível com seu pet.”
+
+
+                                     PetHub — Product & App Design Document • v1.0 • 2026
+Notificações comerciais devem ser claramente identificadas e ter frequência controlável.
+
+
+
+23. Privacidade, segurança e LGPD
+O produto trata dados pessoais do tutor e dados potencialmente sensíveis relacionados ao animal. A arquitetura deve aplicar
+minimização, consentimento quando necessário, transparência e controles claros.
+     Perfil público separado de dados privados.
+     Contato do tutor protegido por intermediário quando possível.
+     Logs de alteração de dados críticos.
+     Exportação e exclusão da conta.
+     Criptografia em trânsito e em repouso.
+     Política clara de uso de dados para personalização e publicidade.
+     Opt-in explícito para comunicações de marketing.
+     Separação de dados de saúde de dados sociais.
+
+
+
+24. Modelo de dados conceitual
+    Entidade                                                         Relacionamento / conteúdo
+    User                                                             Conta, preferências, privacidade, assinaturas
+    Pet                                                              Pertence a um ou mais usuários; perfil e configurações
+    HealthRecord                                                     Pertence a Pet; tipo, data, anexos, próxima data
+    Reminder                                                         Derivado de registro ou criado manualmente
+    DiaryEntry                                                       Pertence a Pet; mídia, texto, tags, visibilidade
+    Place                                                            Negócio/local; categoria, localização, atributos
+    Review                                                           User + Place; critérios estruturados
+    Post                                                             User + Pet opcional; conteúdo, visibilidade, comentários
+    Group                                                            Comunidade temática
+    Product                                                          Catálogo parceiro + atributos
+    Recommendation                                                   Regra/ML + Pet + Product/Place
+
+
+
+
+25. Arquitetura funcional / técnica sugerida
+A tecnologia específica pode variar, mas a arquitetura deve separar identidade, dados do pet, notificações, conteúdo social,
+busca geográfica e integrações comerciais.
+    Domínio                                                          Responsabilidade
+    Auth                                                             Login, sessões, recuperação, consentimentos
+    Pet Core                                                         Pet, perfil, relações com tutores
+    Health                                                           Registros, lembretes, documentos
+    Social                                                           Posts, comentários, grupos, denúncias
+    Places                                                           POIs, avaliações, geolocalização
+    Catalog                                                          Produtos e parceiros
+    Recommendation                                                   Regras de recomendação
+    Notification                                                     Push, e-mail, in-app
+    Analytics                                                        Eventos de produto e funil
+
+
+Para um MVP, monólito modular ou backend único bem particionado é preferível a microserviços prematuros.
+
+
+
+26. MVP — escopo fechado
+    Feature                                   P0/P1/P2                                       Critério de aceite
+    Cadastro/login                            P0                                             Usuário cria conta e entra sem fricção
+    Perfil do pet                             P0                                             Pet pode ser criado/editado e exibido
+                                          PetHub — Product & App Design Document • v1.0 • 2026
+ Feature                                 P0/P1/P2                                         Critério de aceite
+ Saúde                                   P0                                               Registros CRUD e histórico temporal
+ Lembretes                               P0                                               Próximas datas geram alertas configuráveis
+ Diário                                  P0                                               Foto/texto com timeline
+ Carteirinha/QR                          P0                                               Perfil público compartilhável
+ Explorar básico                         P1                                               Mapa/lista com categorias
+ Comunidade básica                       P1                                               Criar post, comentar, denunciar
+ Produtos                                P2                                               Cards com links de parceiro
+ IA                                      P3                                               Camada futura
+
+
+
+
+27. Roadmap
+ Fase                                    Objetivo                                         Entregas
+ 0 — Discovery                           Validar problema                                 Entrevistas, benchmark, protótipo, teste
+ 1 — MVP                                 Criar hábito                                     Pet + Saúde + Lembretes + Diário + QR
+ 2 — Local                               Aumentar utilidade                               Explorar + avaliações + negócios
+                                                                                          Feed + grupos + eventos +
+ 3 — Social                              Aumentar retenção
+                                                                                          perdido/encontrado
+ 4 — Commerce                            Monetizar                                        Produtos, afiliados, ofertas
+ 5 — Intelligence                        Personalizar                                     Assistente, recomendações avançadas
+
+
+
+
+28. Métricas de sucesso
+                                      Pets ativos por semana
+                                                        North Star Metric
+                                       Pets com pelo menos uma ação relevante na semana
+
+
+
+
+                                              1º pet completo
+                                                           Activation
+                                          Criou pet + ao menos um registro ou lembrete
+
+
+
+
+                                           W4 tutor retention
+                                                           Retention
+                                                    Tutor retorna na 4ª semana
+
+
+
+ Métrica                                                          Definição
+ Pet Created                                                      Número de pets criados
+ Health Record Rate                                               % de pets com registro de saúde
+ Reminder Completion                                              % de lembretes concluídos/adiados
+ Diary Frequency                                                  Entradas por pet/mês
+ Explore Intent                                                   Sessões com busca/uso de mapa
+ Community Contribution                                           Posts/comentários por usuário ativo
+ Product CTR                                                      Cliques em produtos recomendados
+ Partner Conversion                                               Conversão em parceiro
+
+
+
+
+29. Eventos de analytics
+A instrumentação deve ser orientada por comportamento, não por volume indiscriminado de eventos.
+
+                                     PetHub — Product & App Design Document • v1.0 • 2026
+     onboarding_started / completed
+     pet_created / pet_completed
+     health_record_created
+     reminder_created / completed / snoozed
+     diary_entry_created
+     qr_shared / qr_viewed
+     explore_search
+     place_view / directions_clicked
+     post_created / comment_created
+     product_view / partner_click
+     notification_opened
+
+
+
+30. Monetização
+    Modelo                                  Quando                                        Observação
+    Afiliados                               P2                                            Baixo atrito, ideal para validar intenção
+    Featured local businesses               P2/P3                                         Negócios pagam por visibilidade
+    Premium tutor                           P3                                            Recursos avançados sem retirar o básico
+    B2B subscription                        P3                                            Perfil profissional, leads e analytics
+    Marketplace                             P4                                            Somente após validação de demanda
+
+
+A versão gratuita precisa ser realmente útil. O paywall deve aparecer em conveniência e recursos avançados, não nos dados
+essenciais do pet.
+
+
+
+31. Riscos e mitigação
+    Risco                                   Impacto                                       Mitigação
+    Produto amplo demais                    Alto                                          Roadmap por fases e P0 fechado
+    Baixa retenção                          Alto                                          Lembretes + diário + utilidade local
+    Conteúdo tóxico/desinformação           Alto                                          Moderação, denúncias e regras
+    Responsabilidade clínica                Alto                                          Limites claros e revisão jurídica
+    Poucos lugares locais                   Médio                                         Curadoria inicial e parceiros
+    Monetização precoce                     Médio                                         Priorizar confiança e uso
+    Spam comercial                          Médio                                         Controle de frequência + relevância
+
+
+
+
+32. Moderation & trust
+A comunidade exige mecanismos desde a primeira versão social: denúncia, bloqueio, filtros básicos, regras, auditoria e
+escalonamento. Negócios devem ter perfil verificado quando aplicável.
+     Denunciar conteúdo
+     Bloquear usuário
+     Silenciar grupo
+     Marcar resposta útil
+     Verificação de negócio
+     Histórico de moderação interno
+
+
+
+33. Accessibility
+     Contraste AA como baseline.
+
+                                        PetHub — Product & App Design Document • v1.0 • 2026
+     Tamanho mínimo confortável para texto e alvos de toque.
+     Não depender apenas de cor para status.
+     Labels acessíveis em ícones e controles.
+     Suporte a leitor de tela nas telas críticas.
+     Feedback de erro textual e acionável.
+     Mapa com alternativa em lista.
+
+
+
+34. Estratégia de lançamento
+O melhor lançamento inicial é geograficamente limitado. Em vez de tentar cobrir todo o Brasil, o produto pode começar em
+uma cidade ou pequeno conjunto de cidades, garantindo densidade de locais e comunidade.
+    GO-TO-MARKET
+    Começar com uma cidade-piloto permite curadoria manual de locais, aquisição por comunidades locais e validação real do efeito de
+    rede.
+
+
+
+
+35. Backlog inicial priorizado
+    ID                               Feature                            Prioridade                         Dependência
+    PH-001                           Criar conta                        P0                                 -
+    PH-002                           Criar/editar pet                   P0                                 PH-001
+    PH-003                           Upload de foto                     P0                                 PH-002
+    PH-004                           Registro de vacina                 P0                                 PH-002
+    PH-005                           Registro de antiparasitário        P0                                 PH-002
+    PH-006                           Lembretes                          P0                                 PH-004/005
+    PH-007                           Diário                             P0                                 PH-002
+    PH-008                           Carteirinha QR                     P0                                 PH-002
+    PH-009                           Página pública                     P0                                 PH-008
+    PH-010                           Mapa básico                        P1                                 Infra geográfica
+    PH-011                           Detalhe de local                   P1                                 PH-010
+    PH-012                           Post/comentário                    P1                                 Auth
+    PH-013                           Denúncia/bloqueio                  P1                                 PH-012
+    PH-014                           Produtos parceiros                 P2                                 Catalog
+    PH-015                           Assistente                         P3                                 Dados suficientes
+
+
+
+
+36. Critérios para protótipo
+Antes de desenvolvimento, o protótipo de alta fidelidade deve testar quatro fluxos completos: criar pet, cadastrar uma vacina
+com lembrete, consultar a carteirinha/QR e encontrar um lugar pet-friendly. Esses fluxos cobrem onboarding, valor funcional,
+identidade e utilidade local.
+    Teste                                                               Meta
+    Tarefa 1                                                            Criar pet sem ajuda
+    Tarefa 2                                                            Cadastrar vacina e entender o lembrete
+    Tarefa 3                                                            Compartilhar carteirinha
+    Tarefa 4                                                            Encontrar e avaliar um local
+    Pergunta                                                            “Em uma frase, para que serve este app?”
+
+
+
+
+37. Definition of Done — design
+     Fluxos P0 documentados.
+                                             PetHub — Product & App Design Document • v1.0 • 2026
+     Estados normal/loading/empty/error definidos.
+     Componentes principais reutilizáveis.
+     Desktop não é tratado como cópia do mobile; mobile é prioridade.
+     Acessibilidade básica revisada.
+     Textos de interface revisados para linguagem natural.
+     Eventos de analytics definidos.
+     Regras de privacidade anotadas por tela.
+     Protótipo testado com usuários antes da implementação.
+
+
+
+38. Exemplo de microcopy
+    Contexto                                                           Copy
+    Home                                                               “Bom dia, Thor. Hoje você só tem uma coisa para resolver.”
+    Sem lembretes                                                      “Tudo certo por aqui. Aproveite o dia com ele.”
+    Novo registro                                                      “O que aconteceu com Thor?”
+    Vacina                                                             “Quando foi aplicada?”
+    Explorar                                                           “O que vocês querem fazer hoje?”
+    Comunidade                                                         “Pergunte para quem vive isso também.”
+    Perfil incompleto                                                  “Faltam só 2 detalhes para completar a carteirinha.”
+
+
+
+
+39. Decisões abertas
+     Nome definitivo e identidade de marca.
+     Modelo de autenticação e provedor cloud.
+     Fonte de dados de lugares e geocodificação.
+     Política de conteúdo veterinário e revisão especializada.
+     Modelo de assinatura premium.
+     Estratégia de proteção de dados do QR Code.
+     Mercado inicial: cidade única ou conjunto de cidades.
+
+
+
+40. Recomendação final
+O maior risco deste projeto é tentar lançar todas as ideias ao mesmo tempo. A proposta é mais forte quando o produto
+começa como uma excelente ferramenta pessoal para um pet e, progressivamente, ganha camadas de rede e marketplace.
+A sequência recomendada é: identidade do pet → saúde e lembretes → diário → QR → descoberta local → comunidade →
+produtos → inteligência. Cada etapa deve aumentar a utilidade do núcleo, e não desviar o produto para uma categoria
+diferente.
+    VISÃO
+    PetHub não deve ser “um app onde você cadastra seu cachorro”. Deve ser o sistema operacional pessoal da vida do pet — simples para
+    o tutor, útil todos os dias e capaz de crescer para um ecossistema.
+
+
+
+
+                                            PetHub — Product & App Design Document • v1.0 • 2026
+

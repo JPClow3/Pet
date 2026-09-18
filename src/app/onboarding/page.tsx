@@ -245,7 +245,7 @@ export default function OnboardingPage() {
 
         <div className="mx-auto flex w-full max-w-xl flex-1 flex-col pt-10">
           <div className="mb-8">
-            <p className="inline-flex rotate-[-1deg] rounded-md bg-sun px-2.5 py-1 text-meta font-extrabold uppercase tracking-[0.12em] text-ink">
+            <p className="inline-flex items-center rounded-full border border-warning/30 bg-sun-soft px-3 py-1 text-meta font-bold text-warning-ink">
               Só o necessário agora
             </p>
             <h1 className="mt-2 font-editorial text-[clamp(2rem,8vw,3.25rem)] font-semibold leading-tight tracking-[-0.03em] text-ink">
@@ -326,7 +326,7 @@ export default function OnboardingPage() {
                   type="submit"
                   variant="blue"
                   size="lg"
-                  className="w-full shadow-[3px_3px_0_var(--color-ink)]"
+                  className="w-full"
                 >
                   Continuar <ArrowRight aria-hidden="true" className="size-5" />
                 </Button>
@@ -372,9 +372,9 @@ export default function OnboardingPage() {
                             setOptionalPetField("species", option.value)
                           }
                           className={cn(
-                            "flex min-h-24 flex-col items-center justify-center gap-2 rounded-3xl border px-3 text-[0.9rem] font-semibold transition-[background-color,border-color,box-shadow] duration-150",
+                            "flex min-h-24 flex-col items-center justify-center gap-2 rounded-3xl border px-3 text-[0.9rem] font-semibold transition-[background-color,border-color] duration-150",
                             selected
-                              ? "border-blue bg-blue-soft text-blue-deep shadow-[3px_3px_0_var(--color-sun)]"
+                              ? "border-blue bg-blue-soft text-blue-deep"
                               : "border-line bg-white text-ink-soft hover:bg-surface",
                           )}
                         >
@@ -391,7 +391,7 @@ export default function OnboardingPage() {
                   type="submit"
                   variant="blue"
                   size="lg"
-                  className="w-full shadow-[3px_3px_0_var(--color-ink)]"
+                  className="w-full"
                 >
                   Continuar <ArrowRight aria-hidden="true" className="size-5" />
                 </Button>
@@ -472,8 +472,8 @@ export default function OnboardingPage() {
                     placeholder="12,4"
                   />
                 </Field>
-                <div className="flex items-start gap-3 rounded-[1.5rem_1.5rem_2.5rem_1.5rem] border border-blue/15 bg-blue-soft p-4">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-sun text-ink">
+                <div className="flex items-start gap-3 rounded-2xl border border-line/80 bg-surface-subtle p-4">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-surface text-teal-ink">
                     <PawPrint aria-hidden="true" className="size-4" />
                   </span>
                   <p className="text-meta leading-relaxed text-muted">
@@ -487,7 +487,7 @@ export default function OnboardingPage() {
                   type="submit"
                   variant="blue"
                   size="lg"
-                  className="w-full shadow-[3px_3px_0_var(--color-ink)]"
+                  className="w-full"
                 >
                   Continuar <ArrowRight aria-hidden="true" className="size-5" />
                 </Button>
@@ -529,9 +529,9 @@ export default function OnboardingPage() {
                           setError(null);
                         }}
                         className={cn(
-                          "flex min-h-28 flex-col items-start justify-between rounded-3xl border p-4 text-left transition-[background-color,border-color,box-shadow] duration-150",
+                          "flex min-h-28 flex-col items-start justify-between rounded-3xl border p-4 text-left transition-[background-color,border-color] duration-150",
                           selected
-                            ? "border-blue bg-blue-soft text-blue-deep shadow-[3px_3px_0_var(--color-sun)]"
+                            ? "border-blue bg-blue-soft text-blue-deep"
                             : "border-line bg-white text-ink-soft hover:bg-surface",
                         )}
                       >
@@ -624,7 +624,7 @@ export default function OnboardingPage() {
                     type="submit"
                     variant="blue"
                     size="lg"
-                    className="w-full shadow-[3px_3px_0_var(--color-ink)]"
+                    className="w-full"
                     disabled={saving}
                   >
                     {saving
@@ -646,7 +646,7 @@ export default function OnboardingPage() {
                   <Button
                     variant="blue"
                     size="lg"
-                    className="w-full shadow-[3px_3px_0_var(--color-ink)]"
+                    className="w-full"
                     onClick={finish}
                     disabled={saving}
                   >

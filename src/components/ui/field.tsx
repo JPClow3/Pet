@@ -5,6 +5,7 @@ import {
   type ComponentProps,
   type ReactElement,
 } from "react";
+import { ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -88,12 +89,18 @@ export function Select({
   ...props
 }: ComponentProps<"select">) {
   return (
-    <select
-      className={cn(controlClasses, "appearance-none pr-8", className)}
-      {...props}
-    >
-      {children}
-    </select>
+    <div className="relative w-full">
+      <select
+        className={cn(controlClasses, "appearance-none pr-10 cursor-pointer", className)}
+        {...props}
+      >
+        {children}
+      </select>
+      <ChevronDown
+        aria-hidden="true"
+        className="pointer-events-none absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-muted"
+      />
+    </div>
   );
 }
 

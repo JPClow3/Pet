@@ -1,9 +1,9 @@
 "use client";
 
 import { Users } from "lucide-react";
-import Link from "next/link";
 import { useMemo } from "react";
 
+import { DiscoveryTabs } from "@/components/discovery-tabs";
 import { PageHeader } from "@/components/page-header";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,30 +20,6 @@ const kindLabels: Record<string, string> = {
   interesse: "Interesse",
   atividade: "Atividade",
 };
-
-function DiscoveryTabs() {
-  return (
-    <nav
-      aria-label="Seções de Descobrir"
-      className="flex overflow-x-auto rounded-2xl border border-line bg-surface/70 p-1 no-scrollbar"
-    >
-      {[
-        { label: "Locais", href: "/explore" },
-        { label: "Comunidade", href: "/community", active: true },
-        { label: "Produtos", href: "/products" },
-      ].map((tab) => (
-        <Link
-          key={tab.href}
-          href={tab.href}
-          aria-current={tab.active ? "page" : undefined}
-          className={`flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-xl px-1 text-[0.82rem] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 ${tab.active ? "bg-white text-blue-deep shadow-[0_2px_8px_rgb(23_50_77/0.08)]" : "text-muted hover:bg-white/70 hover:text-ink"}`}
-        >
-          {tab.label}
-        </Link>
-      ))}
-    </nav>
-  );
-}
 
 export default function GroupsPage() {
   const ready = useHydrated();
@@ -71,10 +47,10 @@ export default function GroupsPage() {
         backHref="/community"
       />
 
-      <DiscoveryTabs />
+      <DiscoveryTabs active="comunidade" />
 
-      <section className="border-l-4 border-l-blue bg-blue-soft px-4 py-3">
-        <p className="text-meta leading-relaxed text-ink-soft/85">
+      <section className="rounded-2xl border border-line/80 bg-surface-subtle px-4 py-3">
+        <p className="text-meta leading-relaxed text-muted">
           Grupos nesta prévia organizam conversas por contexto. A atividade
           exibida é demonstrativa e não representa usuários conectados em tempo
           real.
@@ -99,7 +75,7 @@ export default function GroupsPage() {
                 const isMember = memberGroupIds.includes(group.id);
                 return (
                   <li key={group.id}>
-                    <Card className="flex flex-col gap-3 rounded-[20px] border-l-4 border-l-blue bg-white p-4">
+                    <Card className="flex flex-col gap-3 p-4">
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <h3 className="text-[1rem] font-semibold text-ink">

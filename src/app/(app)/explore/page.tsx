@@ -9,9 +9,9 @@ import {
   SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
-import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { DiscoveryTabs } from "@/components/discovery-tabs";
 import { PageHeader } from "@/components/page-header";
 import { PlaceCard } from "@/components/place-card";
 import { PlaceMap } from "@/components/place-map";
@@ -38,61 +38,6 @@ import { useHydrated } from "@/lib/store/hooks";
 
 const categories = Object.keys(placeCategoryMeta) as PlaceCategory[];
 const attributeOptions = Object.keys(placeAttributeLabels) as PlaceAttribute[];
-
-function DiscoveryTabs({
-  active,
-}: {
-  active: "locais" | "comunidade" | "produtos";
-}) {
-  const tabs = [
-    {
-      id: "locais" as const,
-      label: "Locais",
-      href: "/explore",
-      hint: "Encontrar lugares",
-    },
-    {
-      id: "comunidade" as const,
-      label: "Comunidade",
-      href: "/community",
-      hint: "Trocar experiências",
-    },
-    {
-      id: "produtos" as const,
-      label: "Produtos",
-      href: "/products",
-      hint: "Ver parceiros",
-    },
-  ];
-
-  return (
-    <nav
-      aria-label="Seções de Descobrir"
-      className="flex overflow-x-auto rounded-2xl border border-line bg-surface/70 p-1 no-scrollbar"
-    >
-      {tabs.map((tab) => {
-        const selected = active === tab.id;
-        return (
-          <Link
-            key={tab.id}
-            href={tab.href}
-            aria-current={selected ? "page" : undefined}
-            className={`flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center rounded-xl px-1 text-center transition-[background-color,color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2 ${
-              selected
-                ? "bg-white text-teal-ink shadow-[0_2px_8px_rgb(23_50_77/0.08)]"
-                : "text-muted hover:bg-white/70 hover:text-ink"
-            }`}
-          >
-            <span className="text-[0.82rem] font-semibold">{tab.label}</span>
-            <span className="hidden text-[0.65rem] leading-4 opacity-80 sm:block">
-              {tab.hint}
-            </span>
-          </Link>
-        );
-      })}
-    </nav>
-  );
-}
 
 function ViewToggle({
   view,
@@ -197,19 +142,19 @@ export default function ExplorePage() {
       />
       <DiscoveryTabs active="locais" />
 
-      <section className="rounded-[28px] border border-teal/25 border-l-[6px] border-l-teal bg-lime-soft p-5 shadow-[0_8px_24px_rgb(23_50_77/0.06)]">
+      <section className="rounded-[20px] border border-line/80 bg-surface/60 p-5">
         <div className="flex items-start gap-3">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-white/90 text-teal-ink shadow-sm">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-surface-subtle text-teal-ink">
             <Sparkles aria-hidden="true" className="size-5" />
           </span>
           <div>
-            <p className="text-[0.7rem] font-bold uppercase tracking-[0.14em] text-teal-ink">
+            <p className="text-[0.72rem] font-bold uppercase tracking-[0.12em] text-teal-ink">
               Para começar
             </p>
-            <h2 className="mt-1 text-[1.25rem] font-semibold leading-tight text-ink">
+            <h2 className="mt-1 text-[1.2rem] font-semibold leading-tight text-ink">
               Onde vocês querem ir?
             </h2>
-            <p className="mt-1.5 max-w-[42ch] text-[0.9rem] leading-relaxed text-ink-soft/80">
+            <p className="mt-1 max-w-[42ch] text-[0.9rem] leading-relaxed text-muted">
               Encontre um lugar por bairro e veja atributos que fazem diferença
               para o seu pet.
             </p>

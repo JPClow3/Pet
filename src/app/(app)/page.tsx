@@ -430,28 +430,28 @@ export default function HomePage() {
             <div className="grid grid-cols-2 gap-2">
               <Link
                 href={`/pets/${activePet.id}/health/new`}
-                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-white p-3 text-[0.88rem] font-bold text-ink transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-teal/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
+                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-white p-3 text-[0.88rem] font-bold text-ink transition-colors hover:border-teal/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
               >
                 <Syringe aria-hidden="true" className="size-5 text-teal-ink" />{" "}
                 Registrar cuidado
               </Link>
               <Link
                 href={`/pets/${activePet.id}/health/new?type=peso`}
-                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-white p-3 text-[0.88rem] font-bold text-ink transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-blue/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep focus-visible:ring-offset-2"
+                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-white p-3 text-[0.88rem] font-bold text-ink transition-colors hover:border-blue/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep focus-visible:ring-offset-2"
               >
                 <Scale aria-hidden="true" className="size-5 text-blue-deep" />{" "}
                 Registrar peso
               </Link>
               <Link
                 href={`/pets/${activePet.id}/diary`}
-                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-white p-3 text-[0.88rem] font-bold text-ink transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-accent/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-white p-3 text-[0.88rem] font-bold text-ink transition-colors hover:border-accent/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
               >
                 <Camera aria-hidden="true" className="size-5 text-accent-ink" />{" "}
                 Guardar momento
               </Link>
               <Link
                 href={`/pets/${activePet.id}/card`}
-                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-white p-3 text-[0.88rem] font-bold text-ink transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-warning/55 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning-ink focus-visible:ring-offset-2"
+                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-white p-3 text-[0.88rem] font-bold text-ink transition-colors hover:border-warning/55 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning-ink focus-visible:ring-offset-2"
               >
                 <FileText
                   aria-hidden="true"

@@ -53,10 +53,10 @@ export function PlaceMap({
   return (
     <div className={className}>
       <section
-        className="overflow-hidden rounded-[24px] border border-line bg-success-soft shadow-[0_6px_20px_rgb(23_50_77/0.06)]"
+        className="overflow-hidden rounded-[24px] border border-line/80 bg-surface-subtle shadow-none"
         aria-label="Mapa esquemático dos locais encontrados"
       >
-        <div className="relative h-72 overflow-hidden bg-lime-soft">
+        <div className="relative h-72 overflow-hidden bg-lime-soft/40">
           <svg
             viewBox="0 0 100 100"
             className="absolute inset-0 h-full w-full"
@@ -106,7 +106,7 @@ export function PlaceMap({
                 style={{ left: `${point.x}%`, top: `${point.y}%` }}
               >
                 <span
-                  className={`flex items-center justify-center rounded-full border-2 border-white shadow-[0_3px_8px_rgb(23_50_77/0.2)] ${active ? "size-8 bg-ink text-white" : "size-6 bg-teal text-white"}`}
+                  className={`flex items-center justify-center rounded-full border-2 border-white shadow-sm ${active ? "size-8 bg-ink text-white" : "size-6 bg-teal text-white"}`}
                 >
                   <MapPin
                     aria-hidden="true"
@@ -117,12 +117,12 @@ export function PlaceMap({
             );
           })}
 
-          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/85 px-3 py-1.5 text-[0.7rem] font-semibold text-ink-soft shadow-sm backdrop-blur-sm">
+          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-3 py-1.5 text-[0.7rem] font-semibold text-ink-soft shadow-sm backdrop-blur-sm">
             <LocateFixed
               aria-hidden="true"
               className="size-3.5 text-teal-ink"
             />
-            Você está aqui (estimado
+            Você está aqui (estimado)
           </div>
         </div>
 
@@ -174,7 +174,7 @@ export function PlaceMap({
       </div>
 
       {selected ? (
-        <div className="mt-3 rounded-[24px] border border-teal/25 bg-white p-4 shadow-[0_6px_20px_rgb(23_50_77/0.06)]">
+        <div className="mt-3 rounded-[20px] border border-line/80 bg-white p-4 shadow-card">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[1rem] font-semibold text-ink">

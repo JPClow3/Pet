@@ -60,7 +60,7 @@ export function PostCard({ post, comments }: { post: Post; comments: number }) {
 
   return (
     <article
-      className={`group flex flex-col gap-3 border border-line border-l-4 bg-white p-4 shadow-[0_5px_16px_rgb(23_50_77/0.045)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgb(23_50_77/0.09)] focus-within:border-line ${accent.border}`}
+      className={`group flex flex-col gap-3 rounded-[20px] border border-line/80 border-l-4 bg-white p-4 shadow-none transition-[border-color,background-color] duration-150 hover:bg-surface/30 focus-within:border-line ${accent.border}`}
     >
       <div className="flex items-start gap-3">
         <span
