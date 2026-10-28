@@ -19,7 +19,7 @@ export const toneSurfaceClasses: Record<ChipTone, string> = {
   warning: "border-warning/40 bg-warning/10",
   danger: "border-danger/30 bg-danger/8",
   ink: "border-line bg-surface",
-  muted: "border-line bg-white",
+  muted: "border-line bg-paper",
 };
 
 export function Chip({
@@ -73,7 +73,7 @@ export function FilterChip({
         "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[0.85rem] font-semibold transition-colors",
         selected
           ? "border-teal-ink bg-teal-ink text-white"
-          : "border-line bg-white text-ink-soft hover:bg-surface",
+          : "border-line bg-paper text-ink-soft hover:bg-surface",
         className,
       )}
       {...props}

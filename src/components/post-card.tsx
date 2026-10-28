@@ -11,6 +11,7 @@ import { postTypeMeta } from "@/lib/domain/labels";
 import { postTypeIcons } from "@/lib/icons";
 import type { Post } from "@/lib/domain/schema";
 import { useAppStore } from "@/lib/store/app-store";
+import { useAsyncAction } from "@/lib/use-async-action";
 
 const postAccents: Record<
   Post["type"],
@@ -57,10 +58,11 @@ export function PostCard({ post, comments }: { post: Post; comments: number }) {
   const accent = postAccents[post.type];
   const markPostHelpful = useAppStore((state) => state.markPostHelpful);
   const reportPost = useAppStore((state) => state.reportPost);
+  const action = useAsyncAction();
 
   return (
     <article
-      className={`group flex flex-col gap-3 rounded-[20px] border border-line/80 border-l-4 bg-white p-4 shadow-none transition-[border-color,background-color] duration-150 hover:bg-surface/30 focus-within:border-line ${accent.border}`}
+      className={`group flex flex-col gap-3 rounded-[20px] border border-line/80 border-l-4 bg-paper p-4 shadow-none transition-[border-color,background-color] duration-150 hover:bg-surface/30 focus-within:border-line ${accent.border}`}
     >
       <div className="flex items-start gap-3">
         <span
@@ -125,10 +127,13 @@ export function PostCard({ post, comments }: { post: Post; comments: number }) {
           size="sm"
           variant="ghost"
           aria-label={`Marcar publicação de ${post.authorName} como útil`}
-          onClick={() => {
-            markPostHelpful(post.id);
-            toast.success("Marcado como útil");
-          }}
+          disabled={action.pending}
+          onClick={() =>
+            void action.run(async () => {
+              await markPostHelpful(post.id);
+              toast.success("Reação salva neste aparelho");
+            })
+          }
         >
           <ThumbsUp aria-hidden="true" className="size-4" />
           {post.helpfulCount > 0 ? post.helpfulCount : "Útil"}
@@ -144,13 +149,17 @@ export function PostCard({ post, comments }: { post: Post; comments: number }) {
           size="icon"
           variant="ghost"
           className="ml-auto"
-          aria-label={`Denunciar publicação de ${post.authorName}`}
-          onClick={() => {
-            reportPost(post.id);
-            toast("Denúncia registrada", {
-              description: "A publicação sai do seu feed e entra em análise.",
-            });
-          }}
+          aria-label={`Ocultar publicação de ${post.authorName} neste aparelho`}
+          disabled={action.pending}
+          onClick={() =>
+            void action.run(async () => {
+              await reportPost(post.id);
+              toast("Publicação ocultada neste aparelho", {
+                description:
+                  "Esta prévia não envia denúncias a uma equipe de moderação.",
+              });
+            })
+          }
         >
           <Flag aria-hidden="true" className="size-4" />
         </Button>

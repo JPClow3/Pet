@@ -2,6 +2,8 @@ export type RoadmapPhaseId =
   "trust" | "experience" | "care" | "platform" | "network" | "future" | "craft";
 
 export type RoadmapStatus =
+  | "Entregue"
+  | "Parcial"
   | "Agora"
   | "Validação"
   | "Incompleto"
@@ -89,165 +91,166 @@ export const roadmapItems: RoadmapItem[] = [
   {
     id: "opaque-public-links",
     phase: "trust",
-    status: "Agora",
+    status: "Entregue",
     title: "Trocar URLs públicas codificadas por links opacos e revogáveis",
     summary:
-      "A carteirinha pública deve compartilhar apenas uma referência aleatória controlável, nunca um snapshot legível no endereço.",
+      "Novas publicações usam um token aleatório e permitem atualizar, expirar, trocar ou revogar o endereço.",
     details: [
-      "A URL atual contém dados de pet, cidade, saúde, modo perdido e contato codificados em Base64. Base64 é legível, aparece em logs do navegador e do servidor, não expira e não pode ser revogado.",
-      "Usar um ID opaco aleatório apoiado por um registro no servidor, com expiração, revogação e suporte a atualizações.",
+      "A conta com e-mail confirmado pode publicar campos escolhidos com validade de 7, 30 ou 90 dias. O servidor guarda somente o hash do token e controla revisões para rejeitar decisões antigas.",
+      "Atualizar mantém o endereço; trocar invalida o link anterior; revogar impede novas consultas. Mudanças locais não publicam nem revogam automaticamente.",
+      "Links antigos base64url continuam cópias legíveis, imutáveis e sem revogação. PNGs recebidos e capturas também não podem ser apagados remotamente.",
     ],
-    source: "src/lib/domain/card.ts:53",
   },
   {
     id: "public-card-privacy",
     phase: "trust",
-    status: "Agora",
+    status: "Entregue",
     title: "Impedir indexação e vazamento de referrers nas carteirinhas",
     summary:
       "Páginas públicas precisam declarar seus limites de descoberta e transporte no navegador e no servidor.",
     details: [
-      "Adicionar noindex, X-Robots-Tag, Referrer-Policy estrita e headers explícitos de segurança.",
-      "A resposta de produção local não tinha CSP, Referrer-Policy, Permissions-Policy, proteção contra frames ou proteção de content type.",
-      "As páginas públicas hoje geram metadados comuns; a metadata precisa refletir esse conteúdo controlado pelo tutor.",
+      "Carteirinhas usam noindex, X-Robots-Tag e no-referrer; os metadados não expõem o nome ou contato do pet.",
+      "Headers limitam frames, objetos e permissões; o service worker não armazena páginas públicas. A telemetria remove URLs de carteirinhas, tokens de conta e corpos de requisição.",
+      "Links gerenciados permitem expiração e revogação de novas consultas. Estas proteções não apagam arquivos recebidos nem tornam revogáveis os snapshots antigos.",
     ],
-    source: "src/app/p/[code]/page.tsx:19",
   },
   {
     id: "real-accounts",
     phase: "trust",
-    status: "Agora",
+    status: "Parcial",
     title: "Implementar contas reais ou corrigir a linguagem de conta",
     summary:
       "A promessa de conta, logout, comunidade e uso em vários aparelhos precisa corresponder ao modelo local atual.",
     details: [
-      "“Conta”, “sair da conta”, atividade da comunidade e expectativa entre dispositivos conflitam com um perfil salvo apenas no localStorage.",
-      "Até existir autenticação e sincronização, usar termos como “perfil neste aparelho” e avisar claramente que apagar os dados do navegador remove tudo.",
+      "Perfil local e conta opcional são áreas distintas. Neon Auth e Neon/Postgres fornecem a base de autenticação e cópias remotas, conforme a configuração do ambiente.",
+      "A cópia na nuvem é enviada ou restaurada por decisão explícita. Entrar em uma conta não envia os dados do aparelho automaticamente.",
+      "Comunidade compartilhada, exclusão completa da identidade de autenticação e sincronização automática ainda não estão implementadas.",
     ],
     source: "README.md:114",
   },
   {
     id: "durable-storage",
     phase: "trust",
-    status: "Agora",
+    status: "Entregue",
     title: "Mover dados duráveis e mídia para fora do localStorage",
     summary:
-      "Fotos, anexos, eventos, registros e conteúdo inicial não devem ser serializados juntos a cada alteração.",
+      "O estado durável usa IndexedDB; fotos e documentos ficam em um armazenamento separado de blobs.",
     details: [
-      "Usar IndexedDB/OPFS para mídia, schemas versionados, escritas transacionais, reporte de cota e migrações testadas.",
-      "A persistência atual tem uma versão, mas ainda não tem caminho de migração.",
+      "Escritas assíncronas são serializadas e só atualizam a interface após persistência transacional. Conteúdo de mídia é deduplicado e separado dos metadados.",
+      "Dados legados do localStorage são validados e migrados; falha na migração preserva a origem. Conflitos entre abas exigem recuperação explícita.",
+      "Ajustes mostra a estimativa de espaço e permite pedir armazenamento persistente por ação explícita. Autorização não substitui backup nem impede exclusão manual.",
+      "Remover pet, restaurar ou reiniciar dados elimina mídia sem referência. Monitoramento contínuo, limpeza por pressão de espaço e validação em aparelhos reais permanecem pendentes.",
     ],
-    source: "src/lib/store/app-store.ts:699",
   },
   {
     id: "restore-import",
     phase: "trust",
-    status: "Agora",
+    status: "Entregue",
     title: "Adicionar restauração e importação, não apenas exportação",
     summary:
       "Levar os dados consigo também precisa significar conseguir restaurá-los com segurança.",
     details: [
-      "Adicionar importação validada, prévia, tratamento de duplicados, lembretes de backup e instruções de recuperação.",
-      "O perfil promete que o usuário pode “levar” seus dados, mas hoje oferece apenas exportação JSON e exclusão.",
+      "Backup JSON v2 inclui os arquivos dos documentos, inclusive os que estão na lixeira. O importador aceita versões anteriores e valida schemas, mídia e referências antes de restaurar.",
+      "A restauração substitui a cópia local inteira; não mistura backups nem duplica registros. Falhas de escrita preservam os dados anteriores.",
+      "Prévia, confirmação, exportação bruta de emergência e recuperação de corrupção estão disponíveis. Rascunhos e tokens de publicação não entram no backup; lembretes automáticos de backup são futuros.",
     ],
-    source: "src/app/(app)/profile/page.tsx:261",
   },
   {
     id: "community-backend",
     phase: "trust",
-    status: "Agora",
+    status: "Parcial",
     title: "Não apresentar a comunidade como ao vivo sem backend",
     summary:
       "Publicar, denunciar, bloquear, reagir, comentar e participar de grupos precisa ter estado compartilhado e moderação real.",
     details: [
-      "Hoje essas ações afetam apenas o navegador local e usuários de exemplo.",
-      "Ou entregar backend com moderação e estado compartilhado, ou transformar a experiência em uma prévia claramente somente leitura.",
+      "Feed, respostas, reações e grupos são explicitamente exemplos locais. As ações indicam que não enviam mensagens a outros tutores.",
+      "Ocultar conteúdo não promete uma denúncia enviada nem análise de moderação. Backend compartilhado e moderação real continuam pendentes.",
     ],
   },
   {
     id: "reminders-outside-app",
     phase: "trust",
-    status: "Agora",
+    status: "Parcial",
     title: "Entregar lembretes fora do app aberto",
     summary:
-      "Um cuidado importante não pode depender de o tutor estar olhando para o PetHub.",
+      "Um cuidado importante não pode depender de o tutor estar olhando para a Zelupi.",
     details: [
-      "Adicionar agendamento de notificações push ou locais, recuperação de permissão, status de entrega, fuso horário e reagendamento quando um registro de cuidado mudar.",
-      "Hoje os lembretes viram apenas entradas dentro do app.",
+      "Web Push opcional tem consentimento, fuso, horário silencioso, cancelamento e agenda de sete dias renovada com conexão. O texto do aviso é genérico e não confirma doses.",
+      "A integração está implementada, mas a ativação hospedada e a entrega em aparelhos reais ainda precisam ser validadas. A central no app continua disponível.",
     ],
   },
   {
     id: "public-card-freshness",
     phase: "trust",
-    status: "Agora",
+    status: "Entregue",
     title: "Adicionar frescor e confiança à carteirinha pública",
     summary:
       "Quem encontra um pet precisa saber se a informação está ativa, recente e dentro do que o produto pode afirmar.",
     details: [
-      "Mostrar horário de geração ou atualização, informar se a carteirinha está ativa, exibir um aviso explícito de que a saúde não é avaliação clínica e oferecer um caminho seguro quando nenhum contato foi compartilhado.",
+      "Novas cópias exibem a data de geração; links antigos sem data são identificados. A página explica que o conteúdo e o modo perdido não se atualizam nesse endereço.",
+      "Saúde é um resumo dos registros do tutor, sem avaliação clínica. Existe orientação quando nenhum contato foi compartilhado.",
     ],
   },
   {
     id: "onboarding-focus",
     phase: "experience",
-    status: "Agora",
+    status: "Entregue",
     title: "Resetar scroll e mover foco entre etapas do onboarding",
     summary:
       "Cada avanço precisa abrir com o próximo passo completo e perceptível, inclusive em 320px.",
     details: [
-      "Ao avançar a partir do CTA inferior em 320px, a posição de scroll era mantida e o título do passo 4 ficava parcialmente acima da viewport.",
-      "Fazer o container da etapa voltar ao topo e focar o heading depois de setStep.",
+      "Avançar e voltar move o foco ao título e retorna o scroll ao topo, inclusive ao recuperar um rascunho.",
+      "Voltar no último passo não cria o perfil. Pular o primeiro cuidado cria apenas o perfil, sem registro incompleto.",
     ],
     source: "src/app/onboarding/page.tsx:143",
   },
   {
     id: "care-label-overflow",
     phase: "experience",
-    status: "Agora",
+    status: "Entregue",
     title: "Corrigir rótulos de cuidado cortados em 320px e zoom",
     summary:
       "Os tipos de cuidado precisam continuar legíveis sem depender de uma largura ideal.",
     details: [
-      "“Antiparasitário”, “Medicamento” e “Observação” estouram os botões de duas colunas.",
-      "Permitir quebra de linha, empilhar ícone e rótulo mais cedo ou mudar para uma coluna em larguras estreitas.",
+      "Tipos de cuidado permitem quebra de linha e usam uma coluna nas menores larguras. Peso e datas têm validação explícita antes de salvar.",
     ],
     source: "src/components/record-form.tsx:160",
   },
   {
     id: "location-recovery",
     phase: "experience",
-    status: "Agora",
+    status: "Entregue",
     title: "Corrigir a recuperação quando a localização é negada",
     summary:
       "A interface precisa oferecer uma recuperação real quando o usuário não autoriza localização precisa.",
     details: [
-      "O callback de falha define denied=true e desabilita imediatamente a localização precisa.",
-      "O cálculo de status então resolve para cidade, tornando o card “Localização não autorizada” praticamente inalcançável.",
+      "Permissão negada e posição indisponível têm estados distintos e nova tentativa explícita. Desativar localização precisa deixa de usar coordenadas já obtidas.",
+      "Sem posição, distâncias usam o centro de São Paulo com essa origem declarada. Informar uma cidade no perfil não finge geocodificação.",
     ],
     source: "src/lib/geo.ts:53",
   },
   {
     id: "narrow-discovery",
     phase: "experience",
-    status: "Agora",
+    status: "Parcial",
     title: "Melhorar os controles de descoberta em telas estreitas",
     summary:
       "Busca, categorias e filtros devem denunciar quando existe conteúdo lateral em vez de parecerem cortados.",
     details: [
-      "O placeholder de busca e as linhas de categoria e filtro aparecem cortados em 320px.",
-      "Adicionar uma pista visível de rolagem horizontal, snap, um menu compacto de categorias ou colocar filtros secundários atrás de “Filtros”.",
+      "Categorias de lugares e produtos quebram em múltiplas linhas. Informações de procedência não ficam truncadas.",
+      "A validação ampla com zoom, leitores de tela e dispositivos reais permanece no passe dedicado de acessibilidade.",
     ],
   },
   {
     id: "navigation-hierarchy",
     phase: "experience",
-    status: "Agora",
+    status: "Entregue",
     title: "Deixar a hierarquia da navegação principal explícita",
     summary:
       "A rota do pet e a área de configurações não devem disputar o mesmo significado de “Perfil”.",
     details: [
-      "Páginas de identidade do pet ativam “Cuidados”, enquanto “Perfil” significa tutor e configurações da conta.",
-      "Considerar “Hoje / Meu pet / Descobrir / Conta”, ou oferecer uma rota persistente e explícita para o perfil do pet.",
+      "A navegação permanente é Hoje / Meu pet / Descobrir / Ajustes. Meu pet abre diretamente o perfil do pet ativo.",
+      "Agenda, histórico e diário permanecem acessíveis pelas abas de cuidados. Conta na nuvem é separada do perfil salvo no aparelho.",
     ],
     source: "src/components/app-shell.tsx:22",
   },
@@ -284,7 +287,7 @@ export const roadmapItems: RoadmapItem[] = [
       "Os testes de domínio e componentes são fortes, mas ainda não provam os fluxos completos no browser.",
     details: [
       "Adicionar testes de onboarding, layouts 320/375px, foco por teclado, falha de cota de armazenamento, privacidade da carteirinha pública, rotas dinâmicas offline, atualizações do service worker e instalação.",
-      "A suíte atual tem 102 testes de domínio e componentes, sem uma suíte E2E de rotas.",
+      "A suíte de domínio e componentes foi ampliada; uma suíte estável de rotas em navegador e validação em aparelhos reais continuam necessárias.",
     ],
     source: "package.json:5",
   },
@@ -316,126 +319,130 @@ export const roadmapItems: RoadmapItem[] = [
   {
     id: "medication-management",
     phase: "care",
-    status: "Incompleto",
+    status: "Entregue",
     title: "Gerenciar medicamentos de forma estruturada",
     summary:
-      "Medicamento não deve ser apenas mais um tipo de registro de saúde.",
+      "Planos informados pelo tutor têm dose, unidade, horários, calendário e confirmação de cada ocorrência.",
     details: [
-      "Adicionar dose, unidade, frequência/horários, datas de início e fim, instruções, prescritor ou fonte, estado de dose perdida e recorrência específica de medicamento.",
-      "O contrato-alvo está documentado no design do produto.",
+      "Dose e unidade, horários, intervalo em dias, início/fim, fuso, instruções e fonte são campos estruturados. O app não calcula doses nem recomenda tratamentos.",
+      "É possível registrar dose dada, pulada ou não dada e corrigir uma confirmação sem apagar o histórico. Revisões e encerramento preservam versões do plano.",
+      "A agenda e o relatório mostram o histórico informado. Ausência de confirmação não prova administração; Web Push depende da ativação e validação de entrega. Prescrições verificadas permanecem futuras.",
     ],
-    source: "design.md:303",
   },
   {
     id: "recurring-care",
     phase: "care",
-    status: "Incompleto",
+    status: "Entregue",
     title: "Completar o ciclo de vida do cuidado recorrente",
     summary:
-      "Concluir, adiar, reagendar e desfazer já funcionam; o restante precisa ficar igualmente explícito.",
+      "Cuidados e rotinas têm ações explícitas, histórico preservado e prévia do próximo ciclo.",
     details: [
-      "Adicionar pular ocorrência, encerrar recorrência, editar ocorrências futuras e pré-visualizar claramente o que concluir um item vai criar.",
+      "Concluir, adiar, reagendar, pular ocorrência, encerrar recorrência e desfazer estão implementados. Pular não registra um cuidado como realizado.",
+      "Lembretes de rotina podem ser criados e editados; desfazer protege alterações posteriores e a próxima data é mostrada antes da conclusão.",
     ],
   },
   {
     id: "form-drafts",
     phase: "care",
-    status: "Incompleto",
+    status: "Entregue",
     title: "Proteger rascunhos e recuperação de formulários",
     summary:
       "Uma anotação de saúde, diário, onboarding ou pet não pode desaparecer porque a navegação mudou.",
     details: [
-      "Adicionar rascunhos locais automáticos, recuperação após navegação ou reload, isolamento de falha de anexos e proteção de formulário sujo ao trocar de pet.",
-      "Hoje saúde, diário, onboarding e formulários de pet guardam dados apenas no estado do componente.",
+      "Onboarding, perfil do pet, saúde e diário guardam rascunhos de texto na sessão da aba, com schema validado e chaves por pet e registro.",
+      "Navegação e recarga recuperam os campos. Fotos e anexos não entram no rascunho e precisam ser selecionados novamente após recarregar.",
+      "Salvar ou cancelar explicitamente limpa o rascunho. Restaurar backup ou apagar os dados também limpa os rascunhos antigos. Fechar a sessão da aba pode removê-los.",
     ],
   },
   {
     id: "reliable-documents",
     phase: "care",
-    status: "Incompleto",
+    status: "Entregue",
     title: "Dar armazenamento confiável aos documentos",
     summary:
-      "Documentos precisam ser arquivos recuperáveis, não somente imagens presas a registros de saúde.",
+      "Cada pet tem uma biblioteca de arquivos independente dos registros de saúde, com recuperação pela lixeira.",
     details: [
-      "Adicionar suporte a PDF e arquivos, categorias de documento, CRUD independente, uso de armazenamento, limpeza e recuperação de upload falho.",
-      "Hoje “Documentos” significa imagens anexadas a registros, e apenas image/* é aceito.",
+      "PDF, JPEG, PNG, GIF e WebP de até 10 MB são verificados pelo conteúdo, guardados em IndexedDB e baixados como arquivos originais. Conteúdo executável não é renderizado dentro do app.",
+      "Título, categoria, data e notas podem ser editados; busca e filtros ajudam a encontrar os documentos. Falha ao salvar mantém o formulário e o arquivo selecionado para nova tentativa.",
+      "Mover para a lixeira e restaurar preserva o arquivo; backups incluem a biblioteca e a lixeira. Anexos antigos de saúde continuam acessíveis. Exclusão permanente e limpeza de espaço seguem pendentes.",
     ],
   },
   {
     id: "health-history-export",
     phase: "care",
-    status: "Incompleto",
+    status: "Entregue",
     title: "Exportar o histórico de saúde de maneira humana",
     summary:
-      "JSON é uma saída técnica; tutores e profissionais também precisam de uma história legível.",
+      "O histórico de cada pet pode ser selecionado por data e tipo e baixado como um resumo legível para impressão.",
     details: [
-      "Adicionar exportação de histórico por pet — idealmente PDF ou impressão — com intervalos de data, filtros, anexos, proveniência e controles de compartilhamento.",
-      "A exportação JSON do app inteiro já existe.",
+      "Datas inclusivas, tipos de cuidado e contagem de registros definem o conteúdo antes do download. O resumo HTML pode ser impresso ou salvo como PDF pelo navegador.",
+      "O relatório inclui origem informada, observações e planos de medicação com seus eventos e correções. O período filtra a data do registro; a auditoria de um medicamento selecionado é incluída inteira.",
+      "Fotos e arquivos não são incorporados ao resumo: podem ser baixados separadamente em Documentos. O tutor escolhe com quem compartilhar; o conteúdo não é validado clinicamente.",
     ],
   },
   {
     id: "storage-migration-safety",
     phase: "care",
-    status: "Incompleto",
+    status: "Parcial",
     title: "Tornar armazenamento e migração seguros",
     summary:
       "Falhas de cota, dados corrompidos e mídia órfã precisam de recuperação entendível.",
     details: [
-      "Adicionar migrações de schema, recuperação de dados corrompidos, exportação bruta de emergência, monitoramento de cota, limpeza de mídia e estados claros de pressão de armazenamento.",
-      "Hoje todos os registros e fotos ficam em localStorage sem esses guardrails.",
+      "Schema e referências são validados antes de gravar; escrita transacional em IndexedDB acontece antes da atualização da interface. Falhas preservam a cópia anterior.",
+      "A migração valida a origem localStorage antes de substituí-la. Corrupção oferece cópia bruta, restauração e reinício explícito; versões incompatíveis não são sobrescritas silenciosamente.",
+      "Conflitos entre abas são detectados. Há estimativa de cota e solicitação explícita de armazenamento persistente; não há limpeza automática por pressão de espaço. Recuperação em dispositivos reais precisa de validação.",
     ],
-    source: "src/lib/store/app-store.ts:257",
   },
   {
     id: "account-lifecycle",
     phase: "platform",
-    status: "Incompleto",
+    status: "Parcial",
     title: "Definir a linguagem e o ciclo de vida da conta",
     summary:
       "Logout, assinatura e exclusão precisam significar algo verificável.",
     details: [
-      "A interface fala em conta, assinatura, logout e excluir conta, mas ainda não existe uma conta real.",
-      "Hoje logout apenas limpa o objeto tutor e deixa os dados do pet no aparelho.",
-      "Ou relabelar isso como perfil local, ou implementar autenticação, sessões, recuperação e semântica correta de logout e exclusão.",
+      "Perfil local, exclusão dos dados do aparelho e conta opcional Neon Auth têm funções distintas. Sair da nuvem encerra a sessão sem prometer apagar a cópia local.",
+      "Cadastro, entrada e recuperação de senha usam autenticação real quando configurados. A exclusão de snapshot remoto não exclui a identidade de autenticação.",
+      "Alterar senha e encerrar outras sessões exigem conta confirmada. A exclusão da identidade permanece indisponível até confirmar suporte do provedor; os dados cloud já têm vínculos de limpeza em cascata.",
+      "Billing e encerramento completo da conta continuam pendentes.",
     ],
     source: "src/app/(app)/profile/page.tsx:307",
   },
   {
     id: "public-pet-identity",
     phase: "platform",
-    status: "Incompleto",
+    status: "Parcial",
     title: "Fazer identidade pública e modo perdido serem atualizáveis",
     summary:
-      "QR impresso precisa continuar seguro e atual quando o tutor muda o estado do pet.",
+      "Links gerenciados podem manter o endereço ao atualizar a cópia pública escolhida pelo tutor.",
     details: [
-      "QR sharing, controles de privacidade, exportação PNG e banners de modo perdido já existem.",
-      "O QR contém um snapshot na URL; carteirinhas impressas não podem ser atualizadas ou revogadas.",
-      "Adicionar identificador estável apoiado por servidor, revogação, atualizações ao vivo do modo perdido, logs de acesso e, de preferência, encaminhamento protegido de contato.",
+      "Publicações com conta têm referência aleatória, expiração, atualização, troca do link e revogação. PNG local sem conta permanece disponível, com QR opcional para um link gerenciado.",
+      "Alterações de modo perdido, contato ou privacidade no aparelho não atualizam a publicação automaticamente. A interface pede revisão e confirmação para publicar a nova cópia.",
+      "Links legados e imagens permanecem imutáveis. Atualização automática, logs de acesso e encaminhamento protegido de contato ainda são futuros.",
     ],
-    source: "design.md:333",
   },
   {
     id: "notification-delivery",
     phase: "platform",
-    status: "Incompleto",
+    status: "Parcial",
     title: "Entregar notificações de verdade",
     summary:
       "A central de notificações é uma base; a entrega precisa ter permissão, agenda e falha visíveis.",
     details: [
-      "Adicionar entrega por sistema ou push, estados de permissão e instalação, agendamento, tratamento de falha de entrega e controles de horário silencioso e frequência.",
-      "As preferências por categoria e a central in-app já existem.",
+      "Consentimento por aparelho, preferências por categoria, fuso e horário silencioso acompanham a agenda Web Push. Mudanças e cancelamentos são enviados quando há conexão; avisos já aceitos pelo serviço ainda podem chegar.",
+      "Tentativas têm limite e prazo original: até 30 minutos para medicação e seis horas para demais cuidados. Aceitação pelo serviço não comprova entrega ou leitura. Configuração hospedada e teste em aparelho real continuam pendentes.",
     ],
   },
   {
     id: "offline-pwa-lifecycle",
     phase: "platform",
-    status: "Incompleto",
+    status: "Parcial",
     title: "Completar o ciclo de vida offline/PWA",
     summary:
       "Atualizações do service worker não podem surpreender quem tem rascunhos abertos.",
     details: [
-      "Adicionar aviso de atualização, atualização segura com rascunhos abertos, recuperação de cache e versão e distinção explícita entre recursos locais e dependentes de rede.",
-      "Service worker, fallback offline, dados locais em cache e banner offline já estão presentes.",
+      "Atualizações aguardam ação do tutor; não recarregam a página automaticamente e bloqueiam a atualização enquanto há edição na tela.",
+      "Rascunhos de texto ajudam na retomada e carteirinhas públicas não ficam no cache do service worker. Ainda é necessário validar offline, instalação e atualização em dispositivos reais e rotas dinâmicas nunca visitadas.",
     ],
   },
   {
@@ -446,8 +453,8 @@ export const roadmapItems: RoadmapItem[] = [
     summary:
       "Eventos no aparelho não explicam a saúde do produto nem respeitam sozinhos uma política de consentimento.",
     details: [
-      "Adicionar analytics com consentimento, error reporting, medição de funil, retenção orientada por privacidade e monitoramento operacional de saúde.",
-      "Os eventos de produto hoje ficam armazenados somente no dispositivo.",
+      "Eventos de produto ficam no aparelho. Sentry é carregado quando configurado e sanitiza carteirinhas, tokens de conta e corpos de requisição antes do envio.",
+      "Estratégia de consentimento, medição de funil, retenção e monitoramento operacional validado ainda precisam ser concluídos.",
     ],
   },
   {
@@ -497,7 +504,7 @@ export const roadmapItems: RoadmapItem[] = [
       "Recomendações explicáveis só são úteis se preço, disponibilidade e relação comercial estiverem claros.",
     details: [
       "Matching explicável e opt-in comercial já existem.",
-      "Produtos, preços e links são seeded; alguns links apontam para example.com.",
+      "Produtos e preços são identificados como fictícios. A interface não oferece compra nem abre links de exemplo.",
       "Adicionar feeds reais de parceiros, frescor de preço, atribuição de afiliado, rotulagem de patrocinado, disponibilidade e tracking de conversão.",
     ],
     source: "src/lib/domain/seed.ts:342",
@@ -505,12 +512,14 @@ export const roadmapItems: RoadmapItem[] = [
   {
     id: "cloud-sync",
     phase: "network",
-    status: "Futuro",
+    status: "Parcial",
     title: "Sincronizar na nuvem e recuperar em vários aparelhos",
     summary:
       "A história do pet precisa acompanhar o tutor sem abandonar o modo local-first.",
     details: [
-      "Adicionar sincronização cloud, recuperação entre dispositivos e uma estratégia explícita para conflitos e dados que ainda não chegaram à nuvem.",
+      "Conta opcional oferece envio e restauração manuais de uma cópia inteira. RLS isola contas e controle de revisão rejeita sobrescrita concorrente.",
+      "A interface compara a cópia remota, pede confirmação e permite baixar uma cópia de segurança antes da substituição. Entrar na conta não inicia um upload automático.",
+      "Não há mesclagem por registro, sincronização contínua, fila offline de uploads ou edição simultânea compartilhada.",
     ],
   },
   {
@@ -583,12 +592,13 @@ export const roadmapItems: RoadmapItem[] = [
   {
     id: "onboarding-behavior",
     phase: "craft",
-    status: "Refatoração",
+    status: "Entregue",
     title: "Finalizar o comportamento do onboarding",
     summary:
       "A primeira configuração deve ser curta, recuperável e mensuravelmente confiável.",
     details: [
-      "Adicionar preservação de rascunho, gerenciamento de foco entre passos, recuperação limpa de falhas e confirmação medida de que a ativação do primeiro pet permanece abaixo de 90 segundos.",
+      "Rascunho, foco, scroll, peso decimal, validação de datas e navegação de volta foram implementados. Perfil e primeiro cuidado são gravados numa operação atômica.",
+      "Pular um cuidado não registra uma ação que não ocorreu. A promessa não medida de ativação em 90 segundos foi removida.",
     ],
   },
   {
@@ -599,7 +609,7 @@ export const roadmapItems: RoadmapItem[] = [
     summary:
       "Voltar não deveria apagar o contexto de uma busca, filtro ou anotação em andamento.",
     details: [
-      "Fazer a navegação de volta preservar filtros, scroll, pet ativo, aba aberta e input ainda não finalizado.",
+      "Rascunhos de formulários são recuperáveis e separados por pet. Preservar filtros de descoberta e posição de scroll entre todas as rotas ainda está pendente.",
     ],
   },
   {

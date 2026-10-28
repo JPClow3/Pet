@@ -52,8 +52,8 @@ function TodaySkeleton() {
       aria-live="polite"
       aria-busy="true"
     >
-      <span className="sr-only">Abrindo seu PetHub</span>
-      <div className="rounded-[28px] border border-line bg-white p-5">
+      <span className="sr-only">Abrindo a Zelupi</span>
+      <div className="rounded-[28px] border border-line bg-paper p-5">
         <div className="flex items-center gap-4">
           <Skeleton className="size-24 rounded-full" />
           <div className="flex flex-1 flex-col gap-2">
@@ -430,28 +430,28 @@ export default function HomePage() {
             <div className="grid grid-cols-2 gap-2">
               <Link
                 href={`/pets/${activePet.id}/health/new`}
-                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-white p-3 text-[0.88rem] font-bold text-ink transition-colors hover:border-teal/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
+                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-paper p-3 text-[0.88rem] font-bold text-ink transition-colors hover:border-teal/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
               >
                 <Syringe aria-hidden="true" className="size-5 text-teal-ink" />{" "}
                 Registrar cuidado
               </Link>
               <Link
                 href={`/pets/${activePet.id}/health/new?type=peso`}
-                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-white p-3 text-[0.88rem] font-bold text-ink transition-colors hover:border-blue/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep focus-visible:ring-offset-2"
+                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-paper p-3 text-[0.88rem] font-bold text-ink transition-colors hover:border-blue/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep focus-visible:ring-offset-2"
               >
                 <Scale aria-hidden="true" className="size-5 text-blue-deep" />{" "}
                 Registrar peso
               </Link>
               <Link
                 href={`/pets/${activePet.id}/diary`}
-                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-white p-3 text-[0.88rem] font-bold text-ink transition-colors hover:border-accent/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-paper p-3 text-[0.88rem] font-bold text-ink transition-colors hover:border-accent/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
               >
                 <Camera aria-hidden="true" className="size-5 text-accent-ink" />{" "}
                 Guardar momento
               </Link>
               <Link
                 href={`/pets/${activePet.id}/card`}
-                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-white p-3 text-[0.88rem] font-bold text-ink transition-colors hover:border-warning/55 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning-ink focus-visible:ring-offset-2"
+                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-paper p-3 text-[0.88rem] font-bold text-ink transition-colors hover:border-warning/55 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning-ink focus-visible:ring-offset-2"
               >
                 <FileText
                   aria-hidden="true"
@@ -499,7 +499,7 @@ export default function HomePage() {
                 {petDiary.map((entry) => (
                   <li
                     key={entry.id}
-                    className="flex items-center gap-3 rounded-[18px] border border-line bg-white p-3"
+                    className="flex items-center gap-3 rounded-[18px] border border-line bg-paper p-3"
                   >
                     {entry.photo ? (
                       <Photo

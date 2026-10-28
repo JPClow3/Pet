@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
 import { RecordForm } from "@/components/record-form";
+import { MedicationCoursePanel } from "@/components/medication-course-panel";
 import { Photo } from "@/components/ui/photo";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,7 +20,9 @@ export default function RecordDetailPage() {
     state.pets.find((item) => item.id === params.petId),
   );
   const record = useAppStore((state) =>
-    state.records.find((item) => item.id === params.recordId),
+    state.records.find(
+      (item) => item.id === params.recordId && item.petId === params.petId,
+    ),
   );
   const updateRecord = useAppStore((state) => state.updateRecord);
   const removeRecord = useAppStore((state) => state.removeRecord);
@@ -62,21 +65,24 @@ export default function RecordDetailPage() {
         </Card>
       ) : null}
 
+      {record.medication ? <MedicationCoursePanel record={record} /> : null}
       <Card>
         <RecordForm
+          key={record.id}
+          petId={pet.id}
           petName={pet.name}
           initial={record}
           submitLabel="Salvar alterações"
           onCancel={() => router.back()}
-          onSubmit={(values) => {
-            updateRecord(record.id, { ...values, petId: pet.id });
+          onSubmit={async (values) => {
+            await updateRecord(record.id, { ...values, petId: pet.id });
             toast.success("Registro atualizado");
             router.replace(`/pets/${pet.id}/health`);
           }}
-          onDelete={() => {
+          onDelete={async () => {
             if (!window.confirm(`Excluir "${record.title}" do histórico?`))
               return;
-            removeRecord(record.id);
+            await removeRecord(record.id);
             toast.success("Registro excluído");
             router.replace(`/pets/${pet.id}/health`);
           }}

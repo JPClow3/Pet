@@ -8,6 +8,7 @@ import { SkeletonScreen } from "@/components/ui/skeleton";
 import { useAppStore } from "@/lib/store/app-store";
 import { useHydrated } from "@/lib/store/hooks";
 import { useEffect } from "react";
+import { PushSyncProvider } from "@/lib/push/provider";
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
   const ready = useHydrated();
@@ -23,10 +24,10 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
   if (!ready || !hasTutor) {
     return (
       <AppShell>
-        <SkeletonScreen label="Abrindo o PetHub" />
+        <SkeletonScreen label="Abrindo a Zelupi" />
       </AppShell>
     );
   }
 
-  return <AppShell>{children as ReactNode}</AppShell>;
+  return <AppShell><PushSyncProvider />{children as ReactNode}</AppShell>;
 }

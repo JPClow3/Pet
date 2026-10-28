@@ -39,7 +39,7 @@ type PreviewState = {
   url: string | null;
   format: PetCardFormat;
   theme: PetCardTheme;
-  publicUrl: string;
+  publicUrl: string | null;
   card: PublicPetCard;
   photo: string | null;
 } | null;
@@ -78,8 +78,6 @@ export function PetShareStudio({
   const isBusy = action.state === "generating";
 
   useEffect(() => {
-    if (!publicUrl) return;
-
     let cancelled = false;
     let previewUrl: string | null = null;
     void createPetCardPng({ card, photo, publicUrl, format, theme })
@@ -118,7 +116,6 @@ export function PetShareStudio({
 
   const currentPreview =
     preview &&
-    publicUrl &&
     preview.format === format &&
     preview.theme === theme &&
     preview.publicUrl === publicUrl &&
@@ -141,7 +138,6 @@ export function PetShareStudio({
     .join(", ");
 
   async function generateArtwork() {
-    if (!publicUrl) throw new Error("A página pública ainda está carregando.");
     return createPetCardPng({ card, photo, publicUrl, format, theme });
   }
 
@@ -194,7 +190,7 @@ export function PetShareStudio({
 
       await navigator.share({
         title: `Carteirinha de ${card.name}`,
-        text: `Carteirinha digital de ${card.name}, feita no PetHub.`,
+        text: `Carteirinha digital de ${card.name}, feita na Zelupi.`,
         files: [file],
       });
       onTrack?.("png_shared");
@@ -250,6 +246,12 @@ export function PetShareStudio({
             O preview abaixo é a imagem exata do PNG. Apenas os dados públicos
             autorizados entram na arte.
           </p>
+          <p className="mt-2 max-w-[60ch] text-meta leading-relaxed text-muted">
+            O PNG é uma imagem deste momento e não muda depois de baixado.
+            {publicUrl
+              ? " Seu QR Code abre o link gerenciado, que pode ser atualizado, revogado ou expirar."
+              : " Você pode baixar a imagem sem criar conta ou publicar dados. Publique um link gerenciado para incluir QR Code."}
+          </p>
         </div>
 
         <div className="flex flex-col gap-5 p-4 sm:p-5">
@@ -267,7 +269,7 @@ export function PetShareStudio({
                     className={`flex min-h-[4.35rem] cursor-pointer flex-col justify-center rounded-2xl border px-2.5 text-left transition-[border-color,background-color,box-shadow] ${
                       checked
                         ? "border-blue bg-blue-soft text-blue-deep shadow-sm"
-                        : "border-line bg-white text-ink hover:bg-surface"
+                        : "border-line bg-paper text-ink hover:bg-surface"
                     }`}
                   >
                     <input
@@ -278,9 +280,7 @@ export function PetShareStudio({
                       onChange={() => setFormat(value)}
                       className="sr-only"
                     />
-                    <span className="text-meta font-bold">
-                      {option.label}
-                    </span>
+                    <span className="text-meta font-bold">{option.label}</span>
                     <span className="mt-0.5 text-meta leading-snug opacity-75">
                       {option.hint}
                     </span>
@@ -304,7 +304,7 @@ export function PetShareStudio({
                     className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-3 text-meta font-bold transition-colors ${
                       checked
                         ? "border-blue bg-blue text-white"
-                        : "border-line bg-white text-ink hover:bg-surface"
+                        : "border-line bg-paper text-ink hover:bg-surface"
                     }`}
                   >
                     <input
@@ -364,11 +364,7 @@ export function PetShareStudio({
                     aria-hidden="true"
                     className="size-7 animate-spin motion-reduce:animate-none"
                   />
-                  <p className="text-meta font-semibold">
-                    {publicUrl
-                      ? "Montando o preview…"
-                      : "Preparando o link público…"}
-                  </p>
+                  <p className="text-meta font-semibold">Montando o preview…</p>
                 </div>
               )}
             </div>
@@ -379,11 +375,7 @@ export function PetShareStudio({
           </figure>
 
           <div className="grid gap-2 sm:grid-cols-2">
-            <Button
-              onClick={handleShare}
-              disabled={!publicUrl || isBusy}
-              className="w-full"
-            >
+            <Button onClick={handleShare} disabled={isBusy} className="w-full">
               {isBusy ? (
                 <LoaderCircle
                   aria-hidden="true"
@@ -397,7 +389,7 @@ export function PetShareStudio({
             <Button
               variant="secondary"
               onClick={handleDownload}
-              disabled={!publicUrl || isBusy}
+              disabled={isBusy}
               className="w-full"
             >
               <Download aria-hidden="true" className="size-4" />
@@ -455,18 +447,23 @@ export function PetShareStudio({
       </Card>
 
       <Card className="flex items-center gap-3 bg-mint/60">
-        <div className="shrink-0 rounded-2xl border border-teal/15 bg-white p-2 shadow-sm">
+        <div className="shrink-0 rounded-2xl border border-teal/15 bg-paper p-2 shadow-sm">
           {publicUrl ? (
             <QrCode value={publicUrl} className="size-14" />
           ) : (
-            <div className="size-14 animate-pulse rounded-xl bg-surface motion-reduce:animate-none" />
+            <span className="flex size-14 items-center justify-center text-meta text-muted">
+              Local
+            </span>
           )}
         </div>
         <div className="min-w-0">
-          <CardTitle>QR Code sempre incluído</CardTitle>
+          <CardTitle>
+            {publicUrl ? "QR Code do link gerenciado" : "Imagem sem publicação"}
+          </CardTitle>
           <p className="mt-1 text-meta leading-relaxed text-muted">
-            Ele abre a página pública de {card.name} com os mesmos controles de
-            privacidade da arte.
+            {publicUrl
+              ? `Ele abre a página pública de ${card.name}. Atualize o link após mudar os dados; revogação e expiração também interrompem o QR Code.`
+              : "O PNG continua disponível sem conta. Nenhum link é criado automaticamente."}
           </p>
         </div>
       </Card>

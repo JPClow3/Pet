@@ -11,7 +11,7 @@ export default function AppError({
 }) {
   return (
     <section className="mx-auto flex max-w-lg flex-col items-center gap-4 py-16 text-center">
-      <title>Não foi possível abrir · PetHub</title>
+      <title>Não foi possível abrir · Zelupi</title>
       <HeartHandshake className="size-12 text-teal-ink" aria-hidden="true" />
       <h1 className="font-display text-3xl">Vamos tentar de novo?</h1>
       <p className="text-muted">

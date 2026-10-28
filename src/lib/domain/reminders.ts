@@ -1,10 +1,15 @@
 import { daysUntil, isValidDateKey, shiftDays, todayKey } from "./dates";
 import { urgencyFor, urgencyText, type Urgency } from "./health";
 import type { HealthRecord, Pet, Reminder } from "./schema";
+import {
+  medicationClock,
+  medicationDoseKey,
+  nextMedicationOccurrence,
+} from "./medication";
 
 export type ReminderItem = {
   key: string;
-  source: "registro" | "manual";
+  source: "registro" | "manual" | "medicamento";
   id: string;
   petId: string;
   petName: string;
@@ -16,6 +21,15 @@ export type ReminderItem = {
   notes: string | null;
   snoozedUntil: string | null;
   reason: string;
+  medication?: {
+    scheduleId: string;
+    time: string;
+    timeZone: string;
+    amount: string;
+    unit: string;
+    eventId: string | null;
+    due: boolean;
+  };
 };
 
 export type SnoozeMap = Record<string, string>;
@@ -39,9 +53,46 @@ export function buildReminders(input: {
   const items: ReminderItem[] = [];
 
   for (const record of input.records) {
-    if (!isValidDateKey(record.nextDueDate)) continue;
     const pet = petById.get(record.petId);
     if (!pet) continue;
+    if (record.medication) {
+      const occurrence = nextMedicationOccurrence(record.medication, now);
+      if (!occurrence) continue;
+      const { schedule, date, time, event } = occurrence;
+      const clock = medicationClock(schedule.timeZone, now);
+      const days = Math.round(
+        (Date.parse(`${date}T12:00:00Z`) -
+          Date.parse(`${clock.date}T12:00:00Z`)) /
+          86400000,
+      );
+      const due = `${date}T${time}` <= `${clock.date}T${clock.time}`;
+      items.push({
+        key: `medicamento:${record.id}:${medicationDoseKey(schedule.id, date, time)}`,
+        source: "medicamento",
+        id: record.id,
+        petId: pet.id,
+        petName: pet.name,
+        title: record.title,
+        dueDate: date,
+        leadDays: 0,
+        days,
+        urgency: due ? "vencido" : days === 0 ? "hoje" : "futuro",
+        notes: schedule.instructions || null,
+        snoozedUntil: null,
+        reason: "Horário do plano informado",
+        medication: {
+          scheduleId: schedule.id,
+          time,
+          timeZone: schedule.timeZone,
+          amount: schedule.amount,
+          unit: schedule.unit,
+          eventId: event?.id ?? null,
+          due,
+        },
+      });
+      continue;
+    }
+    if (!isValidDateKey(record.nextDueDate)) continue;
     const key = reminderKey("registro", record.id);
     const snoozedUntil = input.snoozes[key] ?? null;
     const { urgency, days } = urgencyFor(
@@ -98,7 +149,10 @@ export function buildReminders(input: {
     const order: Urgency[] = ["vencido", "hoje", "proximo", "futuro"];
     const urgencyDelta = order.indexOf(a.urgency) - order.indexOf(b.urgency);
     if (urgencyDelta !== 0) return urgencyDelta;
-    return a.dueDate.localeCompare(b.dueDate);
+    return (
+      a.dueDate.localeCompare(b.dueDate) ||
+      (a.medication?.time ?? "").localeCompare(b.medication?.time ?? "")
+    );
   });
 }
 
@@ -127,6 +181,10 @@ export function reminderSummary(items: ReminderItem[]): {
 }
 
 export function reminderAttentionText(item: ReminderItem): string {
+  if (item.medication)
+    return item.medication.due
+      ? "horário sem confirmação"
+      : `planejado às ${item.medication.time}`;
   return urgencyText(item.days);
 }
 

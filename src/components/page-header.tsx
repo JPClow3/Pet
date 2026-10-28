@@ -40,8 +40,8 @@ export function PageHeader({
   return (
     <div className="mb-7 flex flex-wrap items-start gap-2">
       {backHref ? <BackLink fallbackHref={backHref} /> : null}
-      <div className="min-w-0 flex-1 pt-0.5">
-        <h1 className="text-[28px] font-bold leading-tight tracking-tight text-ink lg:text-3xl">
+      <div className="min-w-0 basis-48 flex-1 pt-0.5">
+        <h1 className="break-words text-[28px] font-bold leading-tight tracking-tight text-ink lg:text-3xl">
           {title}
         </h1>
         {subtitle ? (

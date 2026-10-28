@@ -76,7 +76,7 @@ export function QuickAddButton({
       <BottomSheet
         open={open}
         onClose={() => setOpen(false)}
-        title={pet ? `O que aconteceu com ${pet.name}?` : "Adicionar ao PetHub"}
+        title={pet ? `O que aconteceu com ${pet.name}?` : "Adicionar à Zelupi"}
         description="Escolha o registro que você quer guardar. Você poderá completar os detalhes depois."
       >
         <div className="grid grid-cols-2 gap-2">
@@ -87,7 +87,7 @@ export function QuickAddButton({
                 key={action.label}
                 href={action.href}
                 onClick={() => setOpen(false)}
-                className="group flex min-h-28 flex-col items-start justify-between rounded-[20px] border border-line bg-white p-4 transition-[background-color,transform] hover:bg-surface active:scale-[0.98]"
+                className="group flex min-h-28 flex-col items-start justify-between rounded-[20px] border border-line bg-paper p-4 transition-[background-color,transform] hover:bg-surface active:scale-[0.98]"
               >
                 <span
                   className={cn(

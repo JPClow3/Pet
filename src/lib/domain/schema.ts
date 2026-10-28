@@ -1,10 +1,12 @@
 import { z } from "zod";
+import { isValidDateKey } from "./dates";
 
 export const isoDate = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Data deve estar no formato AAAA-MM-DD");
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Data deve estar no formato AAAA-MM-DD")
+  .refine(isValidDateKey, "Informe uma data válida");
 
-export const isoDateTime = z.string().min(1);
+export const isoDateTime = z.iso.datetime({ offset: true });
 
 export const id = z.string().min(1);
 
@@ -54,6 +56,14 @@ export const petSchema = z.object({
   sex: sexSchema,
   birthDate: isoDate.nullable(),
   weightKg: z.number().positive().max(120).nullable(),
+  weightBaseline: z
+    .object({
+      weightKg: z.number().positive().max(120).nullable(),
+      date: isoDate,
+      updatedAt: isoDateTime,
+    })
+    .nullable()
+    .optional(),
   photo: z.string().nullable(),
   color: z.string().max(40).nullable(),
   microchip: z.string().max(40).nullable(),
@@ -78,23 +88,166 @@ export const healthRecordTypeSchema = z.enum([
 ]);
 export type HealthRecordType = z.infer<typeof healthRecordTypeSchema>;
 
-export const healthRecordSchema = z.object({
+export const medicationTimeSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Informe um horário válido");
+export const medicationPlanInputSchema = z
+  .object({
+    amount: z
+      .string()
+      .trim()
+      .min(1)
+      .max(30)
+      .refine((value) => {
+        if (/^\d+(?:[.,]\d+)?$/.test(value))
+          return Number(value.replace(",", ".")) > 0;
+        const fraction = /^(\d+)\/(\d+)$/.exec(value);
+        return !!fraction && Number(fraction[1]) > 0 && Number(fraction[2]) > 0;
+      }, "Informe a quantidade prescrita, como 1, 0,5 ou 1/2"),
+    unit: z.string().trim().min(1).max(30),
+    times: z
+      .array(medicationTimeSchema)
+      .min(1)
+      .max(12)
+      .refine(
+        (times) => new Set(times).size === times.length,
+        "Não repita horários",
+      ),
+    everyDays: z.number().int().min(1).max(365),
+    startsOn: isoDate,
+    endsOn: isoDate.nullable(),
+    timeZone: z
+      .string()
+      .min(1)
+      .max(80)
+      .refine((value) => {
+        try {
+          new Intl.DateTimeFormat("en", { timeZone: value }).format();
+          return true;
+        } catch {
+          return false;
+        }
+      }, "Fuso horário inválido"),
+    instructions: z.string().max(600),
+    source: z.string().trim().min(1).max(160),
+  })
+  .refine(
+    (plan) => !plan.endsOn || plan.endsOn >= plan.startsOn,
+    "O fim deve ser igual ou posterior ao início",
+  );
+export type MedicationPlanInput = z.infer<typeof medicationPlanInputSchema>;
+
+export const medicationScheduleSchema = medicationPlanInputSchema.safeExtend({
   id,
-  petId: id,
-  type: healthRecordTypeSchema,
-  title: z.string().min(1).max(80),
-  date: isoDate,
-  nextDueDate: isoDate.nullable(),
-  leadDays: z.number().int().min(0).max(365),
-  recurrenceMonths: z.number().int().min(0).max(60).nullable(),
-  professional: z.string().max(80).nullable(),
-  notes: z.string().max(600).nullable(),
-  attachmentName: z.string().max(120).nullable(),
-  attachmentData: z.string().nullable(),
-  weightKg: z.number().positive().max(120).nullable(),
-  completedAt: isoDateTime.nullable(),
+  effectiveFrom: isoDateTime.nullable(),
+  closedAt: isoDateTime.nullable(),
   createdAt: isoDateTime,
 });
+export const medicationDoseStatusSchema = z.enum([
+  "given",
+  "skipped",
+  "missed",
+  "unrecorded",
+]);
+export type MedicationDoseStatus = z.infer<typeof medicationDoseStatusSchema>;
+export const medicationDoseEventSchema = z.object({
+  id,
+  scheduleId: id,
+  date: isoDate,
+  time: medicationTimeSchema,
+  status: medicationDoseStatusSchema,
+  recordedAt: isoDateTime,
+  note: z.string().max(300).nullable(),
+  correctsId: id.nullable(),
+});
+export const medicationCourseSchema = z
+  .object({
+    activeScheduleId: id.nullable(),
+    schedules: z.array(medicationScheduleSchema).min(1).max(500),
+    events: z.array(medicationDoseEventSchema).max(50000),
+  })
+  .superRefine((course, ctx) => {
+    const ids = new Set(course.schedules.map((plan) => plan.id));
+    const schedules = new Map(course.schedules.map((plan) => [plan.id, plan]));
+    const issue = (message: string) =>
+      ctx.addIssue({ code: "custom", message });
+    if (
+      ids.size !== course.schedules.length ||
+      new Set(course.events.map((event) => event.id)).size !==
+        course.events.length
+    )
+      issue("Histórico de medicação com IDs duplicados");
+    if (course.activeScheduleId && !ids.has(course.activeScheduleId))
+      issue("Plano ativo não encontrado");
+    if (
+      course.schedules.some((plan) =>
+        plan.id === course.activeScheduleId
+          ? plan.closedAt !== null
+          : plan.closedAt === null,
+      )
+    )
+      issue("Estado de encerramento do plano inválido");
+    const latestEvents = new Map<
+      string,
+      z.infer<typeof medicationDoseEventSchema>
+    >();
+    for (const event of course.events) {
+      const plan = schedules.get(event.scheduleId);
+      if (!plan) issue("Dose associada a um plano ausente");
+      else if (
+        !plan.times.includes(event.time) ||
+        event.date < plan.startsOn ||
+        (plan.endsOn && event.date > plan.endsOn) ||
+        ((Date.parse(`${event.date}T12:00:00Z`) -
+          Date.parse(`${plan.startsOn}T12:00:00Z`)) /
+          86400000) %
+          plan.everyDays !==
+          0
+      )
+        issue("Dose fora do calendário informado");
+      const key = `${event.scheduleId}:${event.date}T${event.time}`;
+      const previous = latestEvents.get(key);
+      if (
+        (previous?.id ?? null) !== event.correctsId ||
+        (!previous && event.status === "unrecorded")
+      )
+        issue("Correção de dose inválida ou duplicada");
+      latestEvents.set(key, event);
+    }
+  });
+export type MedicationSchedule = z.infer<typeof medicationScheduleSchema>;
+export type MedicationDoseEvent = z.infer<typeof medicationDoseEventSchema>;
+export type MedicationCourse = z.infer<typeof medicationCourseSchema>;
+
+export const healthRecordSchema = z
+  .object({
+    id,
+    petId: id,
+    type: healthRecordTypeSchema,
+    title: z.string().min(1).max(80),
+    date: isoDate,
+    nextDueDate: isoDate.nullable(),
+    leadDays: z.number().int().min(0).max(365),
+    recurrenceMonths: z.number().int().min(0).max(60).nullable(),
+    professional: z.string().max(80).nullable(),
+    notes: z.string().max(600).nullable(),
+    attachmentName: z.string().max(120).nullable(),
+    attachmentData: z.string().nullable(),
+    weightKg: z.number().positive().max(120).nullable(),
+    weightUpdatedAt: isoDateTime.optional(),
+    medication: medicationCourseSchema.nullable().optional(),
+    completedAt: isoDateTime.nullable(),
+    createdAt: isoDateTime,
+  })
+  .refine(
+    (record) =>
+      !record.medication ||
+      (record.type === "medicamento" &&
+        record.nextDueDate === null &&
+        record.recurrenceMonths === null &&
+        record.completedAt === null),
+    "O plano de medicação usa seus próprios horários e histórico de doses",
+  );
 export type HealthRecord = z.infer<typeof healthRecordSchema>;
 
 export const reminderSchema = z.object({
@@ -106,6 +259,7 @@ export const reminderSchema = z.object({
   leadDays: z.number().int().min(0).max(365),
   notes: z.string().max(400).nullable(),
   done: z.boolean(),
+  completedAt: isoDateTime.nullable().optional(),
   createdAt: isoDateTime,
 });
 export type Reminder = z.infer<typeof reminderSchema>;
@@ -119,6 +273,7 @@ export const diaryEntrySchema = z.object({
   tags: z.array(z.string().max(30)).max(8),
   place: z.string().max(80).nullable(),
   weightKg: z.number().positive().max(120).nullable(),
+  weightUpdatedAt: isoDateTime.optional(),
   visibility: z.enum(["privado", "publico"]),
   createdAt: isoDateTime,
 });
@@ -304,6 +459,7 @@ export type Tutor = z.infer<typeof tutorSchema>;
 
 export const publicPetCardSchema = z.object({
   v: z.literal(1),
+  generatedAt: z.iso.datetime().optional(),
   name: z.string().min(1).max(60),
   species: speciesSchema,
   breed: z.string().max(60).nullable(),

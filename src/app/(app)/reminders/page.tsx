@@ -2,16 +2,26 @@
 
 import { BellRing, Check, ClipboardList, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import { toast } from "sonner";
 
 import { CareTabs } from "@/components/care-tabs";
 import { PetContextSwitcher, type PetScope } from "@/components/pet-header";
 import { ReminderCard } from "@/components/reminder-card";
-import { ButtonLink } from "@/components/ui/button";
+import { ReminderForm } from "@/components/reminder-form";
+import { Button, ButtonLink } from "@/components/ui/button";
+import { BottomSheet } from "@/components/ui/sheet";
 import { Card } from "@/components/ui/card";
 import { FilterChip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
-import { reminderSummary } from "@/lib/domain/reminders";
+import {
+  activeReminders,
+  isSnoozed,
+  reminderSummary,
+} from "@/lib/domain/reminders";
+import { formatDateTimeShort } from "@/lib/domain/dates";
+import { latestMedicationDoseEvents } from "@/lib/domain/medication";
 import { useAppStore } from "@/lib/store/app-store";
 import { useActivePet, useHydrated, useReminderItems } from "@/lib/store/hooks";
 
@@ -48,36 +58,78 @@ export default function RemindersPage() {
   const activePet = useActivePet();
   const pets = useAppStore((state) => state.pets);
   const reminders = useAppStore((state) => state.reminders);
+  const records = useAppStore((state) => state.records);
   const [scope, setScope] = useState<PetScope>("todos");
   const [filter, setFilter] = useState<Filter>("todos");
+  const [creating, setCreating] = useState(false);
 
-  const doneReminders = useMemo(
+  const completed = useMemo(
     () =>
-      reminders.filter(
-        (reminder) =>
-          reminder.done && (scope === "todos" || reminder.petId === scope),
-      ),
-    [reminders, scope],
+      [
+        ...reminders
+          .filter((reminder) => reminder.done)
+          .map((reminder) => ({
+            key: `manual:${reminder.id}`,
+            title: reminder.title,
+            petId: reminder.petId,
+            date: reminder.completedAt ?? null,
+            href: null as string | null,
+            reminderId: reminder.id as string | null,
+          })),
+        ...records
+          .filter((record) => record.completedAt)
+          .map((record) => ({
+            key: `registro:${record.id}`,
+            title: record.title,
+            petId: record.petId,
+            date: record.completedAt,
+            href: `/pets/${record.petId}/health/${record.id}`,
+            reminderId: null as string | null,
+          })),
+        ...records.flatMap((record) =>
+          record.medication
+            ? latestMedicationDoseEvents(record.medication)
+                .filter((event) => event.status === "given")
+                .map((event) => ({
+                  key: `dose:${event.id}`,
+                  title: `${record.title} · dose de ${event.date.split("-").reverse().join("/")} às ${event.time}`,
+                  petId: record.petId,
+                  date: event.recordedAt,
+                  href: `/pets/${record.petId}/health/${record.id}`,
+                  reminderId: null as string | null,
+                }))
+            : [],
+        ),
+      ]
+        .filter((entry) => scope === "todos" || entry.petId === scope)
+        .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? "")),
+    [records, reminders, scope],
   );
   const scopedItems = useMemo(
     () =>
       scope === "todos" ? items : items.filter((item) => item.petId === scope),
     [items, scope],
   );
-  const summary = useMemo(() => reminderSummary(scopedItems), [scopedItems]);
+  const activeItems = useMemo(
+    () => activeReminders(scopedItems),
+    [scopedItems],
+  );
+  const summary = useMemo(() => reminderSummary(activeItems), [activeItems]);
   const filtered = useMemo(() => {
     if (filter === "concluidos") return [];
     if (filter === "vencidos")
-      return scopedItems.filter((item) => item.urgency === "vencido");
+      return activeItems.filter((item) => item.urgency === "vencido");
     if (filter === "hoje")
-      return scopedItems.filter((item) => item.urgency === "hoje");
+      return activeItems.filter((item) => item.urgency === "hoje");
     if (filter === "proximos")
-      return scopedItems.filter((item) => item.days >= 0 && item.days <= 7);
+      return activeItems.filter((item) => item.days >= 0 && item.days <= 7);
     return scopedItems;
-  }, [filter, scopedItems]);
-  const overdue = filtered.filter((item) => item.urgency === "vencido");
-  const today = filtered.filter((item) => item.urgency === "hoje");
-  const upcoming = filtered.filter(
+  }, [filter, scopedItems, activeItems]);
+  const awake = activeReminders(filtered);
+  const snoozed = filtered.filter((item) => isSnoozed(item));
+  const overdue = awake.filter((item) => item.urgency === "vencido");
+  const today = awake.filter((item) => item.urgency === "hoje");
+  const upcoming = awake.filter(
     (item) => item.urgency === "proximo" || item.urgency === "futuro",
   );
 
@@ -109,13 +161,21 @@ export default function RemindersPage() {
             ao pet certo.
           </p>
         </div>
-        <ButtonLink
-          href={scope === "todos" ? "/record/new" : `/pets/${scope}/health/new`}
-          size="sm"
-        >
-          <Plus aria-hidden="true" className="size-4" />
-          Registrar cuidado
-        </ButtonLink>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={() => setCreating(true)}>
+            <Plus aria-hidden="true" className="size-4" />
+            Criar lembrete
+          </Button>
+          <ButtonLink
+            href={
+              scope === "todos" ? "/record/new" : `/pets/${scope}/health/new`
+            }
+            size="sm"
+          >
+            <Plus aria-hidden="true" className="size-4" />
+            Registrar cuidado
+          </ButtonLink>
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-3">
@@ -178,12 +238,12 @@ export default function RemindersPage() {
 
       <p className="sr-only" aria-live="polite">
         {filter === "concluidos"
-          ? `${doneReminders.length} cuidados concluídos`
+          ? `${completed.length} cuidados concluídos`
           : `${filtered.length} cuidados neste filtro`}
       </p>
 
       {filter === "concluidos" ? (
-        doneReminders.length === 0 ? (
+        completed.length === 0 ? (
           <EmptyState
             icon={<Check aria-hidden="true" className="size-5" />}
             title="Nada concluído ainda"
@@ -191,19 +251,57 @@ export default function RemindersPage() {
           />
         ) : (
           <ul className="flex flex-col gap-2">
-            {doneReminders.map((reminder) => (
-              <li key={reminder.id}>
+            {completed.map((entry) => (
+              <li key={entry.key}>
                 <Card className="flex items-center gap-3 border-success-ink/25 bg-success-soft">
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-canvas text-success-ink">
                     <Check aria-hidden="true" className="size-4" />
                   </span>
-                  <span className="min-w-0 flex-1 text-[0.95rem] font-semibold text-ink">
-                    {reminder.title}
-                  </span>
+                  <div className="min-w-0 flex-1 text-[0.95rem] font-semibold text-ink">
+                    {entry.href ? (
+                      <Link
+                        href={entry.href}
+                        className="underline underline-offset-4"
+                      >
+                        {entry.title}
+                      </Link>
+                    ) : (
+                      entry.title
+                    )}
+                    {entry.date ? (
+                      <p className="mt-1 text-meta font-normal text-muted">
+                        Concluído em {formatDateTimeShort(entry.date)}
+                      </p>
+                    ) : null}
+                    {entry.reminderId ? (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="mt-2"
+                        onClick={async () => {
+                          try {
+                            await useAppStore
+                              .getState()
+                              .updateReminder(entry.reminderId!, {
+                                done: false,
+                                completedAt: null,
+                              });
+                            toast.success("Lembrete reaberto na data original");
+                          } catch (cause) {
+                            toast.error(
+                              cause instanceof Error
+                                ? cause.message
+                                : "Não foi possível reabrir.",
+                            );
+                          }
+                        }}
+                      >
+                        Reabrir lembrete
+                      </Button>
+                    ) : null}
+                  </div>
                   <span className="text-meta text-muted">
-                    {reminder.petId === activePet?.id
-                      ? activePet.name
-                      : pets.find((pet) => pet.id === reminder.petId)?.name}
+                    {pets.find((pet) => pet.id === entry.petId)?.name}
                   </span>
                 </Card>
               </li>
@@ -259,14 +357,41 @@ export default function RemindersPage() {
               tone="info"
             />
           ) : null}
+          {snoozed.length > 0 ? (
+            <AgendaGroup
+              title="Adiados"
+              items={snoozed}
+              showPet={scope === "todos"}
+              tone="muted"
+            />
+          ) : null}
         </div>
       )}
 
       <Card className="border-line bg-surface/65 text-[0.82rem] leading-relaxed text-muted">
-        Avisos aparecem dentro do PetHub a partir das datas que você registra. A
-        entrega de notificações do sistema depende do suporte da instalação e da
-        permissão do aparelho.
+        Avisos aparecem dentro da Zelupi a partir das datas que você registra. O
+        app ainda não envia notificações com a tela fechada.
       </Card>
+      <BottomSheet
+        open={creating}
+        onClose={() => setCreating(false)}
+        title="Novo lembrete"
+        description="Organize a rotina do seu pet."
+      >
+        {creating ? (
+          <ReminderForm
+            pets={pets}
+            petId={scope === "todos" ? activePet?.id : scope}
+            onCancel={() => setCreating(false)}
+            onSubmit={async (values) => {
+              await useAppStore.getState().addReminder(values);
+              setCreating(false);
+              setFilter("todos");
+              toast.success("Lembrete criado");
+            }}
+          />
+        ) : null}
+      </BottomSheet>
     </div>
   );
 }
@@ -280,12 +405,13 @@ function AgendaGroup({
   title: string;
   items: ReturnType<typeof useReminderItems>;
   showPet: boolean;
-  tone: "danger" | "warning" | "info";
+  tone: "danger" | "warning" | "info" | "muted";
 }) {
   const toneClasses = {
     danger: "text-danger-ink",
     warning: "text-warning-ink",
     info: "text-info-ink",
+    muted: "text-muted",
   } as const;
   return (
     <section aria-labelledby={`agenda-${tone}-title`}>

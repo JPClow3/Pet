@@ -1,13 +1,51 @@
 "use client";
 
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { persist } from "zustand/middleware";
+import {
+  createBackup,
+  MAX_BACKUP_BYTES,
+  parseBackup,
+  persistedStateSchema,
+  type PersistedState,
+} from "@/lib/domain/backup";
+import { validatedStorage, writePersistedState } from "./storage";
+import { clearFormDrafts } from "@/lib/use-form-draft";
+import {
+  documentMetadataSchema,
+  petDocumentSchema,
+  type PetDocument,
+  type NewDocumentInput,
+  type DocumentPatch,
+} from "@/lib/domain/document";
+import { validateDocumentFile } from "@/lib/document-file";
+import { blobBytes, bytesDataUrl, mediaDataUrl, prepareMedia } from "./media";
 
 import type {
   AnalyticsEventName,
   AnalyticsProps,
 } from "@/lib/domain/analytics";
-import { addMonthsToKey, nowIso, todayKey } from "@/lib/domain/dates";
+import {
+  addMonthsToKey,
+  isValidDateKey,
+  nowIso,
+  todayKey,
+} from "@/lib/domain/dates";
+import {
+  sameCareValue,
+  validateCareRecord,
+  validateRoutineReminder,
+  type CareUndo,
+} from "@/lib/domain/care";
+import { reconcileWeights, weightTimestamp } from "@/lib/domain/weight";
+import {
+  endMedicationCourse,
+  recordMedicationDose,
+  reviseMedicationCourse,
+  type RecordMedicationDoseInput,
+} from "@/lib/domain/medication";
+import type { MedicationPlanInput } from "@/lib/domain/schema";
+import { diaryEntrySchema, petSchema } from "@/lib/domain/schema";
 import {
   deriveNotifications,
   mergeNotifications,
@@ -43,12 +81,6 @@ import { newId } from "@/lib/id";
 
 const MY_AUTHOR_ID = "me";
 
-const noopStorage = {
-  getItem: () => null,
-  setItem: () => undefined,
-  removeItem: () => undefined,
-};
-
 export type AppState = {
   tutor: Tutor | null;
   pets: Pet[];
@@ -57,6 +89,7 @@ export type AppState = {
   reminders: Reminder[];
   snoozes: Record<string, string>;
   diary: DiaryEntry[];
+  documents: PetDocument[];
   places: Place[];
   reviews: Review[];
   posts: Post[];
@@ -73,13 +106,14 @@ export type AppState = {
   ready: boolean;
 };
 
-export type AppActions = {
+export type SyncActions = {
   completeOnboarding: (input: {
     tutorName: string;
     email: string | null;
     city: string;
     focusAreas: Tutor["focusAreas"];
     pet: NewPetInput;
+    initialRecord?: Omit<NewRecordInput, "petId">;
   }) => void;
   updateTutor: (patch: Partial<Tutor>) => void;
   updateSettings: (patch: Partial<Settings>) => void;
@@ -93,16 +127,33 @@ export type AppActions = {
   addRecord: (input: NewRecordInput) => string;
   updateRecord: (recordId: string, patch: Partial<HealthRecord>) => void;
   removeRecord: (recordId: string) => void;
+  reviseMedicationPlan: (
+    recordId: string,
+    expectedScheduleId: string | null,
+    plan: MedicationPlanInput,
+  ) => void;
+  endMedicationPlan: (recordId: string, expectedScheduleId: string) => void;
+  recordMedicationDose: (
+    recordId: string,
+    input: RecordMedicationDoseInput,
+  ) => void;
 
   addReminder: (input: NewReminderInput) => string;
   updateReminder: (reminderId: string, patch: Partial<Reminder>) => void;
   removeReminder: (reminderId: string) => void;
-  completeReminderItem: (item: ReminderItem) => void;
-  snoozeReminderItem: (item: ReminderItem, days: number) => void;
+  completeReminderItem: (item: ReminderItem) => CareUndo | null;
+  snoozeReminderItem: (item: ReminderItem, days: number) => CareUndo;
+  rescheduleReminderItem: (item: ReminderItem, date: string) => CareUndo;
+  skipReminderOccurrence: (item: ReminderItem) => CareUndo;
+  stopReminderRecurrence: (item: ReminderItem) => CareUndo;
+  undoCareAction: (undo: CareUndo) => void;
 
   addDiaryEntry: (input: NewDiaryInput) => string;
   updateDiaryEntry: (entryId: string, patch: Partial<DiaryEntry>) => void;
   removeDiaryEntry: (entryId: string) => void;
+  updateDocument: (id: string, patch: Partial<DocumentPatch>) => void;
+  trashDocument: (id: string) => void;
+  restoreDocument: (id: string) => void;
 
   addPlace: (input: NewPlaceInput) => string;
   addReview: (input: NewReviewInput) => void;
@@ -130,6 +181,23 @@ export type AppActions = {
 
   track: (name: AnalyticsEventName, props?: AnalyticsProps) => void;
 };
+
+export type AppActions = {
+  [K in keyof SyncActions]: K extends "markReady"
+    ? SyncActions[K]
+    : (
+        ...args: Parameters<SyncActions[K]>
+      ) => Promise<ReturnType<SyncActions[K]>>;
+} & {
+  createDocument: (input: NewDocumentInput, file: Blob) => Promise<string>;
+};
+
+let commandQueue: Promise<unknown> = Promise.resolve();
+function enqueue<T>(command: () => Promise<T>): Promise<T> {
+  const pending = commandQueue.then(command);
+  commandQueue = pending.catch(() => undefined);
+  return pending;
+}
 
 export type NewPetInput = {
   name: string;
@@ -199,6 +267,7 @@ const initialState: AppState = {
   reminders: [],
   snoozes: {},
   diary: [],
+  documents: [],
   places: [],
   reviews: [],
   posts: [],
@@ -217,7 +286,7 @@ const initialState: AppState = {
 
 function buildPet(input: NewPetInput): Pet {
   const timestamp = nowIso();
-  return {
+  return petSchema.parse({
     id: newId("pet"),
     name: input.name.trim(),
     species: input.species,
@@ -225,6 +294,10 @@ function buildPet(input: NewPetInput): Pet {
     sex: input.sex,
     birthDate: input.birthDate ?? null,
     weightKg: input.weightKg ?? null,
+    weightBaseline:
+      input.weightKg != null
+        ? { weightKg: input.weightKg, date: todayKey(), updatedAt: timestamp }
+        : null,
     photo: input.photo ?? null,
     color: input.color ?? null,
     microchip: input.microchip ?? null,
@@ -239,7 +312,7 @@ function buildPet(input: NewPetInput): Pet {
     lostMode: { active: false, since: null, note: null },
     createdAt: timestamp,
     updatedAt: timestamp,
-  };
+  });
 }
 
 function recordEvent(
@@ -253,52 +326,148 @@ function recordEvent(
   );
 }
 
-export const useAppStore = create<AppState & AppActions>()(
+function currentCareSource(state: AppState, item: ReminderItem) {
+  if (item.source === "medicamento")
+    throw new Error("Registre esta dose no plano de medicação.");
+  if (!state.pets.some((pet) => pet.id === item.petId)) {
+    throw new Error("Este pet não está mais disponível.");
+  }
+  if (item.source === "registro") {
+    const record = state.records.find(
+      (entry) => entry.id === item.id && entry.petId === item.petId,
+    );
+    if (
+      !record ||
+      record.medication ||
+      !record.nextDueDate ||
+      record.nextDueDate !== item.dueDate
+    ) {
+      throw new Error(
+        "Este cuidado mudou. Atualize a agenda antes de continuar.",
+      );
+    }
+    return { source: "registro" as const, value: record };
+  }
+  const reminder = state.reminders.find(
+    (entry) => entry.id === item.id && entry.petId === item.petId,
+  );
+  if (!reminder || reminder.done || reminder.dueDate !== item.dueDate) {
+    throw new Error(
+      "Este lembrete mudou. Atualize a agenda antes de continuar.",
+    );
+  }
+  return { source: "manual" as const, value: reminder };
+}
+
+function careUndo(state: AppState, item: ReminderItem): CareUndo {
+  return {
+    petId: item.petId,
+    key: `${item.source}:${item.id}`,
+    records: [],
+    reminders: [],
+    snoozeBefore: state.snoozes[`${item.source}:${item.id}`],
+    snoozeAfter: undefined,
+  };
+}
+
+function carePatch(
+  state: AppState,
+  patch: Partial<AppState>,
+): Partial<AppState> {
+  const updated = { ...state, ...patch };
+  const incoming = deriveNotifications({
+    pets: updated.pets,
+    records: updated.records,
+    reminders: updated.reminders,
+    snoozes: updated.snoozes,
+    places: updated.places,
+    products: updated.products,
+    enabled: updated.settings.notifications,
+  });
+  const activeIds = new Set(incoming.map((notification) => notification.id));
+  const retained = state.notifications.filter(
+    (notification) =>
+      !(
+        notification.id.startsWith("notif-prevencao-") ||
+        notification.id.startsWith("notif-rotina-")
+      ) || activeIds.has(notification.id),
+  );
+  return {
+    ...patch,
+    notifications: mergeNotifications(retained, incoming),
+    lastSweepAt: nowIso(),
+  };
+}
+
+const boundStore = create<AppState & AppActions>()(
   persist(
-    (commit, get) => {
-      // Persist before notifying subscribers: a quota failure must never look saved.
+    (commit, baseGet) => {
+      let staged: (AppState & AppActions) | null = null;
+      const get = () => staged ?? baseGet();
+      // Reducers stage changes; the queued command commits only after IndexedDB completes.
       const set = (
         update:
           | Partial<AppState>
           | ((state: AppState & AppActions) => Partial<AppState>),
       ) => {
         const patch = typeof update === "function" ? update(get()) : update;
-        if (typeof window !== "undefined") {
-          try {
-            window.localStorage.setItem(
-              "pethub-store",
-              JSON.stringify({ state: { ...get(), ...patch }, version: 1 }),
-            );
-          } catch {
-            window.dispatchEvent(new Event("pethub-storage-error"));
-            throw new Error(
-              "Não foi possível salvar neste aparelho. Libere espaço e tente novamente; seu formulário continua aqui.",
-            );
-          }
-        }
-        commit(patch);
+        if (!staged) throw new Error("Alteração fora de uma transação.");
+        staged = { ...staged, ...patch };
       };
-      return {
-        ...initialState,
-
-        completeOnboarding: ({ tutorName, email, city, focusAreas, pet }) => {
+      const syncActions: SyncActions = {
+        completeOnboarding: ({
+          tutorName,
+          email,
+          city,
+          focusAreas,
+          pet,
+          initialRecord,
+        }) => {
+          if (get().tutor)
+            throw new Error(
+              "Este perfil já foi criado. Abra o início para continuar.",
+            );
           const created = buildPet(pet);
-          set((state) => ({
-            tutor: {
-              name: tutorName.trim(),
-              email: email?.trim() || null,
-              city: city.trim() || PILOT_CITY,
-              focusAreas,
-              marketingOptIn: false,
-              createdAt: nowIso(),
-            },
-            settings: { ...state.settings, city: city.trim() || PILOT_CITY },
-            pets: [created],
-            activePetId: created.id,
-            events: recordEvent(state.events, "onboarding_completed"),
-          }));
-          get().track("pet_created", { species: created.species });
-          get().sweepNotifications();
+          const record = initialRecord
+            ? validateCareRecord({
+                ...initialRecord,
+                id: newId("record"),
+                petId: created.id,
+                completedAt: initialRecord.completedAt ?? null,
+                createdAt: nowIso(),
+              })
+            : null;
+          set((state) =>
+            carePatch(
+              state,
+              reconcileWeights(
+                state,
+                {
+                  tutor: {
+                    name: tutorName.trim(),
+                    email: email?.trim() || null,
+                    city: city.trim() || PILOT_CITY,
+                    focusAreas,
+                    marketingOptIn: false,
+                    createdAt: nowIso(),
+                  },
+                  settings: {
+                    ...state.settings,
+                    city: city.trim() || PILOT_CITY,
+                  },
+                  pets: [created],
+                  activePetId: created.id,
+                  records: record ? [record, ...state.records] : state.records,
+                  events: recordEvent(
+                    recordEvent(state.events, "onboarding_completed"),
+                    "pet_created",
+                    { species: created.species },
+                  ),
+                },
+                [created.id],
+              ),
+            ),
+          );
         },
 
         updateTutor: (patch) =>
@@ -321,26 +490,53 @@ export const useAppStore = create<AppState & AppActions>()(
             },
           })),
 
-        resetAll: () => set({ ...initialState, ready: true }),
+        resetAll: () => {
+          set({ ...initialState, ready: true });
+        },
 
         addPet: (input) => {
           const created = buildPet(input);
           set((state) => ({
             pets: [...state.pets, created],
-            activePetId: state.activePetId ?? created.id,
+            activePetId: created.id,
+            events: recordEvent(state.events, "pet_created", {
+              species: created.species,
+            }),
           }));
-          get().track("pet_created", { species: created.species });
           return created.id;
         },
 
-        updatePet: (petId, patch) =>
-          set((state) => ({
-            pets: state.pets.map((pet) =>
-              pet.id === petId
-                ? { ...pet, ...patch, updatedAt: nowIso() }
-                : pet,
+        updatePet: (petId, patch) => {
+          const state = get();
+          const pet = state.pets.find((entry) => entry.id === petId);
+          if (!pet) throw new Error("Pet não encontrado.");
+          const updated = petSchema.parse({
+            ...pet,
+            ...patch,
+            id: pet.id,
+            createdAt: pet.createdAt,
+            updatedAt: nowIso(),
+            weightBaseline:
+              patch.weightKg !== undefined && patch.weightKg !== pet.weightKg
+                ? {
+                    weightKg: patch.weightKg,
+                    date: todayKey(),
+                    updatedAt: weightTimestamp(state, petId),
+                  }
+                : pet.weightBaseline,
+          });
+          set(
+            reconcileWeights(
+              state,
+              {
+                pets: state.pets.map((entry) =>
+                  entry.id === petId ? updated : entry,
+                ),
+              },
+              [petId],
             ),
-          })),
+          );
+        },
 
         removePet: (petId) =>
           set((state) => {
@@ -353,13 +549,16 @@ export const useAppStore = create<AppState & AppActions>()(
                 .map((reminder) => reminder.id),
             ]);
             const pets = state.pets.filter((pet) => pet.id !== petId);
-            return {
+            return carePatch(state, {
               pets,
               records: state.records.filter((record) => record.petId !== petId),
               reminders: state.reminders.filter(
                 (reminder) => reminder.petId !== petId,
               ),
               diary: state.diary.filter((entry) => entry.petId !== petId),
+              documents: state.documents.filter(
+                (entry) => entry.petId !== petId,
+              ),
               snoozes: Object.fromEntries(
                 Object.entries(state.snoozes).filter(([key]) => {
                   const [, sourceId] = key.split(":");
@@ -370,169 +569,585 @@ export const useAppStore = create<AppState & AppActions>()(
                 state.activePetId === petId
                   ? (pets[0]?.id ?? null)
                   : state.activePetId,
-            };
+            });
           }),
 
         setActivePet: (petId) => set({ activePetId: petId }),
 
         addRecord: (input) => {
-          const record: HealthRecord = {
+          if (!get().pets.some((pet) => pet.id === input.petId))
+            throw new Error("Pet não encontrado.");
+          const record = validateCareRecord({
             ...input,
             id: newId("record"),
             completedAt: input.completedAt ?? null,
             createdAt: nowIso(),
-          };
-          set((state) => ({
-            records: [record, ...state.records],
-            pets: state.pets.map((pet) =>
-              pet.id === record.petId && record.weightKg
-                ? { ...pet, weightKg: record.weightKg, updatedAt: nowIso() }
-                : pet,
+            weightUpdatedAt:
+              input.weightKg !== null
+                ? weightTimestamp(get(), input.petId)
+                : undefined,
+          });
+          set((state) =>
+            carePatch(
+              state,
+              reconcileWeights(
+                state,
+                {
+                  records: [record, ...state.records],
+                  events: recordEvent(state.events, "health_record_created", {
+                    type: record.type,
+                  }),
+                },
+                [record.petId],
+              ),
             ),
-          }));
-          get().track("health_record_created", { type: record.type });
-          get().sweepNotifications();
+          );
           return record.id;
         },
 
-        updateRecord: (recordId, patch) =>
-          set((state) => ({
-            records: state.records.map((record) =>
-              record.id === recordId ? { ...record, ...patch } : record,
-            ),
-          })),
-
-        removeRecord: (recordId) =>
-          set((state) => ({
-            records: state.records.filter((record) => record.id !== recordId),
-            snoozes: Object.fromEntries(
-              Object.entries(state.snoozes).filter(
-                ([key]) => !key.endsWith(recordId),
+        updateRecord: (recordId, patch) => {
+          const existing = get().records.find(
+            (record) => record.id === recordId,
+          );
+          if (!existing) throw new Error("Registro não encontrado.");
+          if (existing.medication && patch.type && patch.type !== "medicamento")
+            throw new Error(
+              "Este registro tem um histórico de doses. Preserve o tipo medicamento.",
+            );
+          const updated = validateCareRecord({
+            ...existing,
+            ...patch,
+            // General record edits cannot overwrite dose events from another screen.
+            medication: existing.medication ?? patch.medication ?? null,
+            id: existing.id,
+            petId: existing.petId,
+            createdAt: existing.createdAt,
+            weightUpdatedAt:
+              (patch.weightKg !== undefined &&
+                patch.weightKg !== existing.weightKg) ||
+              (patch.date !== undefined && patch.date !== existing.date)
+                ? weightTimestamp(get(), existing.petId)
+                : existing.weightUpdatedAt,
+          });
+          set((state) =>
+            carePatch(
+              state,
+              reconcileWeights(
+                state,
+                {
+                  records: state.records.map((record) =>
+                    record.id === recordId ? updated : record,
+                  ),
+                  snoozes:
+                    existing.nextDueDate === updated.nextDueDate
+                      ? state.snoozes
+                      : Object.fromEntries(
+                          Object.entries(state.snoozes).filter(
+                            ([key]) => key !== `registro:${recordId}`,
+                          ),
+                        ),
+                },
+                [existing.petId],
               ),
             ),
-          })),
+          );
+        },
+
+        reviseMedicationPlan: (recordId, expectedScheduleId, plan) => {
+          const record = get().records.find((entry) => entry.id === recordId);
+          if (!record?.medication)
+            throw new Error("Plano de medicação não encontrado.");
+          if (record.medication.activeScheduleId !== expectedScheduleId)
+            throw new Error(
+              "O plano mudou. Abra a edição novamente antes de salvar.",
+            );
+          const medication = reviseMedicationCourse(
+            record.medication,
+            plan,
+            newId("med-plan"),
+          );
+          set((state) =>
+            carePatch(state, {
+              records: state.records.map((entry) =>
+                entry.id === recordId ? { ...entry, medication } : entry,
+              ),
+            }),
+          );
+        },
+
+        endMedicationPlan: (recordId, expectedScheduleId) => {
+          const record = get().records.find((entry) => entry.id === recordId);
+          if (!record?.medication)
+            throw new Error("Plano de medicação não encontrado.");
+          const medication = endMedicationCourse(
+            record.medication,
+            expectedScheduleId,
+          );
+          set((state) =>
+            carePatch(state, {
+              records: state.records.map((entry) =>
+                entry.id === recordId ? { ...entry, medication } : entry,
+              ),
+            }),
+          );
+        },
+
+        recordMedicationDose: (recordId, input) => {
+          const record = get().records.find((entry) => entry.id === recordId);
+          if (!record?.medication)
+            throw new Error("Plano de medicação não encontrado.");
+          const medication = recordMedicationDose(
+            record.medication,
+            input,
+            newId("dose"),
+          );
+          set((state) =>
+            carePatch(state, {
+              records: state.records.map((entry) =>
+                entry.id === recordId ? { ...entry, medication } : entry,
+              ),
+            }),
+          );
+        },
+
+        removeRecord: (recordId) =>
+          set((state) =>
+            carePatch(
+              state,
+              reconcileWeights(
+                state,
+                {
+                  records: state.records.filter(
+                    (record) => record.id !== recordId,
+                  ),
+                  snoozes: Object.fromEntries(
+                    Object.entries(state.snoozes).filter(
+                      ([key]) => key !== `registro:${recordId}`,
+                    ),
+                  ),
+                },
+                state.records
+                  .filter((record) => record.id === recordId)
+                  .map((record) => record.petId),
+              ),
+            ),
+          ),
 
         addReminder: (input) => {
-          const reminder: Reminder = {
+          if (!get().pets.some((pet) => pet.id === input.petId))
+            throw new Error("Pet não encontrado.");
+          const reminder = validateRoutineReminder({
             ...input,
             id: newId("reminder"),
             done: input.done ?? false,
             createdAt: nowIso(),
-          };
-          set((state) => ({ reminders: [reminder, ...state.reminders] }));
-          get().track("reminder_created", { kind: reminder.kind });
-          get().sweepNotifications();
+          });
+          set((state) =>
+            carePatch(state, {
+              reminders: [reminder, ...state.reminders],
+              events: recordEvent(state.events, "reminder_created", {
+                kind: reminder.kind,
+              }),
+            }),
+          );
           return reminder.id;
         },
 
-        updateReminder: (reminderId, patch) =>
-          set((state) => ({
-            reminders: state.reminders.map((reminder) =>
-              reminder.id === reminderId ? { ...reminder, ...patch } : reminder,
-            ),
-          })),
+        updateReminder: (reminderId, patch) => {
+          const existing = get().reminders.find(
+            (reminder) => reminder.id === reminderId,
+          );
+          if (!existing) throw new Error("Lembrete não encontrado.");
+          const updated = validateRoutineReminder({
+            ...existing,
+            ...patch,
+            id: existing.id,
+            petId: existing.petId,
+            createdAt: existing.createdAt,
+          });
+          set((state) =>
+            carePatch(state, {
+              reminders: state.reminders.map((reminder) =>
+                reminder.id === reminderId ? updated : reminder,
+              ),
+              snoozes:
+                existing.dueDate === updated.dueDate
+                  ? state.snoozes
+                  : Object.fromEntries(
+                      Object.entries(state.snoozes).filter(
+                        ([key]) => key !== `manual:${reminderId}`,
+                      ),
+                    ),
+            }),
+          );
+        },
 
         removeReminder: (reminderId) =>
-          set((state) => ({
-            reminders: state.reminders.filter(
-              (reminder) => reminder.id !== reminderId,
-            ),
-            snoozes: Object.fromEntries(
-              Object.entries(state.snoozes).filter(
-                ([key]) => !key.endsWith(reminderId),
+          set((state) =>
+            carePatch(state, {
+              reminders: state.reminders.filter(
+                (reminder) => reminder.id !== reminderId,
               ),
-            ),
-          })),
+              snoozes: Object.fromEntries(
+                Object.entries(state.snoozes).filter(
+                  ([key]) => key !== `manual:${reminderId}`,
+                ),
+              ),
+            }),
+          ),
 
         completeReminderItem: (item) => {
+          const state = get();
+          // A completed occurrence can be clicked again from another still-open view.
+          if (
+            item.source === "registro" &&
+            state.records.some(
+              (record) =>
+                record.id === item.id &&
+                record.petId === item.petId &&
+                !record.nextDueDate &&
+                record.completedAt,
+            )
+          )
+            return null;
+          if (
+            item.source === "manual" &&
+            state.reminders.some(
+              (reminder) =>
+                reminder.id === item.id &&
+                reminder.petId === item.petId &&
+                reminder.done,
+            )
+          )
+            return null;
+          const current = currentCareSource(state, item);
+          const undo = careUndo(state, item);
           const today = todayKey();
-          if (item.source === "manual") {
-            set((state) => ({
-              reminders: state.reminders.map((reminder) =>
-                reminder.id === item.id
-                  ? { ...reminder, done: true }
-                  : reminder,
-              ),
-            }));
+          const timestamp = nowIso();
+          const snoozes = { ...state.snoozes };
+          delete snoozes[undo.key];
+          if (current.source === "manual") {
+            const after = {
+              ...current.value,
+              done: true,
+              completedAt: timestamp,
+            };
+            undo.reminders.push({ before: current.value, after });
+            set(
+              carePatch(state, {
+                reminders: state.reminders.map((reminder) =>
+                  reminder.id === item.id ? after : reminder,
+                ),
+                snoozes,
+                events: recordEvent(state.events, "reminder_completed", {
+                  source: item.source,
+                }),
+              }),
+            );
           } else {
-            const record = get().records.find((entry) => entry.id === item.id);
-            if (!record) return;
+            const record = current.value;
             const months = record.recurrenceMonths;
             const nextRecord: HealthRecord = {
               ...record,
               id: newId("record"),
-              title: record.title,
               date: today,
               nextDueDate: months ? addMonthsToKey(today, months) : null,
-              leadDays: record.leadDays,
               completedAt: null,
               attachmentData: null,
               attachmentName: null,
-              createdAt: nowIso(),
+              weightKg: null,
+              createdAt: timestamp,
             };
-            set((state) => ({
-              records: [
-                nextRecord,
-                ...state.records.map((entry) =>
-                  entry.id === record.id
-                    ? { ...entry, nextDueDate: null, completedAt: nowIso() }
-                    : entry,
-                ),
-              ],
-              snoozes: Object.fromEntries(
-                Object.entries(state.snoozes).filter(
-                  ([key]) => !key.endsWith(record.id),
-                ),
-              ),
-            }));
+            const after = {
+              ...record,
+              nextDueDate: null,
+              completedAt: timestamp,
+            };
+            undo.records.push(
+              { before: record, after },
+              { before: null, after: nextRecord },
+            );
+            set(
+              carePatch(state, {
+                records: [
+                  nextRecord,
+                  ...state.records.map((entry) =>
+                    entry.id === record.id ? after : entry,
+                  ),
+                ],
+                snoozes,
+                events: recordEvent(state.events, "reminder_completed", {
+                  source: item.source,
+                }),
+              }),
+            );
           }
-          get().track("reminder_completed", { source: item.source });
-          get().sweepNotifications();
+          return undo;
         },
 
         snoozeReminderItem: (item, days) => {
+          if (!Number.isInteger(days) || days < 1 || days > 3650)
+            throw new Error("Escolha um prazo válido para adiar.");
+          const state = get();
+          const current = currentCareSource(state, item);
+          const undo = careUndo(state, item);
+          // Keep the source in the token so undo cannot overwrite a newer occurrence.
+          if (current.source === "registro")
+            undo.records.push({ before: current.value, after: current.value });
+          else
+            undo.reminders.push({
+              before: current.value,
+              after: current.value,
+            });
           const until = snoozeUntil(days);
-          set((state) => ({
-            snoozes: { ...state.snoozes, [item.key]: until },
-          }));
-          get().track("reminder_snoozed", { days });
+          undo.snoozeAfter = until;
+          set(
+            carePatch(state, {
+              snoozes: { ...state.snoozes, [undo.key]: until },
+              events: recordEvent(state.events, "reminder_snoozed", { days }),
+            }),
+          );
+          return undo;
+        },
+
+        rescheduleReminderItem: (item, date) => {
+          if (!isValidDateKey(date) || date < todayKey())
+            throw new Error("Escolha uma data válida a partir de hoje.");
+          const state = get();
+          const current = currentCareSource(state, item);
+          const undo = careUndo(state, item);
+          const snoozes = { ...state.snoozes };
+          delete snoozes[undo.key];
+          if (current.source === "registro") {
+            const after = { ...current.value, nextDueDate: date };
+            undo.records.push({ before: current.value, after });
+            set(
+              carePatch(state, {
+                records: state.records.map((record) =>
+                  record.id === item.id ? after : record,
+                ),
+                snoozes,
+              }),
+            );
+          } else {
+            const after = { ...current.value, dueDate: date };
+            undo.reminders.push({ before: current.value, after });
+            set(
+              carePatch(state, {
+                reminders: state.reminders.map((reminder) =>
+                  reminder.id === item.id ? after : reminder,
+                ),
+                snoozes,
+              }),
+            );
+          }
+          return undo;
+        },
+
+        skipReminderOccurrence: (item) => {
+          const state = get();
+          const current = currentCareSource(state, item);
+          if (current.source !== "registro" || !current.value.recurrenceMonths)
+            throw new Error("Este cuidado não tem recorrência ativa.");
+          const undo = careUndo(state, item);
+          const after = {
+            ...current.value,
+            nextDueDate: addMonthsToKey(
+              item.dueDate,
+              current.value.recurrenceMonths,
+            ),
+          };
+          undo.records.push({ before: current.value, after });
+          const snoozes = { ...state.snoozes };
+          delete snoozes[undo.key];
+          set(
+            carePatch(state, {
+              records: state.records.map((record) =>
+                record.id === item.id ? after : record,
+              ),
+              snoozes,
+            }),
+          );
+          return undo;
+        },
+
+        stopReminderRecurrence: (item) => {
+          const state = get();
+          const current = currentCareSource(state, item);
+          if (current.source !== "registro" || !current.value.recurrenceMonths)
+            throw new Error("Este cuidado não tem recorrência ativa.");
+          const undo = careUndo(state, item);
+          const after = {
+            ...current.value,
+            nextDueDate: null,
+            recurrenceMonths: null,
+          };
+          undo.records.push({ before: current.value, after });
+          const snoozes = { ...state.snoozes };
+          delete snoozes[undo.key];
+          set(
+            carePatch(state, {
+              records: state.records.map((record) =>
+                record.id === item.id ? after : record,
+              ),
+              snoozes,
+            }),
+          );
+          return undo;
+        },
+
+        undoCareAction: (undo) => {
+          const state = get();
+          const unchanged =
+            state.pets.some((pet) => pet.id === undo.petId) &&
+            state.snoozes[undo.key] === undo.snoozeAfter &&
+            undo.records.every(({ after }) =>
+              sameCareValue(
+                state.records.find((record) => record.id === after.id),
+                after,
+              ),
+            ) &&
+            undo.reminders.every(({ after }) =>
+              sameCareValue(
+                state.reminders.find((reminder) => reminder.id === after.id),
+                after,
+              ),
+            );
+          if (!unchanged)
+            throw new Error(
+              "Este cuidado foi alterado depois. Confira a agenda antes de editar novamente.",
+            );
+          const recordChanges = new Map(
+            undo.records.map((change) => [change.after.id, change.before]),
+          );
+          const reminderChanges = new Map(
+            undo.reminders.map((change) => [change.after.id, change.before]),
+          );
+          const snoozes = { ...state.snoozes };
+          if (undo.snoozeBefore === undefined) delete snoozes[undo.key];
+          else snoozes[undo.key] = undo.snoozeBefore;
+          set(
+            carePatch(state, {
+              records: state.records.flatMap((record) =>
+                recordChanges.has(record.id)
+                  ? recordChanges.get(record.id)
+                    ? [recordChanges.get(record.id)!]
+                    : []
+                  : [record],
+              ),
+              reminders: state.reminders.map(
+                (reminder) => reminderChanges.get(reminder.id) ?? reminder,
+              ),
+              snoozes,
+            }),
+          );
         },
 
         addDiaryEntry: (input) => {
-          const entry: DiaryEntry = {
+          if (!get().pets.some((pet) => pet.id === input.petId))
+            throw new Error("Pet não encontrado.");
+          const entry = diaryEntrySchema.parse({
             ...input,
             id: newId("diary"),
             createdAt: nowIso(),
-          };
-          set((state) => ({
-            diary: [entry, ...state.diary],
-            pets:
+            weightUpdatedAt:
               input.weightKg !== null
-                ? state.pets.map((pet) =>
-                    pet.id === entry.petId
-                      ? {
-                          ...pet,
-                          weightKg: input.weightKg,
-                          updatedAt: nowIso(),
-                        }
-                      : pet,
-                  )
-                : state.pets,
-          }));
-          get().track("diary_entry_created", { visibility: entry.visibility });
+                ? weightTimestamp(get(), input.petId)
+                : undefined,
+          });
+          set((state) =>
+            reconcileWeights(
+              state,
+              {
+                diary: [entry, ...state.diary],
+                events: recordEvent(state.events, "diary_entry_created", {
+                  visibility: entry.visibility,
+                }),
+              },
+              [entry.petId],
+            ),
+          );
           return entry.id;
         },
 
-        updateDiaryEntry: (entryId, patch) =>
-          set((state) => ({
-            diary: state.diary.map((entry) =>
-              entry.id === entryId ? { ...entry, ...patch } : entry,
+        updateDiaryEntry: (entryId, patch) => {
+          const existing = get().diary.find((entry) => entry.id === entryId);
+          if (!existing) throw new Error("Momento não encontrado.");
+          const updated = diaryEntrySchema.parse({
+            ...existing,
+            ...patch,
+            id: existing.id,
+            petId: existing.petId,
+            createdAt: existing.createdAt,
+            weightUpdatedAt:
+              (patch.weightKg !== undefined &&
+                patch.weightKg !== existing.weightKg) ||
+              (patch.date !== undefined && patch.date !== existing.date)
+                ? weightTimestamp(get(), existing.petId)
+                : existing.weightUpdatedAt,
+          });
+          set((state) =>
+            reconcileWeights(
+              state,
+              {
+                diary: state.diary.map((entry) =>
+                  entry.id === entryId ? updated : entry,
+                ),
+              },
+              [existing.petId],
             ),
-          })),
+          );
+        },
 
         removeDiaryEntry: (entryId) =>
+          set((state) =>
+            reconcileWeights(
+              state,
+              {
+                diary: state.diary.filter((entry) => entry.id !== entryId),
+              },
+              state.diary
+                .filter((entry) => entry.id === entryId)
+                .map((entry) => entry.petId),
+            ),
+          ),
+
+        updateDocument: (id, patch) =>
+          set((state) => {
+            const document = state.documents.find((item) => item.id === id);
+            if (!document || document.deletedAt)
+              throw new Error("Documento não encontrado.");
+            const metadata = documentMetadataSchema.parse({
+              ...document,
+              ...patch,
+            });
+            return {
+              documents: state.documents.map((item) =>
+                item.id === id
+                  ? { ...item, ...metadata, updatedAt: nowIso() }
+                  : item,
+              ),
+            };
+          }),
+        trashDocument: (id) =>
           set((state) => ({
-            diary: state.diary.filter((entry) => entry.id !== entryId),
+            documents: state.documents.map((item) =>
+              item.id === id
+                ? {
+                    ...item,
+                    deletedAt: item.deletedAt ?? nowIso(),
+                    updatedAt: nowIso(),
+                  }
+                : item,
+            ),
+          })),
+        restoreDocument: (id) =>
+          set((state) => ({
+            documents: state.documents.map((item) =>
+              item.id === id
+                ? { ...item, deletedAt: null, updatedAt: nowIso() }
+                : item,
+            ),
           })),
 
         addPlace: (input) => {
@@ -562,8 +1177,12 @@ export const useAppStore = create<AppState & AppActions>()(
             reported: false,
             hidden: false,
           };
-          set((state) => ({ posts: [post, ...state.posts] }));
-          get().track("post_created", { type: post.type });
+          set((state) => ({
+            posts: [post, ...state.posts],
+            events: recordEvent(state.events, "post_created", {
+              type: post.type,
+            }),
+          }));
           return post.id;
         },
 
@@ -601,8 +1220,12 @@ export const useAppStore = create<AppState & AppActions>()(
             reported: false,
             createdAt: nowIso(),
           };
-          set((state) => ({ comments: [comment, ...state.comments] }));
-          get().track("comment_created", { postId: comment.postId });
+          set((state) => ({
+            comments: [comment, ...state.comments],
+            events: recordEvent(state.events, "comment_created", {
+              postId: comment.postId,
+            }),
+          }));
           return comment.id;
         },
 
@@ -674,34 +1297,106 @@ export const useAppStore = create<AppState & AppActions>()(
 
         clearNotifications: () => set({ notifications: [] }),
 
-        sweepNotifications: () =>
-          set((state) => {
-            const incoming = deriveNotifications({
-              pets: state.pets,
-              records: state.records,
-              reminders: state.reminders,
-              places: state.places,
-              products: state.products,
-              enabled: state.settings.notifications,
+        sweepNotifications: () => set((state) => carePatch(state, {})),
+
+        markReady: () => commit({ ready: true }),
+
+        track: (name, props) => {
+          try {
+            set((state) => ({
+              events: recordEvent(state.events, name, props),
+            }));
+          } catch {
+            // Optional analytics must never interrupt navigation or a saved action.
+          }
+        },
+      };
+      const actions = Object.fromEntries(
+        Object.entries(syncActions).map(([name, reducer]) => {
+          if (name === "markReady") return [name, reducer];
+          return [
+            name,
+            (...args: unknown[]) => {
+              const pending = enqueue(async () => {
+                const previous = baseGet();
+                staged = previous;
+                let result: unknown;
+                let next: AppState & AppActions;
+                try {
+                  result = (reducer as (...args: unknown[]) => unknown)(
+                    ...args,
+                  );
+                  next = staged;
+                } finally {
+                  staged = null;
+                }
+                if (next !== previous) {
+                  await writePersistedState(
+                    next,
+                    false,
+                    {},
+                    undefined,
+                    [
+                      "resetAll",
+                      "removePet",
+                      "updatePet",
+                      "removeRecord",
+                      "updateRecord",
+                      "removeDiaryEntry",
+                      "updateDiaryEntry",
+                    ].includes(name),
+                  );
+                  commit(next);
+                }
+                if (name === "resetAll") clearFormDrafts();
+                return result;
+              });
+              return name === "track"
+                ? pending.catch(() => undefined)
+                : pending;
+            },
+          ];
+        }),
+      ) as unknown as AppActions;
+      return {
+        ...initialState,
+        ...actions,
+        createDocument: (input, file) =>
+          enqueue(async () => {
+            const current = baseGet();
+            if (!current.pets.some((pet) => pet.id === input.petId))
+              throw new Error("Pet não encontrado.");
+            const details = await validateDocumentFile(file, input.fileName);
+            const media = await prepareMedia(
+              await blobBytes(file),
+              details.mimeType,
+            );
+            const timestamp = nowIso();
+            const document = petDocumentSchema.parse({
+              ...input,
+              ...details,
+              id: newId("document"),
+              mediaId: media.id,
+              createdAt: timestamp,
+              updatedAt: timestamp,
+              deletedAt: null,
             });
-            return {
-              notifications: mergeNotifications(state.notifications, incoming),
-              lastSweepAt: nowIso(),
+            const next = {
+              ...current,
+              documents: [...current.documents, document],
             };
+            await writePersistedState(next, false, {
+              [media.id]: bytesDataUrl(media.bytes, media.mimeType),
+            });
+            commit(next);
+            return document.id;
           }),
-
-        markReady: () => set({ ready: true }),
-
-        track: (name, props) =>
-          set((state) => ({ events: recordEvent(state.events, name, props) })),
       };
     },
     {
       name: "pethub-store",
       version: 1,
-      storage: createJSONStorage(() =>
-        typeof window === "undefined" ? noopStorage : window.localStorage,
-      ),
+      storage: validatedStorage,
       skipHydration: true,
       partialize: (state) => ({
         tutor: state.tutor,
@@ -711,6 +1406,7 @@ export const useAppStore = create<AppState & AppActions>()(
         reminders: state.reminders,
         snoozes: state.snoozes,
         diary: state.diary,
+        documents: state.documents,
         places: state.places,
         reviews: state.reviews,
         posts: state.posts,
@@ -729,39 +1425,102 @@ export const useAppStore = create<AppState & AppActions>()(
   ),
 );
 
+type StoreState = AppState & AppActions;
+type StateUpdate =
+  | StoreState
+  | Partial<StoreState>
+  | ((state: StoreState) => StoreState | Partial<StoreState>);
+type DurableStore = Omit<typeof boundStore, "setState"> & {
+  (): StoreState;
+  <T>(selector: (state: StoreState) => T): T;
+  setState: (update: StateUpdate, replace?: boolean) => Promise<void>;
+};
+const commitStoreState = boundStore.setState;
+export const useAppStore = boundStore as unknown as DurableStore;
+useAppStore.setState = (update, replace) =>
+  enqueue(async () => {
+    const current = useAppStore.getState();
+    const patch = typeof update === "function" ? update(current) : update;
+    const next = { ...current, ...patch };
+    await writePersistedState(next);
+    if (replace) commitStoreState(next, true);
+    else commitStoreState(patch);
+  });
+
 export const MY_AUTHOR = MY_AUTHOR_ID;
 
-export function seedIfNeeded() {
-  const state = useAppStore.getState();
-  if (state.seededAt) return;
-  useAppStore.setState({
-    places: seedPlaces,
-    groups: seedGroups,
-    products: seedProducts,
-    posts: seedPosts,
-    comments: seedComments,
-    reviews: seedReviews,
-    seededAt: nowIso(),
+export async function seedIfNeeded() {
+  const merge = <T extends { id: string }>(existing: T[], seed: T[]) => {
+    const ids = new Set(existing.map((entry) => entry.id));
+    return [...existing, ...seed.filter((entry) => !ids.has(entry.id))];
+  };
+  await useAppStore.setState((state) =>
+    state.seededAt
+      ? {}
+      : {
+          places: merge(state.places, seedPlaces),
+          groups: merge(state.groups, seedGroups),
+          products: merge(state.products, seedProducts),
+          posts: merge(state.posts, seedPosts),
+          comments: merge(state.comments, seedComments),
+          reviews: merge(state.reviews, seedReviews),
+          seededAt: nowIso(),
+        },
+  );
+}
+
+export function exportSnapshot(): Promise<string> {
+  return enqueue(async () => {
+    const state = useAppStore.getState();
+    const files = Object.fromEntries(
+      await Promise.all(
+        [...new Set(state.documents.map((document) => document.mediaId))].map(
+          async (id) => [id, await mediaDataUrl(id)],
+        ),
+      ),
+    );
+    const text = JSON.stringify(createBackup(state, files), null, 2);
+    if (new TextEncoder().encode(text).byteLength > MAX_BACKUP_BYTES)
+      throw new Error(
+        "A cópia completa excede 100 MB. Baixe os documentos separadamente e reduza os arquivos antes de exportar um backup restaurável.",
+      );
+    return text;
   });
 }
 
-export function exportSnapshot(): string {
-  const state = useAppStore.getState();
-  return JSON.stringify(
-    {
-      exportedAt: nowIso(),
-      tutor: state.tutor,
-      pets: state.pets,
-      records: state.records,
-      reminders: state.reminders,
-      diary: state.diary,
-      reviews: state.reviews.filter(
-        (review) => review.authorName === state.tutor?.name,
-      ),
-      posts: state.posts.filter((post) => post.authorId === MY_AUTHOR_ID),
-      settings: state.settings,
-    },
-    null,
-    2,
-  );
+export function restoreSnapshot(
+  text: string,
+  {
+    recovering = false,
+    expectedLocalState,
+  }: { recovering?: boolean; expectedLocalState?: string } = {},
+) {
+  return enqueue(async () => {
+    if (
+      expectedLocalState !== undefined &&
+      deviceContentSignature() !== expectedLocalState
+    )
+      throw new Error(
+        "Os dados deste aparelho mudaram durante a revisão. Confira novamente antes de restaurar.",
+      );
+    const backup = parseBackup(text);
+    const state = persistedStateSchema.parse(backup);
+    await writePersistedState(state, recovering, backup.files, undefined, true);
+    commitStoreState({ ...state, ready: true });
+    clearFormDrafts();
+  });
+}
+
+export function deviceContentSignature(
+  state: PersistedState = useAppStore.getState(),
+) {
+  return JSON.stringify(persistedStateSchema.parse(state));
+}
+
+export function resetLocalDataForRecovery() {
+  return enqueue(async () => {
+    await writePersistedState(initialState, true, {}, undefined, true);
+    commitStoreState({ ...initialState, ready: true });
+    clearFormDrafts();
+  });
 }

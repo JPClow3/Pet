@@ -2,6 +2,7 @@
 
 import { Bell, BellOff, Check, X } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 
 import { PageHeader } from "@/components/page-header";
@@ -15,6 +16,7 @@ import { notificationKindMeta } from "@/lib/domain/labels";
 import { notificationIcons } from "@/lib/icons";
 import { useAppStore } from "@/lib/store/app-store";
 import { useHydrated } from "@/lib/store/hooks";
+import { useAsyncAction } from "@/lib/use-async-action";
 
 export default function NotificationsPage() {
   const ready = useHydrated();
@@ -25,6 +27,8 @@ export default function NotificationsPage() {
   const dismissNotification = useAppStore((state) => state.dismissNotification);
   const clearNotifications = useAppStore((state) => state.clearNotifications);
   const track = useAppStore((state) => state.track);
+  const action = useAsyncAction();
+  const router = useRouter();
 
   const visible = useMemo(
     () =>
@@ -43,7 +47,12 @@ export default function NotificationsPage() {
         subtitle="Um cuidado, uma chamada para ação."
         action={
           visible.length > 0 ? (
-            <Button size="sm" variant="ghost" onClick={clearNotifications}>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={action.pending}
+              onClick={() => void action.run(clearNotifications)}
+            >
               Limpar
             </Button>
           ) : undefined
@@ -68,7 +77,7 @@ export default function NotificationsPage() {
                   className={`flex flex-col gap-2 ${unread ? "border-teal/30 bg-mint/40" : ""}`}
                 >
                   <div className="flex items-start gap-3">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-white text-teal-ink shadow-card">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-paper text-teal-ink shadow-card">
                       <Icon aria-hidden="true" className="size-5" />
                     </span>
                     <div className="min-w-0 flex-1">
@@ -95,9 +104,23 @@ export default function NotificationsPage() {
                     {item.href ? (
                       <Link
                         href={item.href}
-                        onClick={() => {
-                          markNotificationRead(item.id);
-                          track("notification_opened", { kind: item.kind });
+                        aria-disabled={action.pending}
+                        onClick={(event) => {
+                          if (
+                            event.metaKey ||
+                            event.ctrlKey ||
+                            event.shiftKey ||
+                            event.altKey
+                          )
+                            return;
+                          event.preventDefault();
+                          void action.run(async () => {
+                            await markNotificationRead(item.id);
+                            void track("notification_opened", {
+                              kind: item.kind,
+                            }).catch(() => {});
+                            router.push(item.href!);
+                          });
                         }}
                         className="inline-flex min-h-9 items-center rounded-full bg-teal-ink px-3 text-[0.85rem] font-medium text-white"
                       >
@@ -108,7 +131,10 @@ export default function NotificationsPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => markNotificationRead(item.id)}
+                        disabled={action.pending}
+                        onClick={() =>
+                          void action.run(() => markNotificationRead(item.id))
+                        }
                       >
                         <Check aria-hidden="true" className="size-4" />
                         Marcar como lida
@@ -118,7 +144,10 @@ export default function NotificationsPage() {
                       size="sm"
                       variant="ghost"
                       aria-label="Dispensar notificação"
-                      onClick={() => dismissNotification(item.id)}
+                      disabled={action.pending}
+                      onClick={() =>
+                        void action.run(() => dismissNotification(item.id))
+                      }
                     >
                       <X aria-hidden="true" className="size-4" />
                       Dispensar

@@ -1,6 +1,7 @@
-import { formatShortDate, todayKey } from "./dates";
+import { daysUntil, formatShortDate, todayKey } from "./dates";
 import { urgencyFor, urgencyText } from "./health";
 import { isValidDateKey } from "./dates";
+import { medicationClock, nextMedicationOccurrence } from "./medication";
 import type {
   AppNotification,
   HealthRecord,
@@ -37,6 +38,7 @@ export function deriveNotifications(input: {
   pets: Pet[];
   records: HealthRecord[];
   reminders: Reminder[];
+  snoozes?: Record<string, string>;
   places: Place[];
   products: Product[];
   enabled: NotificationSettings;
@@ -49,7 +51,10 @@ export function deriveNotifications(input: {
 
   if (input.enabled.prevencao) {
     for (const record of input.records) {
+      if (record.medication) continue;
       if (!isValidDateKey(record.nextDueDate)) continue;
+      const snooze = input.snoozes?.[`registro:${record.id}`];
+      if (snooze && daysUntil(snooze, now) > 0) continue;
       const pet = petById.get(record.petId);
       if (!pet) continue;
       const { urgency, days } = urgencyFor(
@@ -82,7 +87,27 @@ export function deriveNotifications(input: {
     for (const record of input.records) {
       const pet = petById.get(record.petId);
       if (!pet || record.type !== "medicamento") continue;
+      if (record.medication) {
+        const dose = nextMedicationOccurrence(record.medication, now);
+        if (!dose) continue;
+        const clock = medicationClock(dose.schedule.timeZone, now);
+        if (`${dose.date}T${dose.time}` > `${clock.date}T${clock.time}`)
+          continue;
+        created.push(
+          notification(
+            `notif-rotina-dose-${record.id}-${dose.schedule.id}-${dose.date}-${dose.time}`,
+            "rotina",
+            `Horário de ${pet.name} sem confirmação`,
+            `${record.title}: ${dose.schedule.amount} ${dose.schedule.unit}, planejado às ${dose.time} (${dose.schedule.timeZone}). Confira o plano e registre o que aconteceu.`,
+            `/pets/${pet.id}/health/${record.id}`,
+            createdAt,
+          ),
+        );
+        continue;
+      }
       if (record.nextDueDate !== today) continue;
+      const snooze = input.snoozes?.[`registro:${record.id}`];
+      if (snooze && daysUntil(snooze, now) > 0) continue;
       created.push(
         notification(
           `notif-rotina-${record.id}-${today}`,
@@ -98,6 +123,8 @@ export function deriveNotifications(input: {
     }
     for (const reminder of input.reminders) {
       if (reminder.done || reminder.dueDate !== today) continue;
+      const snooze = input.snoozes?.[`manual:${reminder.id}`];
+      if (snooze && daysUntil(snooze, now) > 0) continue;
       const pet = petById.get(reminder.petId);
       if (!pet) continue;
       created.push(

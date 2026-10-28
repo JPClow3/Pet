@@ -24,11 +24,10 @@ export default function NewPetPage() {
         <PetForm
           submitLabel="Salvar pet"
           onCancel={() => router.back()}
-          onSubmit={(values) => {
-            const petId = addPet(values);
-            toast.success(`${values.name} agora faz parte do PetHub`);
+          onSubmit={async (values) => {
+            await addPet(values);
+            toast.success(`${values.name} agora faz parte da Zelupi`);
             router.replace(`/pets`);
-            useAppStore.getState().setActivePet(petId);
           }}
         />
       </Card>

@@ -13,8 +13,8 @@ import {
 
 const NOW = new Date();
 
-function resetStore() {
-  useAppStore.setState(useAppStore.getInitialState(), true);
+async function resetStore() {
+  await useAppStore.setState(useAppStore.getInitialState(), true);
   useAppStore.getState().markReady();
 }
 
@@ -30,21 +30,21 @@ function createPet() {
   });
 }
 
-describe("store do PetHub", () => {
-  beforeEach(() => {
-    resetStore();
+describe("store da Zelupi", () => {
+  beforeEach(async () => {
+    await resetStore();
   });
 
-  it("cria o pet e o mantém ativo", () => {
-    const petId = createPet();
+  it("cria o pet e o mantém ativo", async () => {
+    const petId = await createPet();
     const state = useAppStore.getState();
     expect(state.pets).toHaveLength(1);
     expect(state.activePetId).toBe(petId);
     expect(state.events[0].name).toBe("pet_created");
   });
 
-  it("completa o onboarding com tutor, pet e cidade", () => {
-    useAppStore.getState().completeOnboarding({
+  it("completa o onboarding com tutor, pet e cidade", async () => {
+    await useAppStore.getState().completeOnboarding({
       tutorName: "João",
       email: null,
       city: "São Paulo",
@@ -64,9 +64,9 @@ describe("store do PetHub", () => {
     ).toBe(true);
   });
 
-  it("atualiza o peso do pet ao registrar uma pesagem", () => {
-    const petId = createPet();
-    useAppStore.getState().addRecord({
+  it("atualiza o peso do pet ao registrar uma pesagem", async () => {
+    const petId = await createPet();
+    await useAppStore.getState().addRecord({
       petId,
       type: "peso",
       title: "Pesagem mensal",
@@ -83,10 +83,10 @@ describe("store do PetHub", () => {
     expect(useAppStore.getState().pets[0].weightKg).toBe(32.1);
   });
 
-  it("conclui um lembrete de vacina criando o próximo ciclo", () => {
-    const petId = createPet();
+  it("conclui um lembrete de vacina criando o próximo ciclo", async () => {
+    const petId = await createPet();
     const overdue = shiftDays(todayKey(), -5);
-    const recordId = useAppStore.getState().addRecord({
+    const recordId = await useAppStore.getState().addRecord({
       petId,
       type: "vacina",
       title: "Vacina V10",
@@ -109,7 +109,7 @@ describe("store do PetHub", () => {
     });
     expect(item.urgency).toBe("vencido");
 
-    useAppStore.getState().completeReminderItem(item);
+    await useAppStore.getState().completeReminderItem(item);
 
     const state = useAppStore.getState();
     const original = state.records.find((record) => record.id === recordId);
@@ -121,9 +121,9 @@ describe("store do PetHub", () => {
     expect(state.events[0].name).toBe("reminder_completed");
   });
 
-  it("conclui um lembrete manual sem criar novo registro", () => {
-    const petId = createPet();
-    const reminderId = useAppStore.getState().addReminder({
+  it("conclui um lembrete manual sem criar novo registro", async () => {
+    const petId = await createPet();
+    const reminderId = await useAppStore.getState().addReminder({
       petId,
       title: "Comprar ração",
       kind: "outro",
@@ -137,7 +137,7 @@ describe("store do PetHub", () => {
       reminders: useAppStore.getState().reminders,
       snoozes: {},
     });
-    useAppStore.getState().completeReminderItem(item);
+    await useAppStore.getState().completeReminderItem(item);
     const state = useAppStore.getState();
     expect(
       state.reminders.find((reminder) => reminder.id === reminderId)?.done,
@@ -145,9 +145,9 @@ describe("store do PetHub", () => {
     expect(state.records).toHaveLength(0);
   });
 
-  it("adia um lembrete guardando a data de retorno", () => {
-    const petId = createPet();
-    useAppStore.getState().addReminder({
+  it("adia um lembrete guardando a data de retorno", async () => {
+    const petId = await createPet();
+    await useAppStore.getState().addReminder({
       petId,
       title: "Comprar ração",
       kind: "outro",
@@ -161,15 +161,15 @@ describe("store do PetHub", () => {
       reminders: useAppStore.getState().reminders,
       snoozes: {},
     });
-    useAppStore.getState().snoozeReminderItem(item, 3);
+    await useAppStore.getState().snoozeReminderItem(item, 3);
     const state = useAppStore.getState();
     expect(state.snoozes[item.key]).toBeDefined();
     expect(state.events[0].name).toBe("reminder_snoozed");
   });
 
-  it("remove o pet junto com os dados dependentes", () => {
-    const petId = createPet();
-    useAppStore.getState().addRecord({
+  it("remove o pet junto com os dados dependentes", async () => {
+    const petId = await createPet();
+    await useAppStore.getState().addRecord({
       petId,
       type: "vacina",
       title: "Vacina V10",
@@ -183,7 +183,7 @@ describe("store do PetHub", () => {
       attachmentData: null,
       weightKg: null,
     });
-    useAppStore.getState().addDiaryEntry({
+    await useAppStore.getState().addDiaryEntry({
       petId,
       date: todayKey(),
       text: "Primeiro banho no pet shop novo.",
@@ -193,7 +193,7 @@ describe("store do PetHub", () => {
       weightKg: null,
       visibility: "privado",
     });
-    useAppStore.getState().removePet(petId);
+    await useAppStore.getState().removePet(petId);
     const state = useAppStore.getState();
     expect(state.pets).toHaveLength(0);
     expect(state.records).toHaveLength(0);
@@ -201,16 +201,16 @@ describe("store do PetHub", () => {
     expect(state.activePetId).toBeNull();
   });
 
-  it("carrega o conteúdo inicial uma única vez", () => {
-    seedIfNeeded();
+  it("carrega o conteúdo inicial uma única vez", async () => {
+    await seedIfNeeded();
     const places = useAppStore.getState().places.length;
-    seedIfNeeded();
+    await seedIfNeeded();
     expect(useAppStore.getState().places).toHaveLength(places);
     expect(places).toBeGreaterThan(0);
   });
 
-  it("permite explorar lugares e denunciar publicações", () => {
-    seedIfNeeded();
+  it("permite explorar lugares e denunciar publicações", async () => {
+    await seedIfNeeded();
     const places = filterPlaces(
       useAppStore.getState().places,
       { ...emptyFilters, categories: ["parque"] },
@@ -219,7 +219,7 @@ describe("store do PetHub", () => {
     expect(places.length).toBeGreaterThan(0);
 
     const { posts } = useAppStore.getState();
-    useAppStore.getState().reportPost(posts[0].id);
+    await useAppStore.getState().reportPost(posts[0].id);
     const state = useAppStore.getState();
     expect(state.posts.find((post) => post.id === posts[0].id)?.reported).toBe(
       true,
@@ -227,8 +227,8 @@ describe("store do PetHub", () => {
     expect(visiblePosts(state.posts).length).toBe(state.posts.length - 1);
   });
 
-  it("registra publicação e comentário como o tutor local", () => {
-    const postId = useAppStore.getState().addPost({
+  it("registra publicação e comentário como o tutor local", async () => {
+    const postId = await useAppStore.getState().addPost({
       petName: "Thor",
       type: "pergunta",
       groupId: null,
@@ -236,7 +236,7 @@ describe("store do PetHub", () => {
       body: "Procuro lugar com sombra.",
       city: "São Paulo",
     });
-    useAppStore
+    await useAppStore
       .getState()
       .addComment({ postId, body: "Parque das Figueiras!" });
     const state = useAppStore.getState();
@@ -245,10 +245,10 @@ describe("store do PetHub", () => {
     expect(state.comments[0].postId).toBe(postId);
   });
 
-  it("mantém a fila de notificações sem duplicar", () => {
-    const petId = createPet();
-    seedIfNeeded();
-    useAppStore.getState().addRecord({
+  it("mantém a fila de notificações sem duplicar", async () => {
+    const petId = await createPet();
+    await seedIfNeeded();
+    await useAppStore.getState().addRecord({
       petId,
       type: "vacina",
       title: "Vacina V10",
@@ -262,30 +262,30 @@ describe("store do PetHub", () => {
       attachmentData: null,
       weightKg: null,
     });
-    useAppStore.getState().sweepNotifications();
+    await useAppStore.getState().sweepNotifications();
     const first = useAppStore.getState().notifications.length;
-    useAppStore.getState().sweepNotifications();
+    await useAppStore.getState().sweepNotifications();
     expect(useAppStore.getState().notifications.length).toBe(first);
     expect(first).toBeGreaterThan(0);
   });
 
-  it("exporta os dados do tutor para atender a LGPD", () => {
-    useAppStore.getState().completeOnboarding({
+  it("exporta os dados do tutor para atender a LGPD", async () => {
+    await useAppStore.getState().completeOnboarding({
       tutorName: "João",
       email: "joao@exemplo.com",
       city: "São Paulo",
       focusAreas: ["saude", "rotina"],
       pet: { name: "Thor", species: "cao", sex: "macho" },
     });
-    const snapshot = JSON.parse(exportSnapshot());
+    const snapshot = JSON.parse(await exportSnapshot());
     expect(snapshot.tutor.name).toBe("João");
     expect(snapshot.pets).toHaveLength(1);
     expect(snapshot.exportedAt).toBeDefined();
   });
 
-  it("apaga tudo ao excluir a conta", () => {
-    createPet();
-    useAppStore.getState().resetAll();
+  it("apaga tudo ao excluir a conta", async () => {
+    await createPet();
+    await useAppStore.getState().resetAll();
     const state = useAppStore.getState();
     expect(state.pets).toHaveLength(0);
     expect(state.tutor).toBeNull();

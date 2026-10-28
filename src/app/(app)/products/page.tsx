@@ -61,10 +61,10 @@ export default function ProductsPage() {
 
   useEffect(() => {
     if (recommendations.length === 0) return;
-    track("product_view", {
+    void track("product_view", {
       count: recommendations.length,
       petId: pet?.id ?? "",
-    });
+    }).catch(() => {});
   }, [recommendations.length, pet?.id, track]);
 
   if (!ready) return <SkeletonScreen label="Buscando recomendações" />;
@@ -84,25 +84,26 @@ export default function ProductsPage() {
     <div className="flex flex-col gap-4 pb-24">
       <PageHeader
         title="Produtos"
-        subtitle={`Sugestões explicadas para ${pet.name}.`}
+        subtitle={`Catálogo de demonstração para ${pet.name}.`}
       />
       <DiscoveryTabs active="produtos" />
 
-      <section className="rounded-[24px] border border-line bg-white p-5">
+      <section className="rounded-[24px] border border-line bg-paper p-5">
         <div className="flex items-start gap-3">
           <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-surface-subtle text-teal-ink">
             <Sparkles aria-hidden="true" className="size-5" />
           </span>
           <div>
             <p className="text-[0.7rem] font-bold uppercase tracking-[0.14em] text-teal-ink">
-              Recomendações transparentes
+              Exemplos de recomendações
             </p>
             <h2 className="mt-1 text-[1.22rem] font-semibold leading-tight text-ink">
               Você escolhe com contexto.
             </h2>
             <p className="mt-1.5 max-w-[42ch] text-[0.9rem] leading-relaxed text-muted">
-              Cada item explica se combina com espécie, porte, fase de vida ou
-              rotina de {pet.name}.
+              Explore como as sugestões consideram espécie, porte, fase de vida
+              e rotina de {pet.name}. Produtos e preços são fictícios; não há
+              compras.
             </p>
           </div>
         </div>
@@ -122,8 +123,7 @@ export default function ProductsPage() {
               Você está sem conexão
             </p>
             <p className="mt-1 text-meta leading-relaxed text-muted">
-              Estas sugestões estão salvas localmente. O parceiro externo só
-              abre quando houver conexão.
+              O catálogo de demonstração continua disponível neste aparelho.
             </p>
           </div>
         </Card>
@@ -139,7 +139,7 @@ export default function ProductsPage() {
           </span>
         </div>
         <div
-          className="flex gap-2 overflow-x-auto pb-0.5 no-scrollbar"
+          className="flex flex-wrap gap-2"
           role="group"
           aria-label="Categoria de produto"
         >
@@ -200,7 +200,7 @@ export default function ProductsPage() {
               A transparência vem antes do clique.
             </p>
             <p className="mt-1">
-              O PetHub não tem checkout, estoque ou promessa de entrega nesta
+              A Zelupi não tem checkout, estoque ou promessa de entrega nesta
               prévia.
             </p>
             <p className="mt-1">

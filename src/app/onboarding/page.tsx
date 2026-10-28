@@ -13,11 +13,12 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { z } from "zod";
 
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { SkeletonScreen } from "@/components/ui/skeleton";
-import { todayKey } from "@/lib/domain/dates";
+import { isValidDateKey, todayKey } from "@/lib/domain/dates";
 import { healthTypeMeta, speciesLabels } from "@/lib/domain/labels";
 import { petAge } from "@/lib/domain/pet";
 import type { HealthRecordType, Species } from "@/lib/domain/schema";
@@ -25,6 +26,25 @@ import type { NewPetInput } from "@/lib/store/app-store";
 import { useAppStore } from "@/lib/store/app-store";
 import { useHydrated } from "@/lib/store/hooks";
 import { cn } from "@/lib/utils";
+import { useFormDraft } from "@/lib/use-form-draft";
+
+const onboardingDraftSchema = z.object({
+  step: z.number().int().min(0).max(3),
+  tutorName: z.string().max(60),
+  email: z.string().max(120),
+  city: z.string().max(60),
+  pet: z.object({
+    name: z.string().max(60),
+    species: z.enum(["cao", "gato", "outro"]),
+    breed: z.string().max(60).nullable(),
+    birthDate: z.string().max(10).nullable(),
+  }),
+  weightInput: z.string().max(40),
+  careType: z.enum(["vacina", "consulta", "peso", "observacao"]).nullable(),
+  careTitle: z.string().max(80),
+  careDate: z.string().max(10),
+  nextDueDate: z.string().max(10),
+});
 
 const steps = ["Você", "Seu pet", "Detalhes", "Primeiro cuidado"] as const;
 const careChoices: {
@@ -79,20 +99,61 @@ export default function OnboardingPage() {
   const ready = useHydrated();
   const hasTutor = useAppStore((state) => Boolean(state.tutor));
   const completeOnboarding = useAppStore((state) => state.completeOnboarding);
-  const addRecord = useAppStore((state) => state.addRecord);
   const tracked = useRef(false);
+  const stepHeading = useRef<HTMLHeadingElement>(null);
 
-  const [step, setStep] = useState(0);
-  const [tutorName, setTutorName] = useState("");
-  const [email, setEmail] = useState("");
-  const [city, setCity] = useState("São Paulo");
-  const [pet, setPet] = useState<NewPetInput>(initialPet);
-  const [careType, setCareType] = useState<HealthRecordType | null>(null);
-  const [careTitle, setCareTitle] = useState("");
-  const [careDate, setCareDate] = useState(todayKey());
-  const [nextDueDate, setNextDueDate] = useState("");
+  const initialDraft = useMemo<z.infer<typeof onboardingDraftSchema>>(
+    () => ({
+      step: 0,
+      tutorName: "",
+      email: "",
+      city: "São Paulo",
+      pet: { name: "", species: "cao", breed: null, birthDate: null },
+      weightInput: "",
+      careType: null,
+      careTitle: "",
+      careDate: todayKey(),
+      nextDueDate: "",
+    }),
+    [],
+  );
+  const draft = useFormDraft({
+    key: "onboarding",
+    schema: onboardingDraftSchema,
+    initialValue: initialDraft,
+    enabled: ready && !hasTutor,
+  });
+  const {
+    step,
+    tutorName,
+    email,
+    city,
+    pet,
+    weightInput,
+    careType,
+    careTitle,
+    careDate,
+    nextDueDate,
+  } = draft.value;
+  const parsedWeight = weightInput.trim()
+    ? Number(weightInput.replace(",", "."))
+    : null;
+  function setDraftField<K extends keyof typeof initialDraft>(
+    key: K,
+    value: (typeof initialDraft)[K],
+  ) {
+    draft.setValue((current) => ({ ...current, [key]: value }));
+  }
+  function setStep(next: number | ((current: number) => number)) {
+    draft.setValue((current) => ({
+      ...current,
+      step: typeof next === "function" ? next(current.step) : next,
+    }));
+    setError(null);
+  }
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
 
   const ageLabel = useMemo(
     () => (pet.birthDate ? petAge(pet.birthDate)?.label : null),
@@ -104,9 +165,18 @@ export default function OnboardingPage() {
   }, [ready, hasTutor, router]);
 
   useEffect(() => {
+    if (!ready || !draft.ready || hasTutor) return;
+    stepHeading.current?.focus({ preventScroll: true });
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [step, ready, draft.ready, hasTutor]);
+
+  useEffect(() => {
     if (tracked.current) return;
     tracked.current = true;
-    useAppStore.getState().track("onboarding_started");
+    void useAppStore
+      .getState()
+      .track("onboarding_started")
+      .catch(() => {});
   }, []);
 
   function validateCurrentStep() {
@@ -114,26 +184,61 @@ export default function OnboardingPage() {
       setError("Como podemos te chamar?");
       return false;
     }
+    if (
+      step === 0 &&
+      email.trim() &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+    ) {
+      setError("Confira o e-mail ou deixe esse campo opcional vazio.");
+      return false;
+    }
     if (step === 1 && pet.name.trim().length === 0) {
       setError("Dê um nome para seu pet para continuar.");
       return false;
     }
     if (step === 2) {
-      const weight = pet.weightKg;
+      const weight = parsedWeight;
       if (
         weight !== null &&
-        (typeof weight !== "number" || Number.isNaN(weight) || weight <= 0)
+        (typeof weight !== "number" ||
+          !Number.isFinite(weight) ||
+          weight <= 0 ||
+          weight > 120)
       ) {
-        setError("Informe o peso em quilos, por exemplo 12,4.");
+        setError(
+          "Informe um peso maior que zero e de até 120 kg, por exemplo 12,4.",
+        );
         return false;
       }
-      if (pet.birthDate && pet.birthDate > todayKey()) {
-        setError("A data de nascimento não pode estar no futuro.");
+      if (
+        pet.birthDate &&
+        (!isValidDateKey(pet.birthDate) || pet.birthDate > todayKey())
+      ) {
+        setError("Informe uma data de nascimento válida, até hoje.");
         return false;
       }
     }
-    if (step === 3 && careType && careDate.length === 0) {
+    if (step === 3 && careType && !isValidDateKey(careDate)) {
       setError("Escolha a data em que esse cuidado aconteceu.");
+      return false;
+    }
+    if (step === 3 && careType && careDate > todayKey()) {
+      setError("Use a data em que o cuidado aconteceu, até hoje.");
+      return false;
+    }
+    if (
+      step === 3 &&
+      careType &&
+      nextDueDate &&
+      (!isValidDateKey(nextDueDate) || nextDueDate < careDate)
+    ) {
+      setError(
+        "O próximo cuidado precisa ser na mesma data ou depois do registro.",
+      );
+      return false;
+    }
+    if (step === 3 && careType === "peso" && parsedWeight === null) {
+      setError("Volte aos detalhes e informe o peso para guardar uma medida.");
       return false;
     }
     setError(null);
@@ -146,60 +251,67 @@ export default function OnboardingPage() {
     setStep((current) => Math.min(current + 1, steps.length - 1));
   }
 
-  function finish() {
-    if (!validateCurrentStep() || saving) return;
+  async function finish(skipCare = false) {
+    if ((!skipCare && !validateCurrentStep()) || savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     try {
-      completeOnboarding({
+      await completeOnboarding({
         tutorName: tutorName.trim(),
         email: email.trim() || null,
         city: city.trim() || "São Paulo",
         focusAreas: ["saude", "rotina"],
         pet: {
+          ...initialPet,
           ...pet,
           name: pet.name.trim(),
           breed: pet.breed?.trim() || null,
           birthDate: pet.birthDate || null,
-          weightKg: pet.weightKg ?? null,
+          weightKg: parsedWeight,
         },
+        initialRecord:
+          careType && !skipCare
+            ? {
+                type: careType,
+                title: careTitle.trim() || healthTypeMeta[careType].label,
+                date: careDate || todayKey(),
+                nextDueDate: nextDueDate || null,
+                leadDays: nextDueDate
+                  ? healthTypeMeta[careType].defaultLeadDays
+                  : 0,
+                recurrenceMonths: null,
+                professional: null,
+                notes: null,
+                attachmentName: null,
+                attachmentData: null,
+                weightKg: careType === "peso" ? parsedWeight : null,
+              }
+            : undefined,
       });
-
-      const petId = useAppStore.getState().activePetId;
-      if (petId && careType) {
-        const metadata = healthTypeMeta[careType];
-        addRecord({
-          petId,
-          type: careType,
-          title: careTitle.trim() || metadata.label,
-          date: careDate || todayKey(),
-          nextDueDate: nextDueDate || null,
-          leadDays: nextDueDate ? metadata.defaultLeadDays : 0,
-          recurrenceMonths: null,
-          professional: null,
-          notes: null,
-          attachmentName: null,
-          attachmentData: null,
-          weightKg: careType === "peso" ? (pet.weightKg ?? null) : null,
-        });
-      }
+      draft.clearDraft();
       router.replace("/");
     } catch {
       setError(
         "Não foi possível salvar neste aparelho. Seus dados continuam aqui para você tentar novamente.",
       );
       setSaving(false);
+      savingRef.current = false;
     }
   }
 
-  function setOptionalPetField<K extends keyof NewPetInput>(
+  function setOptionalPetField<K extends keyof typeof pet>(
     key: K,
-    value: NewPetInput[K],
+    value: (typeof pet)[K],
   ) {
-    setPet((current) => ({ ...current, [key]: value }));
+    draft.setValue((current) => ({
+      ...current,
+      pet: { ...current.pet, [key]: value },
+    }));
     setError(null);
   }
 
-  if (!ready) return <SkeletonScreen label="Abrindo seu cadastro" />;
+  if (!ready || (!draft.ready && !hasTutor))
+    return <SkeletonScreen label="Abrindo seu cadastro" />;
 
   return (
     <main className="min-h-dvh bg-canvas">
@@ -216,7 +328,7 @@ export default function OnboardingPage() {
           <div className="flex-1">
             <div className="flex items-center justify-between gap-4">
               <p className="text-meta font-semibold text-blue-deep">
-                Criar seu espaço
+                Começar na Zelupi
               </p>
               <span className="text-meta tabular-nums text-muted">
                 {step + 1}/{steps.length}
@@ -244,14 +356,29 @@ export default function OnboardingPage() {
         </header>
 
         <div className="mx-auto flex w-full max-w-xl flex-1 flex-col pt-10">
+          {draft.restored || draft.storageError ? (
+            <p
+              role="status"
+              className="mb-4 rounded-2xl border border-line bg-surface px-4 py-3 text-meta text-ink-soft"
+            >
+              {draft.storageError ??
+                "Seu rascunho foi recuperado nesta aba. Continue de onde parou."}
+            </p>
+          ) : null}
           <div className="mb-8">
             <p className="inline-flex items-center rounded-full border border-warning/30 bg-sun-soft px-3 py-1 text-meta font-bold text-warning-ink">
               Só o necessário agora
             </p>
-            <h1 className="mt-2 font-editorial text-[clamp(2rem,8vw,3.25rem)] font-semibold leading-tight tracking-[-0.03em] text-ink">
+            <h1
+              ref={stepHeading}
+              tabIndex={-1}
+              className="mt-2 font-editorial text-[clamp(2rem,8vw,3.25rem)] font-semibold leading-tight tracking-[-0.03em] text-ink outline-none"
+            >
               {step === 0 ? "Vamos começar pelo seu nome." : null}
-              {step === 1 ? "Quem você cuida todos os dias?" : null}
-              {step === 2 ? "Um pouco mais sobre ele." : null}
+              {step === 1 ? "De quem você cuida todos os dias?" : null}
+              {step === 2
+                ? `Um pouco mais sobre ${pet.name.trim() || "seu pet"}.`
+                : null}
               {step === 3 ? "Quer guardar um cuidado real?" : null}
             </h1>
             <p className="mt-3 max-w-[42ch] text-[0.98rem] leading-relaxed text-ink-soft">
@@ -271,11 +398,10 @@ export default function OnboardingPage() {
                 <Field label="Seu nome" htmlFor="tutor-name" error={error}>
                   <Input
                     id="tutor-name"
-                    autoFocus
                     autoComplete="name"
                     value={tutorName}
                     onChange={(event) => {
-                      setTutorName(event.target.value);
+                      setDraftField("tutorName", event.target.value);
                       setError(null);
                     }}
                     placeholder="Como podemos te chamar?"
@@ -283,7 +409,7 @@ export default function OnboardingPage() {
                     required
                   />
                 </Field>
-                <details className="group rounded-3xl border border-line bg-white p-4 open:shadow-card">
+                <details className="group rounded-3xl border border-line bg-paper p-4 open:shadow-card">
                   <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-[0.95rem] font-semibold text-ink [&::-webkit-details-marker]:hidden">
                     <span>Adicionar detalhes opcionais</span>
                     <span className="text-meta font-medium text-teal-ink group-open:rotate-45 transition-transform">
@@ -294,14 +420,16 @@ export default function OnboardingPage() {
                     <Field
                       label="E-mail"
                       htmlFor="tutor-email"
-                      hint="Só para você recuperar o espaço depois"
+                      hint="Opcional. Este campo não cria uma conta nem recupera dados por e-mail."
                     >
                       <Input
                         id="tutor-email"
                         type="email"
                         autoComplete="email"
                         value={email}
-                        onChange={(event) => setEmail(event.target.value)}
+                        onChange={(event) =>
+                          setDraftField("email", event.target.value)
+                        }
                         placeholder="voce@email.com"
                         maxLength={120}
                       />
@@ -314,7 +442,9 @@ export default function OnboardingPage() {
                       <Input
                         id="tutor-city"
                         value={city}
-                        onChange={(event) => setCity(event.target.value)}
+                        onChange={(event) =>
+                          setDraftField("city", event.target.value)
+                        }
                         maxLength={60}
                       />
                     </Field>
@@ -344,7 +474,6 @@ export default function OnboardingPage() {
                 <Field label="Nome do pet" htmlFor="pet-name" error={error}>
                   <Input
                     id="pet-name"
-                    autoFocus
                     value={pet.name}
                     onChange={(event) =>
                       setOptionalPetField("name", event.target.value)
@@ -375,7 +504,7 @@ export default function OnboardingPage() {
                             "flex min-h-24 flex-col items-center justify-center gap-2 rounded-3xl border px-3 text-[0.9rem] font-semibold transition-[background-color,border-color] duration-150",
                             selected
                               ? "border-blue bg-blue-soft text-blue-deep"
-                              : "border-line bg-white text-ink-soft hover:bg-surface",
+                              : "border-line bg-paper text-ink-soft hover:bg-surface",
                           )}
                         >
                           <Icon aria-hidden="true" className="size-6" />
@@ -421,7 +550,6 @@ export default function OnboardingPage() {
                   <Field label="Raça" htmlFor="pet-breed" hint="Opcional">
                     <Input
                       id="pet-breed"
-                      autoFocus
                       value={pet.breed ?? ""}
                       onChange={(event) =>
                         setOptionalPetField("breed", event.target.value || null)
@@ -457,17 +585,10 @@ export default function OnboardingPage() {
                   <Input
                     id="pet-weight"
                     inputMode="decimal"
-                    value={
-                      pet.weightKg === null
-                        ? ""
-                        : String(pet.weightKg).replace(".", ",")
-                    }
+                    value={weightInput}
                     onChange={(event) => {
-                      const raw = event.target.value.replace(",", ".");
-                      setOptionalPetField(
-                        "weightKg",
-                        raw === "" ? null : Number(raw),
-                      );
+                      setDraftField("weightInput", event.target.value);
+                      setError(null);
                     }}
                     placeholder="12,4"
                   />
@@ -524,22 +645,27 @@ export default function OnboardingPage() {
                         type="button"
                         aria-pressed={selected}
                         onClick={() => {
-                          setCareType(selected ? null : choice.type);
-                          setCareTitle("");
+                          draft.setValue((current) => ({
+                            ...current,
+                            careType: selected
+                              ? null
+                              : (choice.type as typeof careType),
+                            careTitle: "",
+                          }));
                           setError(null);
                         }}
                         className={cn(
                           "flex min-h-28 flex-col items-start justify-between rounded-3xl border p-4 text-left transition-[background-color,border-color] duration-150",
                           selected
                             ? "border-blue bg-blue-soft text-blue-deep"
-                            : "border-line bg-white text-ink-soft hover:bg-surface",
+                            : "border-line bg-paper text-ink-soft hover:bg-surface",
                         )}
                       >
                         <span
                           className={cn(
                             "flex size-9 items-center justify-center rounded-2xl",
                             selected
-                              ? "bg-white text-teal-ink"
+                              ? "bg-paper text-teal-ink"
                               : "bg-surface text-ink-soft",
                           )}
                         >
@@ -580,9 +706,12 @@ export default function OnboardingPage() {
                   >
                     <Input
                       id="care-title"
+                      disabled={saving}
                       autoFocus
                       value={careTitle}
-                      onChange={(event) => setCareTitle(event.target.value)}
+                      onChange={(event) =>
+                        setDraftField("careTitle", event.target.value)
+                      }
                       placeholder={healthTypeMeta[careType].label}
                       maxLength={80}
                     />
@@ -591,10 +720,13 @@ export default function OnboardingPage() {
                     <Field label="Quando aconteceu?" htmlFor="care-date">
                       <Input
                         id="care-date"
+                        disabled={saving}
                         type="date"
                         value={careDate}
                         max={todayKey()}
-                        onChange={(event) => setCareDate(event.target.value)}
+                        onChange={(event) =>
+                          setDraftField("careDate", event.target.value)
+                        }
                         required
                       />
                     </Field>
@@ -605,10 +737,13 @@ export default function OnboardingPage() {
                     >
                       <Input
                         id="care-next"
+                        disabled={saving}
                         type="date"
                         min={careDate || todayKey()}
                         value={nextDueDate}
-                        onChange={(event) => setNextDueDate(event.target.value)}
+                        onChange={(event) =>
+                          setDraftField("nextDueDate", event.target.value)
+                        }
                       />
                     </Field>
                   </div>
@@ -647,7 +782,7 @@ export default function OnboardingPage() {
                     variant="blue"
                     size="lg"
                     className="w-full"
-                    onClick={finish}
+                    onClick={() => finish()}
                     disabled={saving}
                   >
                     {saving ? "Salvando…" : "Criar meu espaço"}
@@ -656,7 +791,7 @@ export default function OnboardingPage() {
                 ) : null}
                 <button
                   type="button"
-                  onClick={finish}
+                  onClick={() => (careType ? finish(true) : setStep(2))}
                   disabled={saving}
                   className="min-h-11 text-meta font-semibold text-muted hover:text-ink disabled:opacity-50"
                 >

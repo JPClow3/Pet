@@ -8,7 +8,8 @@ const cloudflareConfig: OpenNextConfig = {
   // OpenNext infers pnpm from the lockfile. Running the already-installed
   // toolchain through npm avoids pnpm's platform-optional lockfile repair on
   // Windows while keeping the same Next.js build script in every environment.
-  buildCommand: "npm run build",
+  buildCommand:
+    "npm run build && node scripts/prepare-cloudflare-instrumentation.mjs",
 };
 
 export default cloudflareConfig;

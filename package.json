@@ -1,5 +1,5 @@
 {
-  "name": "pethub-scaffold",
+  "name": "zelupi",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,15 +9,23 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:cloud": "node scripts/test-cloud-database.mjs",
+    "test:packaging": "node --test scripts/prepare-cloudflare-instrumentation.test.mjs",
     "test:watch": "vitest",
     "icons": "node scripts/generate-icons.mjs",
     "cf:build": "opennextjs-cloudflare build && node scripts/promote-serwist-assets.mjs",
     "cf:preview": "pnpm cf:build && opennextjs-cloudflare preview",
-    "cf:deploy": "pnpm cf:build && opennextjs-cloudflare deploy"
+    "cf:deploy": "pnpm cf:build && opennextjs-cloudflare deploy",
+    "brand:sync": "node scripts/sync-brand-tokens.mjs",
+    "brand:check": "node scripts/sync-brand-tokens.mjs --check"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
-    "@opennextjs/cloudflare": "1.20.6",
+    "@block65/webcrypto-web-push": "2.0.0",
+    "@js-temporal/polyfill": "0.5.1",
+    "@neondatabase/auth": "0.7.0-beta",
+    "@neondatabase/serverless": "1.2.0",
+    "@opennextjs/cloudflare": "1.20.13",
     "@sentry/nextjs": "^10.75.0",
     "@serwist/turbopack": "9.5.12",
     "class-variance-authority": "^0.7.1",
@@ -25,7 +33,7 @@
     "date-fns": "^4.4.0",
     "lucide-react": "^1.45.0",
     "motion": "^13.2.0",
-    "next": "16.3.5",
+    "next": "16.4.3",
     "next-themes": "^0.4.6",
     "ogl": "^1.0.11",
     "react": "19.3.0",
@@ -52,7 +60,8 @@
     "esbuild": "0.28.1",
     "esbuild-wasm": "0.28.1",
     "eslint": "^9",
-    "eslint-config-next": "16.3.5",
+    "eslint-config-next": "16.4.3",
+    "fake-indexeddb": "6.2.6",
     "jsdom": "30.0.1",
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.8.1",
@@ -60,7 +69,7 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "5.0.0",
-    "wrangler": "4.131.1"
+    "wrangler": "4.152.0"
   },
   "packageManager": "pnpm@11.9.0"
 }

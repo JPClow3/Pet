@@ -1,4 +1,4 @@
-# PetHub Design Implementation Plan
+# Zelupi Design Implementation Plan
 
 **Source of truth:** [`design.md`](./design.md)  
 **Prepared:** 15 September 2026  
@@ -16,7 +16,7 @@ The remaining phases below are still the source-of-truth backlog: shared primiti
 
 ## 1. Outcome
 
-The implementation should make PetHub feel calmer, more trustworthy, and more consistent while preserving the warmth already visible in Welcome.
+The implementation should make Zelupi feel calmer, more trustworthy, and more consistent while preserving the warmth already visible in Welcome.
 
 Success means:
 

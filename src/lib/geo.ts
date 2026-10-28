@@ -5,8 +5,10 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { PILOT_CITY_CENTER } from "@/lib/domain/seed";
 import type { Coordinates } from "@/lib/domain/places";
 import { useAppStore } from "@/lib/store/app-store";
+import { useAsyncAction } from "@/lib/use-async-action";
 
-export type OriginStatus = "cidade" | "carregando" | "negado";
+export type OriginStatus =
+  "cidade" | "precisa" | "carregando" | "negado" | "indisponivel";
 
 const subscribeToNothing = () => () => {};
 
@@ -35,9 +37,11 @@ export function useOrigin(): {
     (state) => state.settings.usePreciseLocation,
   );
   const updateSettings = useAppStore((state) => state.updateSettings);
+  const action = useAsyncAction();
   const supported = useGeolocationSupported();
   const [coords, setCoords] = useState<Coordinates | null>(null);
-  const [denied, setDenied] = useState(false);
+  const [error, setError] = useState<"negado" | "indisponivel" | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!usePreciseLocation || coords || !supported) return;
@@ -45,35 +49,46 @@ export function useOrigin(): {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         if (cancelled) return;
+        setError(null);
         setCoords({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
       },
-      () => {
+      (failure) => {
         if (cancelled) return;
-        setDenied(true);
-        updateSettings({ usePreciseLocation: false });
+        setError(failure.code === 1 ? "negado" : "indisponivel");
       },
       { timeout: 8000 },
     );
     return () => {
       cancelled = true;
     };
-  }, [usePreciseLocation, coords, supported, updateSettings]);
+  }, [usePreciseLocation, coords, supported, attempt]);
 
-  const status: OriginStatus =
-    !usePreciseLocation || !supported
+  const status: OriginStatus = action.pending
+    ? "carregando"
+    : !usePreciseLocation
       ? "cidade"
-      : denied
-        ? "negado"
-        : coords
-          ? "cidade"
-          : "carregando";
+      : !supported
+        ? "indisponivel"
+        : error
+          ? error
+          : coords
+            ? "precisa"
+            : "carregando";
 
   return {
-    origin: coords ?? PILOT_CITY_CENTER,
+    origin:
+      usePreciseLocation && supported && coords ? coords : PILOT_CITY_CENTER,
     status,
-    request: () => updateSettings({ usePreciseLocation: true }),
+    request: () => {
+      void action.run(async () => {
+        setError(null);
+        setCoords(null);
+        if (usePreciseLocation) setAttempt((current) => current + 1);
+        else await updateSettings({ usePreciseLocation: true });
+      });
+    },
   };
 }

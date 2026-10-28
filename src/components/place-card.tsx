@@ -43,16 +43,16 @@ export function PlaceCard({
     <Link
       href={`/explore/${place.id}`}
       aria-label={`Ver detalhes de ${place.name}, ${placeCategoryMeta[place.category].label}`}
-      className="group flex min-h-[15.25rem] flex-col overflow-hidden rounded-[24px] border border-line/80 bg-white shadow-none transition-[border-color,background-color] duration-150 hover:border-teal/50 hover:bg-surface/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
+      className="group flex min-h-[15.25rem] flex-col overflow-hidden rounded-[24px] border border-line/80 bg-paper shadow-none transition-[border-color,background-color] duration-150 hover:border-teal/50 hover:bg-surface/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
     >
       <div
         className={`relative flex h-28 items-end overflow-hidden border-l-[6px] ${visualThemes[place.category].surface} ${visualThemes[place.category].rail} p-4`}
         aria-hidden="true"
       >
-        <span className="relative flex size-12 items-center justify-center rounded-2xl border border-white/80 bg-white/90 text-teal-ink shadow-sm">
+        <span className="relative flex size-12 items-center justify-center rounded-2xl border border-white/80 bg-paper/90 text-teal-ink shadow-sm">
           <Icon className="size-6" />
         </span>
-        <span className="absolute right-4 top-4 rounded-full bg-white/75 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-ink-soft/80">
+        <span className="absolute right-4 top-4 rounded-full bg-paper/75 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-ink-soft/80">
           {placeCategoryMeta[place.category].label}
         </span>
       </div>
@@ -98,9 +98,7 @@ export function PlaceCard({
                 className="size-3.5 shrink-0 text-teal-ink"
               />
             )}
-            <span className="truncate">
-              {sourceLabel} · atualização não informada
-            </span>
+            <span>{sourceLabel} · atualização não informada</span>
           </span>
           <span className="shrink-0 text-[0.72rem] font-semibold text-teal-ink">
             Detalhes

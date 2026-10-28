@@ -2,8 +2,9 @@
 
 import { Eye, EyeOff, Lock, NotebookPen, Plus, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { PageHeader } from "@/components/page-header";
 import { CareTabs } from "@/components/care-tabs";
@@ -17,10 +18,21 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { BottomSheet } from "@/components/ui/sheet";
 import { SkeletonScreen } from "@/components/ui/skeleton";
-import { formatFullDate, todayKey } from "@/lib/domain/dates";
+import { formatFullDate, isValidDateKey, todayKey } from "@/lib/domain/dates";
 import type { DiaryEntry } from "@/lib/domain/schema";
 import { useAppStore } from "@/lib/store/app-store";
 import { useHydrated } from "@/lib/store/hooks";
+import { useFormDraft } from "@/lib/use-form-draft";
+import { useAsyncAction } from "@/lib/use-async-action";
+
+const diaryDraftSchema = z.object({
+  text: z.string().max(800),
+  date: z.string().max(10),
+  place: z.string().max(80),
+  weight: z.string().max(40),
+  tags: z.array(z.string().max(40)).max(8),
+  visibility: z.enum(["privado", "publico"]),
+});
 
 const tagSuggestions = [
   "passeio",
@@ -34,6 +46,11 @@ const tagSuggestions = [
 
 export default function DiaryPage() {
   const params = useParams<{ petId: string }>();
+  return <PetDiaryPage key={params.petId} />;
+}
+
+function PetDiaryPage() {
+  const params = useParams<{ petId: string }>();
   const router = useRouter();
   const ready = useHydrated();
   const pet = useAppStore((state) =>
@@ -46,16 +63,35 @@ export default function DiaryPage() {
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<DiaryEntry | null>(null);
-  const [text, setText] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
-  const [date, setDate] = useState(todayKey());
-  const [place, setPlace] = useState("");
-  const [weight, setWeight] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const [visibility, setVisibility] = useState<"privado" | "publico">(
-    "privado",
+  const initialDraft = useMemo<z.infer<typeof diaryDraftSchema>>(
+    () => ({
+      text: editing?.text ?? "",
+      date: editing?.date ?? todayKey(),
+      place: editing?.place ?? "",
+      weight: editing?.weightKg ? String(editing.weightKg) : "",
+      tags: editing?.tags ?? [],
+      visibility: editing?.visibility ?? "privado",
+    }),
+    [editing],
   );
+  const draft = useFormDraft({
+    key: `diary:${params.petId}:${editing?.id ?? "new"}`,
+    schema: diaryDraftSchema,
+    initialValue: initialDraft,
+    enabled: ready,
+  });
+  const { text, date, place, weight, tags, visibility } = draft.value;
+  function setField<K extends keyof typeof initialDraft>(
+    key: K,
+    value: (typeof initialDraft)[K],
+  ) {
+    draft.setValue((current) => ({ ...current, [key]: value }));
+  }
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const submitting = useRef(false);
+  const removal = useAsyncAction();
 
   const entries = useMemo(
     () =>
@@ -67,13 +103,7 @@ export default function DiaryPage() {
 
   function resetForm() {
     setEditing(null);
-    setText("");
     setPhoto(null);
-    setDate(todayKey());
-    setPlace("");
-    setWeight("");
-    setTags([]);
-    setVisibility("privado");
     setError(null);
   }
 
@@ -84,19 +114,13 @@ export default function DiaryPage() {
 
   function openEdit(entry: DiaryEntry) {
     setEditing(entry);
-    setText(entry.text);
     setPhoto(entry.photo);
-    setDate(entry.date);
-    setPlace(entry.place ?? "");
-    setWeight(entry.weightKg ? String(entry.weightKg) : "");
-    setTags(entry.tags);
-    setVisibility(entry.visibility);
     setError(null);
     setOpen(true);
   }
 
-  function save() {
-    if (!pet) return;
+  async function save() {
+    if (!pet || submitting.current) return;
     if (text.trim().length === 0) {
       setError("Escreva pelo menos uma linha sobre esse momento.");
       return;
@@ -105,9 +129,17 @@ export default function DiaryPage() {
       weight.trim() === "" ? null : Number(weight.replace(",", "."));
     if (
       parsedWeight !== null &&
-      (Number.isNaN(parsedWeight) || parsedWeight <= 0)
+      (!Number.isFinite(parsedWeight) ||
+        parsedWeight <= 0 ||
+        parsedWeight > 120)
     ) {
-      setError("Informe o peso em quilos, por exemplo 31,4.");
+      setError(
+        "Informe um peso maior que zero e de até 120 kg, por exemplo 31,4.",
+      );
+      return;
+    }
+    if (!isValidDateKey(date) || date > todayKey()) {
+      setError("Informe uma data válida para o momento, até hoje.");
       return;
     }
     const payload = {
@@ -120,20 +152,36 @@ export default function DiaryPage() {
       weightKg: parsedWeight,
       visibility,
     };
-    if (editing) {
-      updateDiaryEntry(editing.id, payload);
-      toast.success("Momento atualizado");
-    } else {
-      addDiaryEntry(payload);
-      toast.success("Momento guardado", {
+    submitting.current = true;
+    setSaving(true);
+    try {
+      if (editing) await updateDiaryEntry(editing.id, payload);
+      else await addDiaryEntry(payload);
+      toast.success(editing ? "Momento atualizado" : "Momento guardado", {
         description:
-          visibility === "privado"
-            ? "Só você vê este registro."
-            : "Este registro aparece no seu perfil público.",
+          "Este registro fica neste aparelho; não é publicado na comunidade.",
       });
+      draft.clearDraft();
+      draft.setValue(initialDraft);
+      setOpen(false);
+      resetForm();
+    } catch {
+      setError(
+        "Não foi possível guardar o momento. Seu texto continua preenchido para tentar novamente.",
+      );
+    } finally {
+      submitting.current = false;
+      setSaving(false);
     }
+  }
+
+  function cancel() {
+    if (submitting.current) return;
+    draft.clearDraft();
+    draft.setValue(initialDraft);
+    setPhoto(editing?.photo ?? null);
     setOpen(false);
-    resetForm();
+    setError(null);
   }
 
   if (!ready) return <SkeletonScreen label="Abrindo o diário" />;
@@ -197,7 +245,7 @@ export default function DiaryPage() {
         <ul className="flex flex-col gap-4">
           {entries.map((entry) => (
             <li key={entry.id}>
-              <article className="flex flex-col gap-2 rounded-3xl border border-line bg-white p-4">
+              <article className="flex flex-col gap-2 rounded-3xl border border-line bg-paper p-4">
                 <div className="flex items-center justify-between gap-2">
                   <time className="text-meta text-muted" dateTime={entry.date}>
                     {formatFullDate(entry.date)}
@@ -253,11 +301,14 @@ export default function DiaryPage() {
                   <Button
                     size="sm"
                     variant="ghost"
+                    disabled={removal.pending}
                     onClick={() => {
                       if (!window.confirm("Excluir este momento do diário?"))
                         return;
-                      removeDiaryEntry(entry.id);
-                      toast.success("Momento excluído");
+                      void removal.run(async () => {
+                        await removeDiaryEntry(entry.id);
+                        toast.success("Momento excluído");
+                      });
                     }}
                   >
                     <Trash2 aria-hidden="true" className="size-4" />
@@ -272,31 +323,45 @@ export default function DiaryPage() {
 
       <BottomSheet
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          if (!submitting.current) setOpen(false);
+        }}
         title={editing ? "Editar momento" : "Novo momento"}
         description={`${pet.name} · o que aconteceu hoje?`}
       >
-        <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto">
+        <fieldset
+          disabled={saving}
+          className="flex max-h-[70vh] min-w-0 flex-col gap-4 overflow-y-auto"
+        >
+          {draft.restored || draft.storageError ? (
+            <p
+              role="status"
+              className="rounded-2xl border border-line bg-surface px-4 py-3 text-meta text-ink-soft"
+            >
+              {draft.storageError ??
+                "Rascunho recuperado nesta aba. Se havia uma nova foto, selecione-a novamente."}
+            </p>
+          ) : null}
           <PhotoPicker photo={photo} name={pet.name} onChange={setPhoto} />
 
           <Field label="O que aconteceu?" htmlFor="diary-text" error={error}>
             <Textarea
               id="diary-text"
               value={text}
-              onChange={(event) => setText(event.target.value)}
+              onChange={(event) => setField("text", event.target.value)}
               placeholder="Passeio no parque com o amigo dele."
               maxLength={800}
             />
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
             <Field label="Data" htmlFor="diary-date">
               <Input
                 id="diary-date"
                 type="date"
                 max={todayKey()}
                 value={date}
-                onChange={(event) => setDate(event.target.value)}
+                onChange={(event) => setField("date", event.target.value)}
               />
             </Field>
             <Field label="Peso" htmlFor="diary-weight" hint="Opcional">
@@ -304,7 +369,7 @@ export default function DiaryPage() {
                 id="diary-weight"
                 inputMode="decimal"
                 value={weight}
-                onChange={(event) => setWeight(event.target.value)}
+                onChange={(event) => setField("weight", event.target.value)}
                 placeholder="31,4"
               />
             </Field>
@@ -314,7 +379,7 @@ export default function DiaryPage() {
             <Input
               id="diary-place"
               value={place}
-              onChange={(event) => setPlace(event.target.value)}
+              onChange={(event) => setField("place", event.target.value)}
               placeholder="Parque das Figueiras"
               maxLength={80}
             />
@@ -333,16 +398,17 @@ export default function DiaryPage() {
                     type="button"
                     aria-pressed={selected}
                     onClick={() =>
-                      setTags((current) =>
+                      setField(
+                        "tags",
                         selected
-                          ? current.filter((item) => item !== tag)
-                          : [...current, tag].slice(0, 8),
+                          ? tags.filter((item) => item !== tag)
+                          : [...tags, tag].slice(0, 8),
                       )
                     }
                     className={`min-h-9 rounded-full border px-3 text-[0.85rem] font-medium ${
                       selected
                         ? "border-teal-ink bg-teal-ink text-white"
-                        : "border-line bg-white text-ink-soft"
+                        : "border-line bg-paper text-ink-soft"
                     }`}
                   >
                     {tag}
@@ -354,17 +420,17 @@ export default function DiaryPage() {
 
           <fieldset className="flex flex-col gap-2">
             <legend className="text-[0.85rem] font-medium text-ink">
-              Quem pode ver
+              Visibilidade desejada
             </legend>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 min-[400px]:flex-row">
               <button
                 type="button"
                 aria-pressed={visibility === "privado"}
-                onClick={() => setVisibility("privado")}
+                onClick={() => setField("visibility", "privado")}
                 className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl border text-[0.9rem] font-medium ${
                   visibility === "privado"
                     ? "border-teal-ink bg-mint text-teal-ink"
-                    : "border-line bg-white text-ink-soft"
+                    : "border-line bg-paper text-ink-soft"
                 }`}
               >
                 <EyeOff aria-hidden="true" className="size-4" />
@@ -373,32 +439,36 @@ export default function DiaryPage() {
               <button
                 type="button"
                 aria-pressed={visibility === "publico"}
-                onClick={() => setVisibility("publico")}
+                onClick={() => setField("visibility", "publico")}
                 className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl border text-[0.9rem] font-medium ${
                   visibility === "publico"
                     ? "border-teal-ink bg-mint text-teal-ink"
-                    : "border-line bg-white text-ink-soft"
+                    : "border-line bg-paper text-ink-soft"
                 }`}
               >
                 <Eye aria-hidden="true" className="size-4" />
-                Aparece no perfil
+                Perfil (prévia)
               </button>
             </div>
           </fieldset>
+          <p className="text-meta text-muted">
+            O diário fica neste aparelho. A opção de perfil marca sua
+            preferência; não publica este conteúdo na internet.
+          </p>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Button size="lg" className="flex-1" onClick={save}>
-              {editing ? "Salvar alterações" : "Guardar momento"}
+              {saving
+                ? "Guardando…"
+                : editing
+                  ? "Salvar alterações"
+                  : "Guardar momento"}
             </Button>
-            <Button
-              size="lg"
-              variant="secondary"
-              onClick={() => setOpen(false)}
-            >
+            <Button size="lg" variant="secondary" onClick={cancel}>
               Cancelar
             </Button>
           </div>
-        </div>
+        </fieldset>
       </BottomSheet>
     </div>
   );

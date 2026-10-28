@@ -41,6 +41,7 @@ import { placeCategoryIcons } from "@/lib/icons";
 import { useOrigin } from "@/lib/geo";
 import { useAppStore } from "@/lib/store/app-store";
 import { useHydrated } from "@/lib/store/hooks";
+import { useAsyncAction } from "@/lib/use-async-action";
 
 const visualThemes = {
   parque: { surface: "bg-lime-soft", rail: "border-l-teal" },
@@ -60,16 +61,20 @@ export default function PlaceDetailPage() {
   const reviews = useAppStore((state) => state.reviews);
   const addReview = useAppStore((state) => state.addReview);
   const track = useAppStore((state) => state.track);
-  const { origin } = useOrigin();
+  const { origin, status } = useOrigin();
 
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState(5);
   const [criteria, setCriteria] = useState<PlaceAttribute[]>([]);
   const [text, setText] = useState("");
+  const action = useAsyncAction();
 
   useEffect(() => {
     if (place)
-      track("place_view", { placeId: place.id, category: place.category });
+      void track("place_view", {
+        placeId: place.id,
+        category: place.category,
+      }).catch(() => {});
   }, [place, track]);
 
   const placeReviews = useMemo(
@@ -112,11 +117,11 @@ export default function PlaceDetailPage() {
         className={`relative overflow-hidden rounded-[28px] border-l-[6px] ${visualThemes[place.category].surface} ${visualThemes[place.category].rail} p-5`}
       >
         <div className="relative flex items-end justify-between gap-4">
-          <span className="flex size-16 items-center justify-center rounded-[22px] border border-white/70 bg-white/80 text-teal-ink shadow-sm backdrop-blur-sm">
+          <span className="flex size-16 items-center justify-center rounded-[22px] border border-white/70 bg-paper/80 text-teal-ink shadow-sm backdrop-blur-sm">
             <Icon aria-hidden="true" className="size-8" />
           </span>
           <div className="flex flex-col items-end gap-2 text-right">
-            <span className="rounded-full bg-white/80 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.08em] text-ink-soft/80">
+            <span className="rounded-full bg-paper/80 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.08em] text-ink-soft/80">
               {placeCategoryMeta[place.category].label}
             </span>
             <span className="text-[0.72rem] font-semibold text-ink-soft/70">
@@ -132,7 +137,9 @@ export default function PlaceDetailPage() {
             <ShieldAlert aria-hidden="true" className="size-3.5" />
             Atualização não informada
           </Chip>
-          {place.verified ? (
+          {place.seeded ? (
+            <Chip tone="muted">Local fictício · sem verificação real</Chip>
+          ) : place.verified ? (
             <Chip tone="muted">
               <BadgeCheck aria-hidden="true" className="size-3.5" />
               Verificação cadastrada
@@ -153,7 +160,10 @@ export default function PlaceDetailPage() {
             </span>
           </p>
           <p className="mt-1 pl-7 text-meta text-muted">
-            {distance} km de distância estimada a partir da região escolhida
+            {distance} km de distância estimada a partir{" "}
+            {status === "precisa"
+              ? "da sua localização"
+              : "do centro de São Paulo"}
           </p>
         </div>
 
@@ -188,24 +198,38 @@ export default function PlaceDetailPage() {
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <a
-            href={directionsUrl(place)}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => track("directions_clicked", { placeId: place.id })}
-            className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-[14px] bg-blue px-4 text-[0.9rem] font-semibold text-white transition-colors hover:bg-blue-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
-          >
-            <Navigation aria-hidden="true" className="size-4" />
-            Abrir rota
-            <ExternalLink aria-hidden="true" className="size-3.5 opacity-75" />
-          </a>
+          {place.seeded ? (
+            <p className="flex min-h-12 flex-1 items-center rounded-[14px] bg-surface px-4 text-meta font-semibold text-muted">
+              Rotas indisponíveis para locais fictícios
+            </p>
+          ) : (
+            <a
+              href={directionsUrl(place)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() =>
+                void track("directions_clicked", { placeId: place.id }).catch(
+                  () => {},
+                )
+              }
+              className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-[14px] bg-blue px-4 text-[0.9rem] font-semibold text-white transition-colors hover:bg-blue-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
+            >
+              <Navigation aria-hidden="true" className="size-4" />
+              Abrir rota
+              <ExternalLink
+                aria-hidden="true"
+                className="size-3.5 opacity-75"
+              />
+            </a>
+          )}
           <Button variant="secondary" size="lg" onClick={() => setOpen(true)}>
-            Avaliar local
+            Escrever avaliação local
           </Button>
         </div>
         <p className="text-[0.7rem] leading-relaxed text-muted">
-          A rota abre em outro aplicativo. Horário, contato e disponibilidade
-          atuais não estão disponíveis nesta prévia.
+          {place.seeded
+            ? "Este endereço é ilustrativo. Não use os exemplos para planejar uma visita."
+            : "A rota abre em outro aplicativo. Confirme horário, contato e disponibilidade antes de visitar."}
         </p>
       </Card>
 
@@ -240,7 +264,7 @@ export default function PlaceDetailPage() {
                 <span className="w-36 shrink-0 text-[0.88rem] text-ink-soft">
                   {placeAttributeLabels[score.attribute].label}
                 </span>
-                <span className="h-2 flex-1 overflow-hidden rounded-full bg-white">
+                <span className="h-2 flex-1 overflow-hidden rounded-full bg-paper">
                   <span
                     className={`block h-full rounded-full ${placeAttributeLabels[score.attribute].negative ? "bg-sun" : "bg-teal"}`}
                     style={{
@@ -352,11 +376,16 @@ export default function PlaceDetailPage() {
 
       <BottomSheet
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          if (!action.pending) setOpen(false);
+        }}
         title={`Como foi em ${place.name}?`}
         description="Marque apenas o que você realmente observou. Seu relato ajuda outro tutor a decidir."
       >
-        <div className="flex flex-col gap-5">
+        <fieldset
+          disabled={action.pending}
+          className="flex min-w-0 flex-col gap-5"
+        >
           <fieldset className="flex flex-col gap-2">
             <legend className="text-[0.88rem] font-semibold text-ink">
               Nota geral
@@ -369,7 +398,7 @@ export default function PlaceDetailPage() {
                   aria-pressed={rating === value}
                   aria-label={`${value} de 5`}
                   onClick={() => setRating(value)}
-                  className={`flex size-11 items-center justify-center rounded-2xl border text-[0.95rem] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 ${rating >= value ? "border-sun bg-sun-soft text-warning-ink" : "border-line bg-white text-muted"}`}
+                  className={`flex size-11 items-center justify-center rounded-2xl border text-[0.95rem] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 ${rating >= value ? "border-sun bg-sun-soft text-warning-ink" : "border-line bg-paper text-muted"}`}
                 >
                   {value}
                 </button>
@@ -400,7 +429,7 @@ export default function PlaceDetailPage() {
                           : [...current, attribute],
                       )
                     }
-                    className={`min-h-10 rounded-full border px-3 text-[0.82rem] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 ${selected ? "border-teal bg-teal text-white" : "border-line bg-white text-ink-soft hover:bg-lime-soft"}`}
+                    className={`min-h-10 rounded-full border px-3 text-[0.82rem] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 ${selected ? "border-teal bg-teal text-white" : "border-line bg-paper text-ink-soft hover:bg-lime-soft"}`}
                   >
                     {placeAttributeLabels[attribute].label}
                   </button>
@@ -427,22 +456,24 @@ export default function PlaceDetailPage() {
             <Button
               size="lg"
               className="flex-1"
-              onClick={() => {
-                addReview({
-                  placeId: place.id,
-                  rating,
-                  criteria,
-                  text: text.trim() || null,
-                });
-                setOpen(false);
-                setText("");
-                setCriteria([]);
-                toast.success("Avaliação salva", {
-                  description: "Obrigado por ajudar outro tutor.",
-                });
-              }}
+              onClick={() =>
+                void action.run(async () => {
+                  await addReview({
+                    placeId: place.id,
+                    rating,
+                    criteria,
+                    text: text.trim() || null,
+                  });
+                  setOpen(false);
+                  setText("");
+                  setCriteria([]);
+                  toast.success("Avaliação salva neste aparelho", {
+                    description: "Este exemplo não é enviado a outros tutores.",
+                  });
+                })
+              }
             >
-              Publicar avaliação
+              Salvar avaliação neste aparelho
             </Button>
             <Button
               size="lg"
@@ -452,7 +483,7 @@ export default function PlaceDetailPage() {
               Cancelar
             </Button>
           </div>
-        </div>
+        </fieldset>
       </BottomSheet>
     </div>
   );

@@ -81,7 +81,7 @@ export function PhotoPicker({
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={busy}
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-[14px] border border-line bg-white px-3 text-[0.85rem] font-semibold text-ink transition-colors hover:bg-surface disabled:pointer-events-none disabled:opacity-50"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-[14px] border border-line bg-paper px-3 text-[0.85rem] font-semibold text-ink transition-colors hover:bg-surface disabled:pointer-events-none disabled:opacity-50"
           >
             <ImagePlus aria-hidden="true" className="size-4" />
             {photo ? "Trocar" : "Escolher"}
@@ -90,7 +90,7 @@ export function PhotoPicker({
             type="button"
             onClick={() => cameraRef.current?.click()}
             disabled={busy}
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-[14px] border border-line bg-white px-3 text-[0.85rem] font-semibold text-ink transition-colors hover:bg-surface disabled:pointer-events-none disabled:opacity-50"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-[14px] border border-line bg-paper px-3 text-[0.85rem] font-semibold text-ink transition-colors hover:bg-surface disabled:pointer-events-none disabled:opacity-50"
           >
             <Camera aria-hidden="true" className="size-4" />
             Câmera

@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 import { useAppStore } from "@/lib/store/app-store";
 import { useHydrated } from "@/lib/store/hooks";
+import { useAsyncAction } from "@/lib/use-async-action";
 
 const kindLabels: Record<string, string> = {
   especie: "Espécie",
@@ -28,6 +29,7 @@ export default function GroupsPage() {
   const joinGroup = useAppStore((state) => state.joinGroup);
   const leaveGroup = useAppStore((state) => state.leaveGroup);
   const settings = useAppStore((state) => state.settings);
+  const action = useAsyncAction();
 
   const grouped = useMemo(() => {
     const byKind = new Map<string, typeof groups>();
@@ -83,12 +85,12 @@ export default function GroupsPage() {
                           </h3>
                           <p className="text-meta text-muted">
                             {group.members.toLocaleString("pt-BR")}{" "}
-                            participantes
+                            participantes fictícios
                             {group.city ? ` · ${group.city}` : ""}
                           </p>
                         </div>
                         <Chip tone={isMember ? "teal" : "muted"}>
-                          {isMember ? "Participando" : "Sugerido"}
+                          {isMember ? "Salvo" : "Exemplo"}
                         </Chip>
                       </div>
                       <p className="text-[0.9rem] text-ink-soft/90">
@@ -96,20 +98,25 @@ export default function GroupsPage() {
                       </p>
                       <button
                         type="button"
-                        onClick={() => {
-                          if (isMember) {
-                            leaveGroup(group.id);
-                          } else {
-                            joinGroup(group.id);
-                          }
-                        }}
+                        disabled={action.pending}
+                        onClick={() =>
+                          void action.run(async () => {
+                            if (isMember) {
+                              await leaveGroup(group.id);
+                            } else {
+                              await joinGroup(group.id);
+                            }
+                          })
+                        }
                         className={`min-h-11 self-start rounded-full px-4 text-[0.9rem] font-medium ${
                           isMember
                             ? "border border-line text-ink hover:bg-surface"
                             : "bg-blue text-white"
                         }`}
                       >
-                        {isMember ? "Sair do grupo" : "Entrar no grupo"}
+                        {isMember
+                          ? "Remover dos meus exemplos"
+                          : "Salvar grupo neste aparelho"}
                       </button>
                     </Card>
                   </li>
@@ -121,8 +128,8 @@ export default function GroupsPage() {
       )}
 
       <Card className="border-sun/30 bg-sun-soft text-meta text-ink-soft/80">
-        Grupos por cidade mostram conteúdo de {settings.city}. Você pode
-        silenciar um grupo sem sair dele.
+        Sua cidade no perfil: {settings.city}. Salvar um grupo apenas organiza
+        esta prévia; não inscreve você em uma comunidade real.
       </Card>
     </div>
   );

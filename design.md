@@ -1,5 +1,6 @@
-# PetHub UI/UX Design Specification
+# Zelupi UI/UX Design Specification
 
+**Brand:** Zelupi, selected 28 October 2026; see [brand guidelines](docs/brand-guidelines.md).
 **Status:** Refined product design direction for implementation planning  
 **Date:** 15 September 2026  
 **Primary market:** Brazil, Portuguese (pt-BR)  
@@ -16,7 +17,7 @@
 
 **“O cuidado de hoje. A história inteira do seu pet.”**
 
-PetHub should not feel like a pet shop, a social network with a health tab, or a veterinary ERP. It should feel like the one dependable place where a tutor can answer:
+Zelupi should not feel like a pet shop, a social network with a health tab, or a veterinary ERP. It should feel like the one dependable place where a tutor can answer:
 
 1. Which pet am I looking after?
 2. What needs attention now?
@@ -54,18 +55,18 @@ Identity, health, reminders, diary, and the shareable pet card form the trusted 
 This direction combines:
 
 - analysis of the product brief and domain capabilities, excluding its visual design;
-- inspection of the current PetHub repository and rendered Welcome surface;
+- inspection of the current Zelupi repository and rendered Welcome surface;
 - a September 2026 benchmark of Brazilian and international pet apps;
 - a focused style study of Finn, Luffu, and August Health EHR in Refero Styles;
-- a component-fit review of Componentry and React Bits against PetHub's mobile, accessibility, and performance constraints;
+- a component-fit review of Componentry and React Bits against Zelupi's mobile, accessibility, and performance constraints;
 - mobile navigation, accessibility, status-message, and permission-request conventions;
 - official guidance for Next.js App Router, shadcn/ui, HeroUI (formerly NextUI), and React Bits.
 
-App-store reviews were used only as directional signals. They are not controlled usability research and should be validated through PetHub interviews and task testing.
+App-store reviews were used only as directional signals. They are not controlled usability research and should be validated through Zelupi interviews and task testing.
 
 ### Competitor synthesis
 
-| Product       | What it validates                                                                                        | What PetHub should learn                                                     | Gap PetHub can own                                                 |
+| Product       | What it validates                                                                                        | What Zelupi should learn                                                     | Gap Zelupi can own                                                 |
 | ------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | Petlove       | Brazilian demand for profiles, reminders, health, services, subscriptions, and commerce in one ecosystem | Local relevance and connected service status matter                          | Keep care primary and promotions visibly separate                  |
 | 11pets        | Deep records, recurring preventive care, measurements, exports, multi-pet support, and caregiver sharing | A complete history is valuable                                               | Make entry and retrieval action-led instead of taxonomic and dense |
@@ -89,13 +90,13 @@ App-store reviews were used only as directional signals. They are not controlled
 
 ### Strategic opportunity
 
-PetHub can own **the calm daily home for a pet’s life**: private by default, fast on a phone, honest about offline/local data, and unusually clear about what requires attention.
+Zelupi can own **the calm daily home for a pet’s life**: private by default, fast on a phone, honest about offline/local data, and unusually clear about what requires attention.
 
 ### Reference translation — inspiration, not imitation
 
-The reference pass sharpens PetHub's existing direction instead of replacing it. Each source contributes one useful idea; no source is adopted as a complete skin.
+The reference pass sharpens Zelupi's existing direction instead of replacing it. Each source contributes one useful idea; no source is adopted as a complete skin.
 
-| Reference                    | Useful signal                                                                                                 | PetHub translation                                                                                                 | Deliberately not copied                                                                                          |
+| Reference                    | Useful signal                                                                                                 | Zelupi translation                                                                                                 | Deliberately not copied                                                                                          |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
 | Refero — Finn                | Warm near-black type, friendly pet photography, color fields, hairlines, and almost no elevation              | Keep an affectionate pet tone, but separate surfaces primarily with canvas, white, and one quiet tint              | Ecommerce pills on every control, oversized condensed display type, product-color zoning                         |
 | Refero — Luffu               | A family almanac feeling, warm paper ground, restrained palette, generous negative space, editorial hierarchy | Make history, diary, and pet identity feel collected and durable rather than dashboard-like                        | Six-pixel rectilinear controls, single-weight UI type, full-bleed marketing photography inside operational flows |
@@ -107,7 +108,7 @@ The reference pass sharpens PetHub's existing direction instead of replacing it.
 
 ### Taste decision
 
-The refined direction is **Calm Care Editorial**. PetHub keeps its ivory ground, deep navy ink, cobalt brand anchor, care teal, coral warmth, and sunny highlight, but stops showing all of them at once. The visual hierarchy should come from typography, spacing, pet photography, and surface temperature before decoration.
+The refined direction is **Calm Care Editorial**. Zelupi keeps its ivory ground, deep navy ink, cobalt brand anchor, care teal, coral warmth, and sunny highlight, but stops showing all of them at once. The visual hierarchy should come from typography, spacing, pet photography, and surface temperature before decoration.
 
 The operational app is calmer than Welcome. Welcome may carry one memorable editorial gesture; Today, care forms, reminders, lost mode, and public identity prioritize legibility, consequence, and trust.
 
@@ -268,7 +269,7 @@ Goal: create one pet and one meaningful care item without requesting premature p
    - Headline: “A vida do seu pet, organizada sem complicação.”
    - Support: “Cuidados, lembranças e carteirinha em um lugar só.”
    - Primary CTA: **Começar**.
-   - Secondary: **Já uso o PetHub** only after real accounts exist.
+   - Secondary: **Já uso o Zelupi** only after real accounts exist.
    - Trust note: “Você controla o que fica privado e o que é compartilhado.”
 2. **Pet essentials**
    - Required: name and species.
@@ -514,28 +515,28 @@ The system should feel tactile without looking like a stack of stickers. Color f
 
 | Token              | Value     | Use                                      |
 | ------------------ | --------- | ---------------------------------------- |
-| `background`       | `#FFF9EF` | Warm ivory app canvas                    |
+| `background`       | `#fbf8f2` | Warm ivory app canvas                    |
 | `surface`          | `#FFFFFF` | Cards, sheets, form surfaces             |
-| `surface-subtle`   | `#F1F3F7` | Quiet neutral grouping                   |
-| `foreground`       | `#17213A` | Deep navy primary text                   |
-| `muted-foreground` | `#65708A` | Secondary text; verify AA at final sizes |
-| `primary`          | `#006B5B` | Care actions and success-oriented flows  |
-| `primary-hover`    | `#005447` | Hover/pressed darkening                  |
-| `primary-soft`     | `#D7F7EB` | Selected/positive surfaces               |
-| `brand`            | `#3457D5` | Navigation, onboarding, and brand anchor |
-| `brand-soft`       | `#DFE6FF` | Discovery and account surfaces           |
-| `accent`           | `#F2553F` | Emotional highlight and diary cues       |
-| `accent-soft`      | `#FFE1D9` | Warm memory/identity surfaces            |
-| `sun`              | `#FFD45C` | Today, emphasis, and friendly callouts   |
-| `lime`             | `#AEE46D` | Positive momentum and community cues     |
-| `info`             | `#3457D5` | Informational status                     |
+| `surface-subtle`   | `#f0f3f3` | Quiet neutral grouping                   |
+| `foreground`       | `#172c42` | Deep navy primary text                   |
+| `muted-foreground` | `#617080` | Secondary text; verify AA at final sizes |
+| `primary`          | `#216b5f` | Care actions and success-oriented flows  |
+| `primary-hover`    | `#1b5e54` | Hover/pressed darkening                  |
+| `primary-soft`     | `#e3f0e8` | Selected/positive surfaces               |
+| `brand`            | `#315bd6` | Navigation, onboarding, and brand anchor |
+| `brand-soft`       | `#e5ebfc` | Discovery and account surfaces           |
+| `accent`           | `#d9826b` | Emotional highlight and diary cues       |
+| `accent-soft`      | `#f9e6de` | Warm memory/identity surfaces            |
+| `sun`              | `#f2d58b` | Today, emphasis, and friendly callouts   |
+| `lime`             | `#dce7df` | Positive momentum and community cues     |
+| `info`             | `#315bd6` | Informational status                     |
 | `success`          | `#247A4D` | Completed/saved status                   |
 | `warning`          | `#8A5A00` | Due-soon text/icon                       |
 | `warning-soft`     | `#FFF1CF` | Due-soon surface                         |
 | `danger`           | `#B42318` | Overdue, destructive, lost mode          |
 | `danger-soft`      | `#FDE7E5` | Error/lost-mode surface                  |
-| `border`           | `#DCE1EA` | Dividers and controls                    |
-| `focus`            | `#3457D5` | 3px focus ring with offset               |
+| `border`           | `#dde3e7` | Dividers and controls                    |
+| `focus`            | `#315bd6` | 3px focus ring with offset               |
 
 `accent` is not used as small white-text button fill until contrast is verified; use dark foreground on `accent-soft` instead.
 
@@ -561,19 +562,19 @@ Per-screen rules:
 
 | Token                | Value     |
 | -------------------- | --------- |
-| `background`         | `#111729` |
-| `surface`            | `#192137` |
-| `surface-subtle`     | `#20283E` |
-| `foreground`         | `#FFF8ED` |
-| `muted-foreground`   | `#ABB3C8` |
-| `primary`            | `#70E2C9` |
+| `background`         | `#111d2b` |
+| `surface`            | `#1b2a3c` |
+| `surface-subtle`     | `#233245` |
+| `foreground`         | `#fbf8f2` |
+| `muted-foreground`   | `#a9b8c7` |
+| `primary`            | `#9bd4bd` |
 | `primary-foreground` | `#062A23` |
-| `brand`              | `#9EB1FF` |
-| `accent`             | `#FF826D` |
-| `border`             | `#39415A` |
-| `warning`            | `#FFD45C` |
+| `brand`              | `#315bd6` |
+| `accent`             | `#eda18b` |
+| `border`             | `#354659` |
+| `warning`            | `#f2d58b` |
 | `danger`             | `#FF8A80` |
-| `focus`              | `#9EB1FF` |
+| `focus`              | `#adc0ff` |
 
 Test each text/background and state pair independently. Never assume light-mode semantics remain distinguishable in dark mode.
 
@@ -629,7 +630,7 @@ Do not run three overlapping component systems. Use one behavioral foundation an
 1. **Base UI is the behavioral foundation already present in the app.** Components remain owned in the repository. `components.json` stays on its Base UI-compatible style; never mix Base UI, Radix, and React Aria variants inside one primitive family.
 2. **shadcn/ui is the source and composition convention.** Generate only missing primitives that use the project's configured base. Do not overwrite owned domain components or install parallel Button, Dialog, Tabs, Select, or Toast systems.
 3. **Componentry is a narrow expressive reference.** Its Annotated Text pattern may inform one Welcome-only owned component after license/source review. Do not install its broader visual-effects stack.
-4. **React Bits is a selective interaction/source reference.** Adapt Stepper, Animated List, and Count Up ideas into PetHub-owned components only where they improve a real task. Do not copy the library's dark demo styling.
+4. **React Bits is a selective interaction/source reference.** Adapt Stepper, Animated List, and Count Up ideas into Zelupi-owned components only where they improve a real task. Do not copy the library's dark demo styling.
 5. **Motion is the single JavaScript animation engine.** It is already installed and wrapped in `MotionConfig reducedMotion="user"`. CSS and primitive-owned transitions handle simple color, opacity, and pressed feedback. Motion handles state-linked, interruptible, layout, and sequenced animation. Do not add GSAP or another animation engine.
 
 ### Recommended shadcn primitives
@@ -674,7 +675,7 @@ Every domain component owns its normal, loading, empty/absent, error, disabled, 
 
 ### Componentry and React Bits adoption matrix
 
-| Pattern                                                             | Decision                    | PetHub-owned use                                                       | Requirements                                                                                                                                                                          |
+| Pattern                                                             | Decision                    | Zelupi-owned use                                                       | Requirements                                                                                                                                                                          |
 | ------------------------------------------------------------------- | --------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Componentry Annotated Text                                          | Trial                       | One short underline or highlight in the Welcome value proposition      | Decorative mark is `aria-hidden`; one draw only; final state renders immediately under reduced motion; verify source license before copying any code                                  |
 | React Bits Stepper                                                  | Adopt the interaction model | Onboarding progress and step transitions                               | Real headings and step text remain in the DOM; required context cannot be skipped; Back preserves fields; focus moves to the new `h1`; use existing `motion` only                     |
@@ -689,7 +690,7 @@ Every domain component owns its normal, loading, empty/absent, error, disabled, 
 - Onboarding may animate the step container and progress indicator; no decorative background animation.
 - Operational screens may animate only the object whose state changed, its summary count, and the transient confirmation.
 - A viewport may contain at most one autonomous animation. Loading indicators and user-triggered transitions do not count, but they still honor reduced motion.
-- Remove or leave unused any WebGL/aurora background from production bundles. PetHub does not need OGL for its core experience.
+- Remove or leave unused any WebGL/aurora background from production bundles. Zelupi does not need OGL for its core experience.
 
 ---
 
@@ -1166,7 +1167,7 @@ A surface is not complete until:
 
 Validate these before high-fidelity implementation:
 
-1. Is PetHub a local-first personal tool at launch, or will real accounts/sync ship with P0?
+1. Is Zelupi a local-first personal tool at launch, or will real accounts/sync ship with P0?
 2. Will the public card remain a snapshot or move to a revocable server-backed identity?
 3. Which Brazilian city supplies the first genuinely curated place dataset?
 4. Who owns freshness, verification, and disputes for place attributes?

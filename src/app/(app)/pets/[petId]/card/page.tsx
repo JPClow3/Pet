@@ -3,18 +3,18 @@
 import { ChevronRight, Eye, ShieldCheck, Siren } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
 import { PetShareStudio } from "@/components/pet-share-studio";
+import { ManagedCardPanel } from "@/components/managed-card-panel";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
-import { buildPublicCard, publicCardPath } from "@/lib/domain/card";
+import { buildPublicCard } from "@/lib/domain/card";
 import { todayKey } from "@/lib/domain/dates";
-import { useOriginUrl } from "@/lib/geo";
 import { useAppStore } from "@/lib/store/app-store";
 
 export default function PetCardPage() {
@@ -26,7 +26,7 @@ export default function PetCardPage() {
   const settings = useAppStore((state) => state.settings);
   const updatePet = useAppStore((state) => state.updatePet);
   const track = useAppStore((state) => state.track);
-  const origin = useOriginUrl();
+  const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (pet) track("qr_viewed", { petId: pet.id });
@@ -55,9 +55,6 @@ export default function PetCardPage() {
     );
   }
 
-  const path = publicCardPath(publicCard);
-  const url = origin ? `${origin}${path}` : null;
-
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 pb-12">
       <PageHeader
@@ -66,6 +63,7 @@ export default function PetCardPage() {
         backHref="/pets"
       />
 
+      <ManagedCardPanel petId={pet.id} card={publicCard} onLink={setUrl} />
       <PetShareStudio
         card={publicCard}
         photo={pet.photo}
@@ -87,7 +85,7 @@ export default function PetCardPage() {
             </div>
           </div>
           <ButtonLink
-            href={path}
+            href={url}
             variant="secondary"
             size="sm"
             className="w-full sm:w-auto"
@@ -104,24 +102,38 @@ export default function PetCardPage() {
       <Card className="flex flex-col gap-3">
         <CardTitle>Modo perdido</CardTitle>
         <p className="text-meta text-muted">
-          Com o modo ativo, a página pública mostra o aviso, a data de ativação
-          e o seu contato preferido.
+          O aviso muda no PNG local. Para alterar um link gerenciado, atualize a
+          publicação acima após salvar. Links antigos de cópia não mudam.
         </p>
         <Button
           variant={pet.lostMode.active ? "danger" : "secondary"}
-          onClick={() => {
-            const active = !pet.lostMode.active;
-            updatePet(pet.id, {
-              lostMode: {
-                active,
-                since: active ? todayKey() : null,
-                note: active
-                  ? (pet.lostMode.note ??
-                    "Se você encontrou este pet, use o contato abaixo.")
-                  : null,
-              },
-            });
-            toast(active ? "Modo perdido ativado" : "Modo perdido desativado");
+          onClick={async () => {
+            try {
+              const active = !pet.lostMode.active;
+              await updatePet(pet.id, {
+                lostMode: {
+                  active,
+                  since: active ? todayKey() : null,
+                  note: active
+                    ? (pet.lostMode.note ??
+                      "Se você encontrou este pet, confira as orientações de contato nesta cópia.")
+                    : null,
+                },
+              });
+              toast(
+                active ? "Modo perdido ativado" : "Modo perdido desativado",
+                {
+                  description:
+                    "Atualize a publicação gerenciada para mudar o link. Imagens e links antigos de cópia não mudam.",
+                },
+              );
+            } catch (caught) {
+              toast.error(
+                caught instanceof Error
+                  ? caught.message
+                  : "Não foi possível salvar o modo perdido.",
+              );
+            }
           }}
         >
           <Siren aria-hidden="true" className="size-4" />
@@ -129,6 +141,15 @@ export default function PetCardPage() {
             ? "Desativar modo perdido"
             : "Ativar modo perdido"}
         </Button>
+        {pet.lostMode.active && !pet.card.contact ? (
+          <p
+            role="status"
+            className="text-meta leading-relaxed text-warning-ink"
+          >
+            Nenhum contato foi compartilhado. Adicione um telefone em Ajustar
+            privacidade para que quem encontrar o pet consiga falar com você.
+          </p>
+        ) : null}
       </Card>
 
       <Card className="flex flex-col gap-2">
@@ -176,8 +197,10 @@ export default function PetCardPage() {
           </li>
         </ul>
         <p className="rounded-2xl bg-surface px-3 py-2 text-meta leading-relaxed text-muted">
-          A imagem e o QR são um retrato dos dados atuais. Gere uma nova
-          carteirinha depois de alterar a privacidade ou o perfil.
+          Novos links gerenciados expiram e podem ser revogados ou atualizados
+          acima. Mudar a privacidade local não publica nada automaticamente.
+          Links antigos que contêm uma cópia dos dados continuam imutáveis e não
+          podem ser revogados. Imagens e capturas já salvas também permanecem.
         </p>
         <Link
           href={`/pets/${pet.id}/edit`}

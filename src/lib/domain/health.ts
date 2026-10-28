@@ -6,6 +6,7 @@ import {
   isValidDateKey,
 } from "./dates";
 import type { HealthRecord } from "./schema";
+import { medicationClock, nextMedicationOccurrence } from "./medication";
 
 export type Urgency = "vencido" | "hoje" | "proximo" | "futuro";
 
@@ -29,12 +30,29 @@ export function urgencyText(days: number): string {
   return `venceu há ${Math.abs(days)} dias`;
 }
 
-export function dueRecords(records: HealthRecord[]): HealthRecord[] {
-  return records.filter((record) => isValidDateKey(record.nextDueDate));
+export function dueRecords(
+  records: HealthRecord[],
+  now = new Date(),
+): HealthRecord[] {
+  return records
+    .map((record) =>
+      record.medication
+        ? {
+            ...record,
+            nextDueDate:
+              nextMedicationOccurrence(record.medication, now)?.date ?? null,
+            leadDays: 0,
+          }
+        : record,
+    )
+    .filter((record) => isValidDateKey(record.nextDueDate));
 }
 
-export function sortByDue(records: HealthRecord[]): HealthRecord[] {
-  return [...dueRecords(records)].sort((a, b) =>
+export function sortByDue(
+  records: HealthRecord[],
+  now = new Date(),
+): HealthRecord[] {
+  return [...dueRecords(records, now)].sort((a, b) =>
     (a.nextDueDate ?? "").localeCompare(b.nextDueDate ?? ""),
   );
 }
@@ -73,10 +91,10 @@ export function healthStatus(
     };
   }
 
-  const due = sortByDue(records);
+  const due = sortByDue(records, now);
   const scored = due.map((record) => ({
     record,
-    ...urgencyFor(record.nextDueDate ?? "", record.leadDays, now),
+    ...recordUrgency(record, now),
   }));
 
   const overdue = scored.filter((item) => item.urgency === "vencido");
@@ -145,17 +163,39 @@ export function upcomingRecords(
   now: Date = new Date(),
   limit = 3,
 ): { record: HealthRecord; days: number; urgency: Urgency }[] {
-  return sortByDue(records)
+  return sortByDue(records, now)
     .map((record) => ({
       record,
-      ...urgencyFor(record.nextDueDate ?? "", record.leadDays, now),
+      ...recordUrgency(record, now),
     }))
     .slice(0, limit);
 }
 
+function recordUrgency(
+  record: HealthRecord,
+  now: Date,
+): { days: number; urgency: Urgency } {
+  const dose = record.medication
+    ? nextMedicationOccurrence(record.medication, now)
+    : null;
+  if (!dose) return urgencyFor(record.nextDueDate ?? "", record.leadDays, now);
+  const clock = medicationClock(dose.schedule.timeZone, now);
+  const days = Math.round(
+    (Date.parse(`${dose.date}T12:00:00Z`) -
+      Date.parse(`${clock.date}T12:00:00Z`)) /
+      86400000,
+  );
+  return {
+    days,
+    urgency: days === 0 ? "hoje" : days < 0 ? "vencido" : "futuro",
+  };
+}
+
 export type WeightPoint = { date: string; weightKg: number };
 
-export function weightHistory(records: HealthRecord[]): WeightPoint[] {
+export function weightHistory(
+  records: { date: string; weightKg: number | null }[],
+): WeightPoint[] {
   return records
     .filter((record) => record.weightKg !== null)
     .map((record) => ({
@@ -166,7 +206,7 @@ export function weightHistory(records: HealthRecord[]): WeightPoint[] {
 }
 
 export function weightTrend(
-  records: HealthRecord[],
+  records: { date: string; weightKg: number | null }[],
   fallbackWeight: number | null = null,
 ): {
   latest: number;

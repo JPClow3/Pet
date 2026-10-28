@@ -1,16 +1,27 @@
 "use client";
 
 import { ChevronDown, LoaderCircle } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
+import { z } from "zod";
 
 import { PhotoPicker } from "@/components/photo-picker";
-import { Button } from "@/components/ui/button";
+import {
+  MedicationPlanFields,
+  medicationPlanDraft,
+  medicationPlanDraftSchema,
+  parseMedicationPlanDraft,
+} from "@/components/medication-plan-fields";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
-import { todayKey } from "@/lib/domain/dates";
+import { isValidDateKey, todayKey } from "@/lib/domain/dates";
 import { HEALTH_TYPES, healthTypeMeta } from "@/lib/domain/labels";
 import { healthTypeIcons } from "@/lib/icons";
 import type { HealthRecord, HealthRecordType } from "@/lib/domain/schema";
 import type { NewRecordInput } from "@/lib/store/app-store";
+import { useFormDraft } from "@/lib/use-form-draft";
+import { healthRecordTypeSchema } from "@/lib/domain/schema";
+import { createMedicationCourse } from "@/lib/domain/medication";
+import { newId } from "@/lib/id";
 import { cn } from "@/lib/utils";
 
 const leadOptions = [
@@ -29,7 +40,23 @@ const recurrenceOptions = [
   { value: 12, label: "Todo ano" },
 ];
 
+const recordDraftSchema = z.object({
+  type: healthRecordTypeSchema,
+  title: z.string().max(80),
+  date: z.string().max(10),
+  hasDue: z.boolean(),
+  nextDueDate: z.string().max(10),
+  leadDays: z.number().int().min(0).max(365),
+  recurrenceMonths: z.number().int().min(0).max(60),
+  professional: z.string().max(80),
+  notes: z.string().max(600),
+  weight: z.string().max(30),
+  medicationEnabled: z.boolean().default(false),
+  medicationPlan: medicationPlanDraftSchema.optional(),
+});
+
 export function RecordForm({
+  petId,
   petName,
   initial,
   initialType,
@@ -38,33 +65,69 @@ export function RecordForm({
   onDelete,
   onCancel,
 }: {
+  petId: string;
   petName: string;
   initial?: HealthRecord;
   initialType?: HealthRecordType;
   submitLabel: string;
-  onSubmit: (values: NewRecordInput) => void;
-  onDelete?: () => void;
+  onSubmit: (values: NewRecordInput) => void | Promise<void>;
+  onDelete?: () => void | Promise<void>;
   onCancel?: () => void;
 }) {
-  const [type, setType] = useState<HealthRecordType>(
-    initial?.type ?? initialType ?? "vacina",
+  const initialDraft = useMemo(
+    () => ({
+      type: initial?.type ?? initialType ?? "vacina",
+      title: initial?.title ?? "",
+      date: initial?.date ?? todayKey(),
+      hasDue: Boolean(initial?.nextDueDate),
+      nextDueDate: initial?.nextDueDate ?? "",
+      leadDays:
+        initial?.leadDays ??
+        healthTypeMeta[initialType ?? "vacina"].defaultLeadDays,
+      recurrenceMonths: initial?.recurrenceMonths ?? 0,
+      professional: initial?.professional ?? "",
+      notes: initial?.notes ?? "",
+      weight: initial?.weightKg ? String(initial.weightKg) : "",
+      medicationEnabled: !initial && initialType === "medicamento",
+      medicationPlan: medicationPlanDraft(),
+    }),
+    [initial, initialType],
   );
-  const [title, setTitle] = useState(initial?.title ?? "");
-  const [date, setDate] = useState(initial?.date ?? todayKey());
-  const [hasDue, setHasDue] = useState(Boolean(initial?.nextDueDate));
-  const [nextDueDate, setNextDueDate] = useState(initial?.nextDueDate ?? "");
-  const [leadDays, setLeadDays] = useState(
-    initial?.leadDays ??
-      healthTypeMeta[initialType ?? "vacina"].defaultLeadDays,
-  );
-  const [recurrenceMonths, setRecurrenceMonths] = useState(
-    initial?.recurrenceMonths ?? 0,
-  );
-  const [professional, setProfessional] = useState(initial?.professional ?? "");
-  const [notes, setNotes] = useState(initial?.notes ?? "");
-  const [weight, setWeight] = useState(
-    initial?.weightKg ? String(initial.weightKg) : "",
-  );
+  const { value, setValue, restored, storageError, ready, clearDraft } =
+    useFormDraft({
+      key: `record:${petId}:${initial?.id ?? initialType ?? "vacina"}`,
+      schema: recordDraftSchema,
+      initialValue: initialDraft,
+    });
+  const {
+    type,
+    title,
+    date,
+    hasDue,
+    nextDueDate,
+    leadDays,
+    recurrenceMonths,
+    professional,
+    notes,
+    weight,
+  } = value;
+  function setField<K extends keyof typeof value>(
+    field: K,
+    next: (typeof value)[K],
+  ) {
+    setValue((current) => ({ ...current, [field]: next }));
+  }
+  const setType = (next: HealthRecordType) => setField("type", next);
+  const setTitle = (next: string) => setField("title", next);
+  const setDate = (next: string) => setField("date", next);
+  const setHasDue = (next: boolean) => setField("hasDue", next);
+  const setNextDueDate = (next: string) => setField("nextDueDate", next);
+  const setLeadDays = (next: number) => setField("leadDays", next);
+  const setRecurrenceMonths = (next: number) =>
+    setField("recurrenceMonths", next);
+  const setProfessional = (next: string) => setField("professional", next);
+  const setNotes = (next: string) => setField("notes", next);
+  const setWeight = (next: string) => setField("weight", next);
   const [attachment, setAttachment] = useState<string | null>(
     initial?.attachmentData ?? null,
   );
@@ -75,16 +138,23 @@ export function RecordForm({
   const meta = healthTypeMeta[type];
   const today = todayKey();
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (pending) return;
+    if (pending || !ready) return;
 
     const finalTitle = title.trim() || meta.label;
-    if (hasDue && !nextDueDate) {
-      setError("Informe a próxima data ou desmarque o aviso.");
+    if (!isValidDateKey(date) || date > today) {
+      setError("Informe uma data válida, até hoje, para o cuidado.");
       return;
     }
-    if (hasDue && nextDueDate < date) {
+    const structuredMedication =
+      type === "medicamento" &&
+      (Boolean(initial?.medication) || value.medicationEnabled);
+    if (!structuredMedication && hasDue && !isValidDateKey(nextDueDate)) {
+      setError("Informe uma próxima data válida ou desmarque o aviso.");
+      return;
+    }
+    if (!structuredMedication && hasDue && nextDueDate < date) {
       setError(
         "A próxima data precisa ser igual ou posterior ao cuidado registrado.",
       );
@@ -94,36 +164,62 @@ export function RecordForm({
       weight.trim() === "" ? null : Number(weight.replace(",", "."));
     if (
       parsedWeight !== null &&
-      (Number.isNaN(parsedWeight) || parsedWeight <= 0)
+      (!Number.isFinite(parsedWeight) ||
+        parsedWeight <= 0 ||
+        parsedWeight > 120)
     ) {
       setDetailsOpen(true);
-      setError("Informe o peso em quilos, por exemplo 12,4.");
+      setError(
+        "Informe um peso maior que zero e de até 120 kg, por exemplo 12,4.",
+      );
+      return;
+    }
+    if (type === "peso" && parsedWeight === null) {
+      setError("Informe o peso em quilos para registrar a pesagem.");
       return;
     }
 
     setError(null);
     setPending(true);
     try {
-      onSubmit({
-        petId: initial?.petId ?? "",
+      const medication =
+        initial?.medication ??
+        (structuredMedication
+          ? createMedicationCourse(
+              parseMedicationPlanDraft(
+                value.medicationPlan ?? medicationPlanDraft(),
+              ),
+              newId("med-plan"),
+            )
+          : null);
+      await onSubmit({
+        petId,
         type,
         title: finalTitle,
         date,
-        nextDueDate: hasDue && nextDueDate ? nextDueDate : null,
-        leadDays: hasDue ? leadDays : 0,
+        nextDueDate:
+          !structuredMedication && hasDue && nextDueDate ? nextDueDate : null,
+        leadDays: !structuredMedication && hasDue ? leadDays : 0,
         recurrenceMonths:
-          hasDue && recurrenceMonths > 0 ? recurrenceMonths : null,
+          !structuredMedication && hasDue && recurrenceMonths > 0
+            ? recurrenceMonths
+            : null,
         professional: professional.trim() || null,
         notes: notes.trim() || null,
         attachmentName: attachment ? `anexo-${type}.jpg` : null,
         attachmentData: attachment,
         weightKg: parsedWeight,
+        medication,
       });
-    } catch {
-      setPending(false);
+      clearDraft();
+    } catch (cause) {
       setError(
-        "Não foi possível salvar. Seus dados continuam preenchidos para tentar novamente.",
+        cause instanceof Error
+          ? cause.message
+          : "Não foi possível salvar. Seus dados continuam preenchidos para tentar novamente.",
       );
+    } finally {
+      setPending(false);
     }
   }
 
@@ -152,6 +248,16 @@ export function RecordForm({
           {error}
         </p>
       ) : null}
+      {restored ? (
+        <p role="status" className="text-meta text-teal-ink">
+          Rascunho recuperado nesta aba. Anexe a foto novamente, se necessário.
+        </p>
+      ) : null}
+      {storageError ? (
+        <p role="status" className="text-meta text-danger-ink">
+          {storageError}
+        </p>
+      ) : null}
 
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-[0.85rem] font-semibold text-ink">
@@ -166,19 +272,24 @@ export function RecordForm({
                 key={item}
                 type="button"
                 aria-pressed={selected}
+                disabled={
+                  Boolean(initial?.medication) && item !== "medicamento"
+                }
                 onClick={() => {
                   setType(item);
                   setLeadDays(healthTypeMeta[item].defaultLeadDays);
                   setHasDue(false);
                   setNextDueDate("");
                   setRecurrenceMonths(0);
+                  if (!initial)
+                    setField("medicationEnabled", item === "medicamento");
                   if (!initial) setTitle("");
                 }}
                 className={cn(
                   "flex min-h-16 items-center gap-2 rounded-[16px] border px-3 text-left text-[0.85rem] font-semibold transition-[background-color,border-color,transform] active:scale-[0.98] sm:min-h-20 sm:flex-col sm:items-start sm:justify-center sm:gap-1",
                   selected
                     ? "border-teal-ink bg-mint text-teal-ink"
-                    : "border-line bg-white text-ink-soft hover:bg-surface",
+                    : "border-line bg-paper text-ink-soft hover:bg-surface",
                 )}
               >
                 <Icon
@@ -193,10 +304,53 @@ export function RecordForm({
       </fieldset>
 
       {type === "medicamento" ? (
-        <p className="rounded-[16px] border border-info-ink/25 bg-info-soft px-3 py-2 text-meta leading-relaxed text-info-ink">
-          Este registro guarda o que você informou. A agenda não calcula dose,
-          frequência ou segurança clínica automaticamente.
-        </p>
+        initial?.medication ? (
+          <p className="text-meta text-muted">
+            O plano e o histórico de doses são gerenciados acima. Estas
+            alterações preservam todas as doses registradas.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-ink">
+              <input
+                type="checkbox"
+                className="size-5 accent-teal-ink"
+                checked={value.medicationEnabled}
+                disabled={Boolean(initial?.completedAt)}
+                onChange={(e) =>
+                  setField("medicationEnabled", e.target.checked)
+                }
+              />
+              Organizar doses conforme a prescrição
+            </label>
+            {initial?.completedAt ? (
+              <div className="flex flex-col gap-2">
+                <p className="text-meta text-muted">
+                  Este ciclo já foi concluído. Para organizar novas doses, crie
+                  outro registro.
+                </p>
+                <ButtonLink
+                  size="sm"
+                  variant="secondary"
+                  href={`/pets/${petId}/health/new?type=medicamento`}
+                >
+                  Novo plano de medicação
+                </ButtonLink>
+              </div>
+            ) : null}
+            {value.medicationEnabled ? (
+              <MedicationPlanFields
+                value={value.medicationPlan ?? medicationPlanDraft()}
+                onChange={(plan) => setField("medicationPlan", plan)}
+              />
+            ) : (
+              <p className="text-meta text-muted">
+                Registro simples, sem plano de doses. Você pode acrescentar o
+                plano depois.
+              </p>
+            )}
+          </div>
+        )
       ) : null}
 
       <Field
@@ -223,6 +377,7 @@ export function RecordForm({
           <Input
             id="record-date"
             type="date"
+            required
             max={today}
             value={date}
             onChange={(event) => setDate(event.target.value)}
@@ -242,7 +397,11 @@ export function RecordForm({
         ) : null}
       </div>
 
-      {meta.hasDue ? (
+      {meta.hasDue &&
+      !(
+        type === "medicamento" &&
+        (initial?.medication || value.medicationEnabled)
+      ) ? (
         <fieldset className="flex flex-col gap-3 rounded-[20px] border border-warning/40 bg-warning-soft/70 p-4">
           <legend className="px-1 text-[0.85rem] font-bold text-ink">
             Próximo cuidado
@@ -292,7 +451,7 @@ export function RecordForm({
                         "min-h-11 rounded-full border px-3 text-[0.85rem] font-semibold transition-colors",
                         leadDays === option.value
                           ? "border-teal-ink bg-teal-ink text-white"
-                          : "border-line bg-white text-ink-soft hover:bg-surface",
+                          : "border-line bg-paper text-ink-soft hover:bg-surface",
                       )}
                     >
                       {option.label}
@@ -315,7 +474,7 @@ export function RecordForm({
                         "min-h-11 rounded-full border px-3 text-[0.85rem] font-semibold transition-colors",
                         recurrenceMonths === option.value
                           ? "border-info-ink bg-info-ink text-white"
-                          : "border-line bg-white text-ink-soft hover:bg-surface",
+                          : "border-line bg-paper text-ink-soft hover:bg-surface",
                       )}
                     >
                       {option.label}
@@ -362,21 +521,7 @@ export function RecordForm({
                 maxLength={80}
               />
             </Field>
-          ) : (
-            <Field
-              label="Peso"
-              htmlFor="record-weight-details"
-              hint="Em quilos"
-            >
-              <Input
-                id="record-weight-details"
-                inputMode="decimal"
-                value={weight}
-                onChange={(event) => setWeight(event.target.value)}
-                placeholder="12,4"
-              />
-            </Field>
-          )}
+          ) : null}
 
           <Field
             label="Observações"
@@ -414,7 +559,12 @@ export function RecordForm({
       ) : null}
 
       <div className="flex flex-col gap-2 sm:flex-row-reverse">
-        <Button type="submit" size="lg" className="flex-1" disabled={pending}>
+        <Button
+          type="submit"
+          size="lg"
+          className="flex-1"
+          disabled={pending || !ready}
+        >
           {pending ? (
             <LoaderCircle aria-hidden="true" className="size-5 animate-spin" />
           ) : null}
@@ -426,7 +576,10 @@ export function RecordForm({
             variant="secondary"
             size="lg"
             className="sm:flex-none"
-            onClick={onCancel}
+            onClick={() => {
+              clearDraft();
+              onCancel();
+            }}
             disabled={pending}
           >
             Cancelar
@@ -438,7 +591,21 @@ export function RecordForm({
             variant="danger"
             size="lg"
             className="sm:flex-none"
-            onClick={onDelete}
+            onClick={async () => {
+              setPending(true);
+              setError(null);
+              try {
+                await onDelete();
+              } catch (cause) {
+                setError(
+                  cause instanceof Error
+                    ? cause.message
+                    : "Não foi possível excluir.",
+                );
+              } finally {
+                setPending(false);
+              }
+            }}
             disabled={pending}
           >
             Excluir

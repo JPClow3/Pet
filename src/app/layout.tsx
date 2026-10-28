@@ -4,7 +4,9 @@ import Script from "next/script";
 import { SerwistProvider } from "@serwist/turbopack/react";
 import { Toaster } from "sonner";
 
+import { brand, brandColors } from "@/lib/brand";
 import { OfflineBanner } from "@/components/offline-banner";
+import { AppUpdateNotice } from "@/components/app-update-notice";
 import { StoreProvider } from "@/components/store-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
@@ -19,10 +21,6 @@ const fraunces = Fraunces({
   subsets: ["latin"],
 });
 
-const APP_NAME = "PetHub";
-const APP_TITLE = "PetHub — a vida do seu pet em um só lugar";
-const APP_DESCRIPTION =
-  "Identidade digital, carteira de saúde, diário, lembretes e descoberta local para o seu pet.";
 const THEME_BOOTSTRAP_SCRIPT = `(function () {
   var root = document.documentElement;
   var theme = "light";
@@ -35,22 +33,30 @@ const THEME_BOOTSTRAP_SCRIPT = `(function () {
 })();`;
 
 export const metadata: Metadata = {
-  applicationName: APP_NAME,
-  title: { default: APP_TITLE, template: `%s · ${APP_NAME}` },
-  description: APP_DESCRIPTION,
-  appleWebApp: { capable: true, statusBarStyle: "default", title: APP_NAME },
+  metadataBase: process.env.SITE_URL
+    ? new URL(process.env.SITE_URL)
+    : undefined,
+  applicationName: brand.name,
+  title: { default: brand.title, template: `%s · ${brand.name}` },
+  description: brand.description,
+  appleWebApp: { capable: true, statusBarStyle: "default", title: brand.name },
   formatDetection: { telephone: false },
+  twitter: {
+    card: "summary_large_image",
+    title: brand.title,
+    description: brand.description,
+  },
   openGraph: {
     type: "website",
-    siteName: APP_NAME,
-    title: APP_TITLE,
-    description: APP_DESCRIPTION,
+    siteName: brand.name,
+    title: brand.title,
+    description: brand.description,
     locale: "pt_BR",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#fff9ef",
+  themeColor: brandColors.canvas,
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -67,10 +73,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Script id="theme-bootstrap" strategy="beforeInteractive">
           {THEME_BOOTSTRAP_SCRIPT}
         </Script>
-        <SerwistProvider swUrl="/serwist/sw.js">
+        <SerwistProvider swUrl="/serwist/sw.js" reloadOnOnline={false}>
           <ThemeProvider>
             <StoreProvider>
               <OfflineBanner />
+              <AppUpdateNotice />
               {children}
               <Toaster position="top-center" closeButton richColors />
             </StoreProvider>

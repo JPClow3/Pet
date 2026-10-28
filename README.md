@@ -1,146 +1,173 @@
-# PetHub
+# Zelupi
 
-> “Tudo sobre a vida do seu pet, em um só lugar.”
+**Cuidados e história do seu pet.** Nome escolhido: Zelupi (ze-LU-pi).
+A identidade, o domínio planejado e a continuidade dos dados estão em
+[docs/brand-guidelines.md](docs/brand-guidelines.md).
 
-PetHub é o hub da vida do pet: identidade digital, carteira de saúde, diário,
-lembretes e descoberta local em um só lugar. Este repositório implementa o MVP
-descrito no **PetHub — Product & App Design Document v1.0** (`PetHub_Design_Document.pdf`).
+Zelupi organiza o perfil, a saúde, a rotina e o diário do pet. O app funciona com
+um perfil salvo no aparelho e oferece uma **conta opcional com cópia de
+dados na nuvem sobre Neon/Postgres**. A direção visual é mobile-first, Calm Care Editorial.
 
-O produto é uma **PWA mobile-first, local-first**: os dados do tutor, dos pets e da
-saúde ficam no aparelho, o app abre offline e a carteirinha pública é compartilhável
-por QR Code sem depender de servidor.
+O escopo e os limites de cada recurso estão em [docs/roadmap.md](docs/roadmap.md)
+e na página /roadmap. O documento histórico original é PetHub_Design_Document.pdf; a especificação
+vigente é design.md.
 
-## Stack
+## Rodar e validar
 
-| Camada | Escolha |
-| --- | --- |
-| Framework | Next.js 16 (App Router, Turbopack, React Compiler) |
-| UI | React 19, Tailwind CSS 4 com tokens do design doc (§19) |
-| Estado | Zustand com persistência em `localStorage` |
-| Validação e modelo | Zod |
-| PWA / offline | Serwist (`@serwist/turbopack`) com precache e fallback `/~offline` |
-| QR Code | `uqr` com renderização SVG própria |
-| Motion | `motion` (bottom sheets) e `ogl` (fundo animado do onboarding) |
-| Datas | `date-fns` com locale `pt-BR` |
-| Testes | Vitest (projeto `unit` em Node + projeto `ui` em jsdom com Testing Library) |
-| Deploy | Node.js ou Cloudflare Workers via `@opennextjs/cloudflare` |
-
-## Como rodar
-
-```bash
+```sh
 pnpm install
-pnpm dev            # http://localhost:3000
+pnpm dev
 ```
 
-| Comando | O que faz |
-| --- | --- |
-| `pnpm dev` | Sobe o servidor de desenvolvimento |
-| `pnpm build` | Build de produção (`next build`) |
-| `pnpm start` | Serve o build de produção |
-| `pnpm lint` | ESLint (`eslint-config-next` + regras do React Compiler) |
-| `pnpm typecheck` | `tsc --noEmit` |
-| `pnpm test` | Vitest (unit + ui) |
-| `pnpm icons` | Regenera os ícones da PWA a partir do SVG (usa `sharp`) |
-| `pnpm cf:build` / `cf:preview` / `cf:deploy` | Build, preview e deploy no Cloudflare Workers (OpenNext) |
+No Windows, os scripts também podem ser executados com `npm run dev`,
+`npm run lint` e `npm run build` após instalar as dependências. O OpenNext já
+usa `npm run build` para evitar a reparação de opcionais por plataforma que o
+pnpm pode iniciar ao executar um script.
 
-### Deploy
+| Comando                                 | Finalidade                                                       |
+| --------------------------------------- | ---------------------------------------------------------------- |
+| pnpm dev                                | Desenvolvimento em http://localhost:3000                         |
+| pnpm build / pnpm start                 | Build e servidor de produção Node.js                             |
+| pnpm lint                               | ESLint e regras do React Compiler                                |
+| pnpm typecheck                          | TypeScript sem emitir arquivos                                   |
+| pnpm test --pool=threads --maxWorkers=2 | Testes de domínio e UI com concorrência limitada                 |
+| pnpm test:cloud                         | Isolamento e conflitos no banco configurado; rollback dos testes |
+| pnpm test:packaging                     | Regressões do manifesto de instrumentação para o Worker          |
+| pnpm brand:sync / pnpm brand:check      | Gerar e conferir tokens e símbolo da marca                       |
+| pnpm icons                              | Regenerar ícones da PWA                                          |
+| pnpm cf:build / cf:preview / cf:deploy  | Build, preview e publicação no Cloudflare Workers                |
 
-- **Node.js (verificado)**: `pnpm build && pnpm start`. É o caminho usado na validação
-  deste repositório — build de produção, 22 rotas e o service worker com 57 entradas de
-  precache.
-- **Cloudflare Workers (verificado)**: `pnpm cf:deploy` gera o bundle OpenNext, promove o
-  service worker já compilado para os Static Assets e publica o Worker. O projeto usa o linker
-  hoisted do pnpm porque o empacotador do OpenNext não consegue percorrer os links simbólicos do
-  layout isolado no Windows. O asset `/serwist/sw.js` é servido diretamente pelo edge, com escopo
-  raiz definido em `public/_headers`, sem executar o `esbuild` dentro do runtime do Workers.
+O projeto usa Next.js 16, React 19, Tailwind CSS 4, Zustand, Zod, Serwist e Vitest
+com Testing Library. Antes de alterar APIs do Next.js, leia os guias instalados em
+node_modules/next/dist/docs/.
 
-## Fluxo principal
+## Fluxos implementados
 
-1. `/welcome` — boas-vindas (§9.2 passo 1).
-2. `/onboarding` — conta local, primeiro pet, interesses e resumo com lembretes sugeridos.
-3. `/` — Home com pet ativo, situação de saúde, cuidados de hoje, diário, lugares próximos e comunidade.
-4. `/pets` — perfil do pet com hero, saúde, peso, diário, documentos e carteirinha.
-5. `/reminders` — lista de lembretes com concluir e adiar.
-6. `/pets/[petId]/card` — carteirinha com QR, modo perdido e controles de privacidade.
-7. `/p/[code]` — página pública controlada pelo tutor (o QR abre aqui).
-8. `/explore`, `/community`, `/products`, `/profile`, `/notifications` — descoberta local, comunidade, recomendações e conta.
+- **Primeiro uso:** quatro etapas com foco e scroll gerenciados, peso decimal,
+  validação de datas e rascunho. Perfil e primeiro cuidado são gravados juntos;
+  pular o cuidado não cria registro incompleto.
+- **Meu pet:** cadastro e edição, histórico de oito tipos de registro de saúde,
+  peso, diário com foto e carteirinha. A navegação é Hoje / Meu pet / Descobrir / Ajustes.
+- **Agenda:** lembretes derivados dos registros e rotinas com criação e edição.
+  Concluir, adiar, reagendar, pular, encerrar recorrência e desfazer preservam o
+  histórico; a interface explica o próximo ciclo.
+- **Medicamentos:** dose e unidade informadas, horários, intervalo em dias,
+  início/fim, fuso, instruções e fonte. Confirmações e correções preservam o
+  histórico das doses; editar ou encerrar um plano mantém suas versões anteriores.
+- **Documentos:** biblioteca por pet com PDF, JPEG, PNG, GIF e WebP de até 10 MB,
+  verificação do conteúdo, título, categoria, data e notas. Busca, download do
+  original, lixeira e restauração funcionam sem depender de um registro de saúde.
+- **Histórico para impressão:** seleção por data do registro e tipo de cuidado,
+  contagem e resumo HTML para imprimir ou salvar como PDF pelo navegador. Inclui
+  planos de medicação e suas correções; arquivos são baixados separadamente.
+- **Rascunhos:** onboarding, pet, saúde e diário recuperam texto após navegar ou
+  recarregar a mesma aba. Usam sessionStorage, schemas validados e chaves por
+  pet/registro. Fotos e anexos devem ser selecionados novamente após recarregar.
+  Fechar a sessão da aba pode remover rascunhos.
+- **Backup local:** exportação JSON, importação validada com prévia e confirmação,
+  recuperação de corrupção e exportação bruta de emergência. Restaurar substitui
+  a cópia inteira, sem mesclar arquivos. A versão 2 inclui a biblioteca e a lixeira;
+  versões anteriores continuam aceitas. Guarde uma cópia antes.
+- **Persistência:** IndexedDB guarda o estado e os arquivos em áreas separadas.
+  Escritas são transacionais e serializadas; validação e gravação precedem a
+  mudança em memória. Migração do localStorage preserva a origem em caso de falha.
+  Falhas de cota e conflitos entre abas oferecem recuperação explícita.
+- **Espaço no aparelho:** estimativa de uso e cota, quando o navegador oferece,
+  com atualização manual e solicitação explícita de armazenamento persistente.
+  A interface distingue autorização, recusa e APIs indisponíveis; backup continua
+  necessário mesmo com persistência autorizada.
+- **Carteirinha:** PNG local disponível sem conta. Novos links publicados usam
+  referência aleatória, campos escolhidos, prazo de 7/30/90 dias e ações de
+  atualizar, trocar ou revogar. Páginas usam noindex e no-referrer, ficam fora do
+  cache do service worker e têm URLs removidas da telemetria.
+- **Atualização da PWA:** nova versão é anunciada; o tutor decide quando preparar
+  e reabrir. Não há recarga automática durante edição.
+- **Web Push opcional:** consentimento por aparelho, agenda de sete dias,
+  categorias, fuso, horário silencioso e cancelamento. O texto é genérico e não
+  confirma doses; depende de configuração hospedada e validação de entrega.
 
-## Arquitetura
+## Conta opcional e cópia na nuvem
 
+O modo local não exige conta. O backend usa **Neon/Postgres e Neon Auth**, com
+autenticação e operações de nuvem separadas dos dados do aparelho. A interface
+distingue perfil local, sessão da conta e cópia remota.
+
+O contrato da sincronização é **manual e por cópia inteira**: consultar, enviar,
+restaurar e excluir são ações explícitas. Controle de revisão e geração impede
+sobrescrita silenciosa quando outro aparelho atualiza a mesma conta; mudanças
+locais ou de sessão invalidam confirmações antigas. Não há merge por registro,
+sincronização contínua ou fila de uploads offline.
+
+Entrar na conta não envia dados automaticamente. Sair da conta não apaga o
+perfil do aparelho. Rascunhos não fazem parte do backup nem da cópia na nuvem.
+A disponibilidade de autenticação, recuperação e snapshots depende da configuração
+do backend e da validação hospedada. O servidor usa:
+
+- NEON_AUTH_BASE_URL: endpoint do Neon Auth.
+- NEON_AUTH_COOKIE_SECRET: segredo para a sessão da aplicação.
+- DATABASE_URL: conexão Postgres do papel limitado da aplicação.
+
+As migrations em db/migrations/ definem snapshots, controle de geração e
+carteirinhas gerenciadas. O login limitado pethub_api assume os papéis de acesso
+da aplicação; o servidor valida sessão e e-mail confirmado antes de operações
+privadas. O proxy de autenticação fica em /api/auth/[...path]. Credenciais do banco
+e segredos de cookie ficam apenas no servidor, nunca em variáveis públicas.
+Siga [docs/neon-setup.md](docs/neon-setup.md) e valide cadastro, recuperação,
+isolamento e entrega de e-mail no destino antes de declarar o fluxo pronto.
+
+Publicar uma carteirinha exige consentimento e revisão dos campos. Atualizar
+mantém o endereço, trocar invalida o link anterior e revogar interrompe novas
+consultas. Mudanças locais de contato, modo perdido ou privacidade não publicam
+automaticamente. Sair da conta e excluir um pet local também não revogam sua
+publicação. O token fica na sessão da aba e não entra no backup.
+
+## Superfícies de demonstração
+
+**Explorar, comunidade e produtos usam exemplos locais.** Locais fictícios não
+oferecem rotas externas; marcas, preços e produtos não oferecem compra. O mapa é
+esquemático. Sem posição precisa, distâncias partem do centro de São Paulo;
+escrever outra cidade no perfil não faz geocodificação.
+
+Textos, respostas, reações e grupos da comunidade ficam no aparelho. Ocultar
+conteúdo não envia uma denúncia nem inicia moderação. A preferência de
+visibilidade do diário também não publica na internet. Não há rede social
+compartilhada nem catálogo comercial real.
+
+## Limites atuais
+
+- O espaço disponível depende do navegador. Backup local aceita até 100 MB,
+  cópia na nuvem até 20 MB e cada documento até 10 MB. Arquivos no backup JSON
+  ocupam mais espaço que os originais. Não há limpeza automática por pressão de
+  espaço; remover pet, restaurar ou reiniciar os dados elimina mídia sem referência.
+- Lembretes são calculados dentro do app. **Não há push nem alarmes garantidos
+  com o app fechado.**
+- Links antigos `/p/<base64>` continuam snapshots legíveis e imutáveis: não expiram
+  nem podem ser revogados. Novos links `/p/c_<token>` são gerenciados; revogação não
+  apaga PNGs, arquivos ou capturas já recebidos.
+- Medicamentos reproduzem informações do tutor, sem calcular dose, sugerir
+  tratamento ou validar prescrição. Falta de confirmação não prova dose dada.
+- Lixeira de documentos não oferece exclusão permanente individual. Billing,
+  cuidadores, moderação e assistente de IA permanecem no roadmap.
+- Service worker e fallback offline não garantem acesso a toda rota dinâmica
+  nunca visitada. Instalação, atualização e retomada precisam de testes próprios
+  em dispositivos reais.
+
+## Organização
+
+```text
+src/app/(app)/            telas de cuidado, descoberta e configurações
+src/app/account/          conta opcional
+src/app/onboarding/       configuração inicial
+src/app/p/[code]/         carteirinha gerenciada ou snapshot legado
+src/app/sw.ts             service worker e política de cache
+src/components/          componentes e testes de interface
+src/lib/domain/          schemas, validação e regras puras
+src/lib/store/           IndexedDB, arquivos, estado local e recuperação
+src/lib/cloud/           integração de conta e cópias remotas
+src/lib/use-form-draft.ts rascunhos de texto por sessão
 ```
-src/
-  app/
-    (app)/            # shell com navegação (Início, Meu Pet, Explorar, Comunidade, Perfil)
-    onboarding/       # fluxo de entrada
-    p/[code]/         # carteirinha pública (sem login, sem store)
-    sw.ts             # service worker (Serwist) com precache e fallback offline
-    manifest.ts       # manifest da PWA
-  components/         # UI: primitivos, cards de domínio, mapa, QR, fotos
-  lib/
-    domain/           # tipos + Zod, lógica pura e testável (sem React)
-    store/            # store Zustand persistida + hooks de leitura
-    geo.ts            # origem geográfica com geolocalização opcional
-    image.ts          # compressão de fotos antes de salvar
-```
 
-**Decisões relevantes**
-
-- **Lógica de domínio isolada**: `src/lib/domain` não importa React nem o store. Regras como
-  urgência de um cuidado, próxima dose, tendência de peso, recomendação de produto, agregação
-  de critérios de avaliação e codificação do QR são funções puras cobertas por testes.
-- **Lembretes derivados**: registros de saúde com `nextDueDate` geram os lembretes. Concluir um
-  cuidado cria um novo registro com a data de hoje e o próximo ciclo, preservando o histórico.
-- **Carteirinha sem backend**: o QR carrega um payload compacto em base64url (`/p/<code>`) com
-  apenas os campos liberados pelo tutor. Raça, cidade, situação de saúde e contato têm
-  interruptores próprios (§14 e §23). A foto não entra no QR (limite de capacidade do código).
-- **Privacidade por padrão**: diário privado, conteúdo comercial desligado, opt-in explícito
-  para ofertas, exportação e exclusão de dados no perfil (§23).
-
-## Escopo entregue
-
-- **P0** — cadastro/login local, perfil do pet, saúde (oito tipos de registro com CRUD e
-  histórico), lembretes com aviso configurável, diário com foto/texto/peso, carteirinha com QR
-  e página pública, modo perdido.
-- **P1** — Explorar com busca, filtros por categoria e atributos, mapa esquemático com
-  alternativa em lista e avaliações estruturadas para pets; comunidade com feed, tipos de
-  publicação, grupos, comentários, marcação de resposta útil, denúncia e bloqueio;
-  central de notificações por tipo.
-- **P2** — Descobrir com recomendações explicadas (porte, fase de vida, rotina, parceiro
-  próximo) e links de parceiro identificados.
-- **P3 / IA** — não implementado (depende de dados suficientes, conforme o roadmap §27).
-
-## Limites conhecidos
-
-- **Sem servidor**: não há autenticação real, sincronização entre aparelhos, push notifications
-  nem moderação server-side. A fila de notificações é calculada no aparelho.
-- **Dados de exemplo**: lugares, parceiros e produtos são fictícios, criados para a
-  cidade-piloto (São Paulo) descrita no documento.
-- **Mapa esquemático**: sem tiles de rua; mostra distância relativa entre os locais e mantém a
-  lista como alternativa acessível (§33).
-- **Fotos** são comprimidas no cliente antes de entrar no `localStorage`; anexos grandes
-  consomem a cota do navegador.
-
-## Acessibilidade e estados de interface
-
-O app segue o baseline AA do design doc: contraste verificado par a par nos tokens
-(`#17324D` 13:1, `#0E6A62` 6,5:1, `#596877` 4,8:1 sobre as superfícies com alfa usadas nos
-cards), alvos de toque de no mínimo 44 px, status nunca depende só de cor (sempre há ícone e
-texto), rótulos em controles icônicos, foco visível e respeito a `prefers-reduced-motion`.
-
-Dois ajustes deliberados em relação à paleta do documento (§19.1), ambos para cumprir o
-baseline AA do §33:
-
-- `Neutral 500` passou de `#667788` para `#596877`, porque o valor original ficava em 3,9:1
-  sobre superfícies com alfa (`bg-danger/15`, `bg-surface`) usadas em cards de alerta.
-- O `Teal #2AA198` é usado apenas como preenchimento (ações, barras, marcadores). Texto e
-  links usam `Teal ink #0E6A62`, que passa AA sobre branco, menta e sobre o próprio teal claro.
-
-As telas cobrem os estados de carregamento (skeleton), vazio (com convite para a primeira
-ação), erro, offline, permissão negada e conta nova (§21).
-
-## Próximos passos sugeridos
-
-1. Backend com autenticação, sincronização e moderação (mantendo o domínio puro já isolado).
-2. Push notifications reais e lembretes no servidor (§22).
-3. Catálogo curado de lugares por cidade e integração de geocodificação real.
-4. Assistente de organização de informações com os guardrails clínicos do documento (§18).
+Cloudflare usa OpenNext e promove o service worker compilado para Static Assets
+em scripts/promote-serwist-assets.mjs. O linker hoisted do pnpm atende ao
+empacotamento no Windows. Validação local, publicação, autenticação no provedor e
+comportamento em dispositivo são evidências distintas.

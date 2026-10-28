@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { buildReminders, type ReminderItem } from "@/lib/domain/reminders";
 import type { HealthRecord, Pet } from "@/lib/domain/schema";
 import { seedIfNeeded, useAppStore } from "./app-store";
+import { useCurrentTime } from "@/lib/use-current-time";
 
 export function useHydrated(): boolean {
   return useAppStore((state) => state.ready);
@@ -28,13 +29,14 @@ export function usePetRecords(petId: string | null): HealthRecord[] {
 }
 
 export function useReminderItems(): ReminderItem[] {
+  const now = useCurrentTime();
   const pets = useAppStore((state) => state.pets);
   const records = useAppStore((state) => state.records);
   const reminders = useAppStore((state) => state.reminders);
   const snoozes = useAppStore((state) => state.snoozes);
   return useMemo(
-    () => buildReminders({ pets, records, reminders, snoozes }),
-    [pets, records, reminders, snoozes],
+    () => buildReminders({ pets, records, reminders, snoozes, now }),
+    [pets, records, reminders, snoozes, now],
   );
 }
 

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 
@@ -7,17 +7,17 @@ import { addMonthsToKey, shiftDays, todayKey } from "@/lib/domain/dates";
 import type { ReminderItem } from "@/lib/domain/reminders";
 import { useAppStore } from "@/lib/store/app-store";
 
-function resetStore() {
-  useAppStore.setState(useAppStore.getInitialState(), true);
+async function resetStore() {
+  await useAppStore.setState(useAppStore.getInitialState(), true);
 }
 
-function createPetWithVaccine() {
-  const petId = useAppStore.getState().addPet({
+async function createPetWithVaccine() {
+  const petId = await useAppStore.getState().addPet({
     name: "Thor",
     species: "cao",
     sex: "macho",
   });
-  const recordId = useAppStore.getState().addRecord({
+  const recordId = await useAppStore.getState().addRecord({
     petId,
     type: "vacina",
     title: "Vacina V10",
@@ -54,8 +54,8 @@ function buildItem(overrides: Partial<ReminderItem> = {}): ReminderItem {
 }
 
 describe("ReminderCard", () => {
-  beforeEach(() => {
-    resetStore();
+  beforeEach(async () => {
+    await resetStore();
   });
 
   it("mostra a urgência e o prazo do cuidado", () => {
@@ -69,7 +69,7 @@ describe("ReminderCard", () => {
 
   it("conclui o cuidado criando o próximo ciclo no histórico", async () => {
     const user = userEvent.setup();
-    const { recordId } = createPetWithVaccine();
+    const { recordId } = await createPetWithVaccine();
     const record = useAppStore
       .getState()
       .records.find((item) => item.id === recordId);
@@ -83,6 +83,12 @@ describe("ReminderCard", () => {
 
     render(<ReminderCard item={item} />);
     await user.click(screen.getByRole("button", { name: /concluir/i }));
+    await waitFor(() =>
+      expect(
+        useAppStore.getState().records.find((entry) => entry.id === recordId)
+          ?.nextDueDate,
+      ).toBeNull(),
+    );
 
     const state = useAppStore.getState();
     const original = state.records.find((entry) => entry.id === recordId);
@@ -95,17 +101,37 @@ describe("ReminderCard", () => {
 
   it("adia o lembrete por uma semana", async () => {
     const user = userEvent.setup();
+    const petId = await useAppStore
+      .getState()
+      .addPet({ name: "Thor", species: "cao", sex: "macho" });
+    const reminderId = await useAppStore.getState().addReminder({
+      petId,
+      title: "Comprar ração",
+      kind: "rotina",
+      dueDate: todayKey(),
+      leadDays: 1,
+      notes: null,
+    });
     const item = buildItem({
-      key: "manual:reminder-1",
+      key: `manual:${reminderId}`,
       source: "manual",
-      id: "reminder-1",
+      id: reminderId,
+      petId,
+      dueDate: todayKey(),
     });
 
     render(<ReminderCard item={item} />);
     await user.click(screen.getByRole("button", { name: /adiar/i }));
     await user.click(screen.getByRole("button", { name: /adiar 1 semana/i }));
+    await waitFor(() =>
+      expect(useAppStore.getState().snoozes[`manual:${reminderId}`]).toBe(
+        shiftDays(todayKey(), 7),
+      ),
+    );
 
     const state = useAppStore.getState();
-    expect(state.snoozes["manual:reminder-1"]).toBe(shiftDays(todayKey(), 7));
+    expect(state.snoozes[`manual:${reminderId}`]).toBe(
+      shiftDays(todayKey(), 7),
+    );
   });
 });

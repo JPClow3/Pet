@@ -49,19 +49,25 @@ function NewRecordScreen() {
 
       <Card>
         <RecordForm
+          key={`${pet.id}:${initialType}`}
+          petId={pet.id}
           petName={pet.name}
           initialType={initialType}
           submitLabel="Salvar registro"
           onCancel={() => router.back()}
-          onSubmit={(values) => {
-            addRecord({ ...values, petId: pet.id });
+          onSubmit={async (values) => {
+            const recordId = await addRecord({ ...values, petId: pet.id });
             toast.success("Registro salvo", {
               description:
-                values.nextDueDate !== null
-                  ? "Você será avisado antes do próximo vencimento."
+                values.medication || values.nextDueDate !== null
+                  ? "A próxima data está na agenda da Zelupi."
                   : "O histórico do seu pet foi atualizado.",
             });
-            router.replace(`/pets/${pet.id}/health`);
+            router.replace(
+              values.medication
+                ? `/pets/${pet.id}/health/${recordId}`
+                : `/pets/${pet.id}/health`,
+            );
           }}
         />
       </Card>

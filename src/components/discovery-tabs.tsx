@@ -40,8 +40,8 @@ export function DiscoveryTabs({ active }: { active: DiscoveryTabId }) {
             aria-current={selected ? "page" : undefined}
             className={`flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center rounded-xl px-1 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2 ${
               selected
-                ? "bg-white font-bold text-teal-ink shadow-sm"
-                : "text-muted hover:bg-white/70 hover:text-ink"
+                ? "bg-paper font-bold text-teal-ink shadow-sm"
+                : "text-muted hover:bg-paper/70 hover:text-ink"
             }`}
           >
             <span className="text-[0.82rem] font-semibold">{tab.label}</span>

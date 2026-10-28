@@ -20,8 +20,9 @@ export function toDate(key: string): Date {
 }
 
 export function isValidDateKey(key: string | null | undefined): boolean {
-  if (!key) return false;
-  return isValid(parseISO(key));
+  if (!key || !/^\d{4}-\d{2}-\d{2}$/.test(key)) return false;
+  const parsed = parseISO(key);
+  return isValid(parsed) && format(parsed, "yyyy-MM-dd") === key;
 }
 
 export function daysUntil(dueDate: string, now: Date = new Date()): number {

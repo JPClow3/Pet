@@ -110,18 +110,18 @@ export default function CommunityPage() {
     <div className="flex flex-col gap-4 pb-24">
       <PageHeader
         title="Comunidade"
-        subtitle="Experiências de tutores, com contexto para ajudar."
+        subtitle="Demonstração local de conversas entre tutores."
         action={
           <ButtonLink href="/community/new" size="sm">
             <Plus aria-hidden="true" className="size-4" />
-            Publicar
+            Criar exemplo
           </ButtonLink>
         }
       />
 
       <DiscoveryTabs active="comunidade" />
 
-      <section className="rounded-[24px] border border-line bg-white p-5">
+      <section className="rounded-[24px] border border-line bg-paper p-5">
         <div className="flex items-start gap-3">
           <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-surface-subtle text-teal-ink">
             <Radio aria-hidden="true" className="size-5" />
@@ -131,11 +131,12 @@ export default function CommunityPage() {
               Prévia da comunidade
             </p>
             <h2 className="mt-1 text-[1.22rem] font-semibold leading-tight text-ink">
-              Troque o que você aprendeu.
+              Conheça a proposta da comunidade.
             </h2>
             <p className="mt-1.5 max-w-[42ch] text-[0.9rem] leading-relaxed text-muted">
-              Perguntas, recomendações e encontros aparecem por tema. Pessoas e
-              horários desta tela são exemplos locais.
+              Pessoas, grupos e horários são exemplos. O que você escrever ou
+              marcar aqui fica somente neste aparelho e não é enviado a outros
+              tutores.
             </p>
           </div>
         </div>
@@ -327,7 +328,7 @@ export default function CommunityPage() {
                   setGroupId(groupId === group.id ? null : group.id);
                   setOnlyMine(false);
                 }}
-                className={`min-w-[12rem] shrink-0 rounded-2xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2 ${groupId === group.id ? "border-teal-ink/40 bg-surface-subtle" : "border-line bg-surface hover:bg-white"}`}
+                className={`min-w-[12rem] shrink-0 rounded-2xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2 ${groupId === group.id ? "border-teal-ink/40 bg-surface-subtle" : "border-line bg-surface hover:bg-paper"}`}
               >
                 <p className="line-clamp-1 text-[0.88rem] font-semibold text-ink">
                   {group.name}

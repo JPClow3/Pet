@@ -11,6 +11,7 @@ import { speciesLabels } from "@/lib/domain/labels";
 import type { Pet } from "@/lib/domain/schema";
 import { useAppStore } from "@/lib/store/app-store";
 import { usePetRecords, useReminderItems } from "@/lib/store/hooks";
+import { useAsyncAction } from "@/lib/use-async-action";
 import { cn } from "@/lib/utils";
 
 function greeting(now = new Date()): string {
@@ -49,6 +50,7 @@ export function PetContextSwitcher({
   const setActivePet = useAppStore((state) => state.setActivePet);
   const items = useReminderItems();
   const [open, setOpen] = useState(false);
+  const action = useAsyncAction();
 
   const selectedScope = scope ?? activePetId ?? pets[0]?.id ?? "todos";
   const selectedPet =
@@ -71,9 +73,11 @@ export function PetContextSwitcher({
   );
 
   function choose(nextScope: PetScope) {
-    if (nextScope !== "todos") setActivePet(nextScope);
-    onScopeChange?.(nextScope);
-    setOpen(false);
+    void action.run(async () => {
+      if (nextScope !== "todos") await setActivePet(nextScope);
+      onScopeChange?.(nextScope);
+      setOpen(false);
+    });
   }
 
   return (
@@ -81,10 +85,11 @@ export function PetContextSwitcher({
       <button
         type="button"
         onClick={() => setOpen(true)}
+        disabled={action.pending}
         aria-haspopup="dialog"
         aria-expanded={open}
         className={cn(
-          "group inline-flex min-h-11 max-w-full items-center gap-2 rounded-full border border-line/80 bg-white px-2.5 pr-3 text-left transition-colors hover:bg-surface",
+          "group inline-flex min-h-11 max-w-full items-center gap-2 rounded-full border border-line/80 bg-paper px-2.5 pr-3 text-left transition-colors hover:bg-surface",
           className,
         )}
       >
@@ -113,7 +118,9 @@ export function PetContextSwitcher({
 
       <BottomSheet
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          if (!action.pending) setOpen(false);
+        }}
         title="Escolher contexto"
         description="Seu pet ativo acompanha os registros. Na agenda, você também pode ver todos juntos."
       >
@@ -122,12 +129,13 @@ export function PetContextSwitcher({
             <button
               type="button"
               onClick={() => choose("todos")}
+              disabled={action.pending}
               aria-current={selectedScope === "todos" ? "true" : undefined}
               className={cn(
                 "flex min-h-14 items-center gap-3 rounded-2xl border px-3 text-left transition-colors",
                 selectedScope === "todos"
                   ? "border-teal-ink bg-mint text-teal-ink"
-                  : "border-line bg-white text-ink-soft hover:bg-surface",
+                  : "border-line bg-paper text-ink-soft hover:bg-surface",
               )}
             >
               <span className="flex size-9 items-center justify-center rounded-full bg-surface text-xs font-bold text-teal-ink">
@@ -161,12 +169,13 @@ export function PetContextSwitcher({
                 key={pet.id}
                 type="button"
                 onClick={() => choose(pet.id)}
+                disabled={action.pending}
                 aria-current={selected ? "true" : undefined}
                 className={cn(
                   "flex min-h-14 items-center gap-3 rounded-2xl border px-3 text-left transition-colors",
                   selected
                     ? "border-teal-ink bg-mint text-teal-ink"
-                    : "border-line bg-white text-ink-soft hover:bg-surface",
+                    : "border-line bg-paper text-ink-soft hover:bg-surface",
                 )}
               >
                 <PetAvatar pet={pet} size="sm" />
@@ -191,18 +200,32 @@ export function PetContextSwitcher({
           })}
         </div>
 
+        {action.pending ? (
+          <p role="status" className="mt-3 text-meta text-muted">
+            Salvando pet ativo…
+          </p>
+        ) : null}
+
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Link
             href="/pets/new"
-            onClick={() => setOpen(false)}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[14px] border border-line bg-white px-3 text-[0.85rem] font-semibold text-ink transition-colors hover:bg-surface"
+            aria-disabled={action.pending || undefined}
+            onClick={(event) => {
+              if (action.pending) event.preventDefault();
+              else setOpen(false);
+            }}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[14px] border border-line bg-paper px-3 text-[0.85rem] font-semibold text-ink transition-colors hover:bg-surface"
           >
             <Plus aria-hidden="true" className="size-4" />
             Adicionar pet
           </Link>
           <Link
             href="/pets"
-            onClick={() => setOpen(false)}
+            aria-disabled={action.pending || undefined}
+            onClick={(event) => {
+              if (action.pending) event.preventDefault();
+              else setOpen(false);
+            }}
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[14px] bg-mint px-3 text-[0.85rem] font-semibold text-teal-ink transition-colors hover:bg-mint/70"
           >
             <Settings2 aria-hidden="true" className="size-4" />
@@ -247,7 +270,7 @@ export function PetHeader({
         </div>
         <Link
           href={`/pets/${pet.id}/card`}
-          className="flex size-12 shrink-0 items-center justify-center rounded-[14px] border border-line bg-white text-ink transition-colors hover:bg-surface"
+          className="flex size-12 shrink-0 items-center justify-center rounded-[14px] border border-line bg-paper text-ink transition-colors hover:bg-surface"
           aria-label={`Abrir carteirinha de ${pet.name}`}
         >
           <span

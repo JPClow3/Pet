@@ -1,208 +1,123 @@
-# PetHub — Roadmap público
+# Zelupi — Roadmap público
 
-Documento vivo em 16 de setembro de 2026. A versão navegável está em `/roadmap`.
+Atualizado em **25 de outubro de 2026**. A versão navegável está em /roadmap,
+com os detalhes em src/lib/roadmap.ts.
 
-Este documento reúne o escopo de evolução do PetHub: confiança e privacidade,
-qualidade de experiência, cuidado estruturado, plataforma, rede, inteligência
-responsável e a direção visual Calm Care Editorial.
+**Entregue** descreve o escopo implementado no código. **Parcial** identifica uma
+base funcional com limites explícitos. Testes locais, navegador, serviço
+hospedado e dispositivos reais são etapas distintas; este documento não declara
+uma aprovação completa de produção ou acessibilidade.
 
-## 1. Confiança, privacidade e experiência
+## Confiança e privacidade
 
-1. **Trocar URLs públicas codificadas por links opacos e revogáveis.**
-   - A URL atual contém dados de pet, cidade, saúde, modo perdido e contato codificados em Base64. Base64 é legível, aparece em logs do navegador e do servidor, não expira e não pode ser revogado.
-   - Usar um ID opaco aleatório apoiado por um registro no servidor, com expiração, revogação e suporte a atualizações.
-   - Referência: [`src/lib/domain/card.ts:53`](../src/lib/domain/card.ts#L53).
+Web Push já está implementado em código: consentimento por aparelho, agenda de
+sete dias, fuso, horário silencioso, cancelamento, tentativas limitadas e texto
+genérico. O schema e os logins restritos passaram nos testes Neon; ativação no
+ambiente hospedado e entrega em dispositivos ainda estão pendentes. Os itens de
+push abaixo devem ser lidos como integração parcial, não como serviço ativo.
 
-2. **Impedir indexação e vazamento de referrers nas carteirinhas.**
-   - Adicionar noindex, X-Robots-Tag, Referrer-Policy estrita e headers explícitos de segurança.
-   - A resposta de produção local não tinha CSP, Referrer-Policy, Permissions-Policy, proteção contra frames ou proteção de content type.
-   - As páginas públicas hoje geram metadados comuns; a metadata precisa refletir esse conteúdo controlado pelo tutor.
-   - Referência: [`src/app/p/[code]/page.tsx:19`](../src/app/p/[code]/page.tsx#L19).
+O ciclo da conta também inclui alteração de senha e encerramento de outras
+sessões. A exclusão de identidade continua bloqueada até confirmar suporte do
+provedor; os vínculos de limpeza dos dados cloud já estão instalados.
 
-3. **Implementar contas reais ou corrigir a linguagem de conta.**
-   - “Conta”, “sair da conta”, atividade da comunidade e expectativa entre dispositivos conflitam com um perfil salvo apenas no localStorage.
-   - Até existir autenticação e sincronização, usar termos como “perfil neste aparelho” e avisar claramente que apagar os dados do navegador remove tudo.
-   - Referência: [`README.md:114`](../README.md#L114).
+| Item                               | Estado   | Entrega e próximo limite                                                                                                                                  |
+| ---------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Links opacos e revogáveis          | Entregue | Novas publicações com conta têm token aleatório, prazo, atualização, troca e revogação. Links base64 antigos e imagens permanecem imutáveis.              |
+| Privacidade da resposta pública    | Entregue | noindex, no-referrer, metadados neutros, headers, exclusão do cache e sanitização de telemetria. Não apaga cópias recebidas.                              |
+| Contas reais e linguagem honesta   | Parcial  | Perfil local separado de conta opcional. Backend Neon/Auth em integração; autenticação e recuperação dependem da configuração hospedada.                  |
+| Dados e mídia fora do localStorage | Entregue | IndexedDB com estado e blobs separados, escrita transacional serializada e migração validada do legado. Cota e pressão de espaço variam por navegador.    |
+| Exportação e restauração           | Entregue | Backup v2 inclui documentos e lixeira; aceita versões antigas, valida, mostra prévia e confirma. Restauração integral; falhas preservam a cópia anterior. |
+| Comunidade sem falsas promessas    | Parcial  | Interações identificadas como exemplos locais; ocultar não promete denúncia ou moderação. Backend social permanece pendente.                              |
+| Lembretes com app fechado          | Parcial  | Web Push implementado com consentimento, agenda finita e horário silencioso; ativação hospedada e entrega real pendentes.                                 |
+| Contexto e frescor da carteirinha  | Entregue | Data, aviso de cópia, limites clínicos e orientação sem contato. Atualizar um link gerenciado exige revisão; mudanças locais não são publicadas sozinhas. |
 
-4. **Mover dados duráveis e mídia para fora do localStorage.**
-   - Fotos, anexos, eventos, registros e conteúdo inicial são serializados juntos a cada alteração. Isso ficará lento e limitado pela cota.
-   - Usar IndexedDB/OPFS para mídia, schemas versionados, escritas transacionais, reporte de cota e migrações testadas.
-   - A persistência atual tem uma versão, mas ainda não tem caminho de migração.
-   - Referência: [`src/lib/store/app-store.ts:699`](../src/lib/store/app-store.ts#L699).
+## Experiência e validação
 
-5. **Adicionar restauração e importação, não apenas exportação.**
-   - O perfil promete que o usuário pode “levar” seus dados, mas hoje oferece apenas exportação JSON e exclusão.
-   - Adicionar importação validada, prévia, tratamento de duplicados, lembretes de backup e instruções de recuperação.
-   - Referência: [`src/app/(app)/profile/page.tsx:261`](../src/app/%28app%29/profile/page.tsx#L261).
+| Item                              | Estado    | Entrega e próximo limite                                                                                                           |
+| --------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Foco e scroll do onboarding       | Entregue  | Título focado e topo restaurado em avanço, volta e recuperação. Voltar no último passo não salva; pular cuidado não cria registro. |
+| Rótulos de cuidado estreitos      | Entregue  | Quebra de rótulos e grid responsivo; peso e datas validados antes de salvar.                                                       |
+| Recuperação de geolocalização     | Entregue  | Negação, indisponibilidade, nova tentativa e opt-out. Sem coordenadas, origem declarada como centro de São Paulo.                  |
+| Controles de descoberta estreitos | Parcial   | Categorias em múltiplas linhas; procedência não truncada. Passe amplo de zoom e dispositivos ainda necessário.                     |
+| Hierarquia de navegação           | Entregue  | Hoje / Meu pet / Descobrir / Ajustes; acesso persistente ao pet e abas para agenda/histórico/diário.                               |
+| Compartilhamento mais curto       | Agora     | Reorganizar prévia, estilo e ação principal preservando controles de privacidade.                                                  |
+| Organização de ajustes            | Agora     | Conta cloud separada. Ainda agrupar melhor notificações, privacidade, dados e app na área local.                                   |
+| Suíte de navegador                | Validação | Testes de domínio/componentes ampliados. Manter cobertura de rotas, 320/375px, teclado, falha de cota e compartilhamento.          |
+| Promessa offline completa         | Validação | Testar rotas dinâmicas nunca visitadas, anexos, retomada, falhas e atualização. Precache sozinho não comprova tudo.                |
+| Acessibilidade                    | Validação | Teclado, leitor de tela, zoom 200%, forced colors, reduced motion e contraste precisam de passe dedicado.                          |
 
-6. **Não apresentar a comunidade como ao vivo sem backend.**
-   - Publicar, denunciar, bloquear, reagir, comentar e participar de grupos hoje afetam apenas o navegador local e usuários de exemplo.
-   - Ou entregar backend com moderação e estado compartilhado, ou transformar a experiência em uma prévia claramente somente leitura.
+## Cuidados
 
-7. **Entregar lembretes fora do app aberto.**
-   - Um cuidado importante não pode depender de o tutor estar olhando para o PetHub.
-   - Adicionar agendamento de notificações push ou locais, recuperação de permissão, status de entrega, fuso horário e reagendamento quando um registro de cuidado mudar.
-   - Hoje os lembretes viram apenas entradas dentro do app.
+| Item                        | Estado   | Entrega e próximo limite                                                                                                                                                                     |
+| --------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Medicamentos estruturados   | Entregue | Dose/unidade informadas, horários, calendário, fuso, início/fim, instruções e fonte. Doses e correções preservam histórico; sem cálculo clínico; Web Push em validação.                      |
+| Ciclo de cuidado recorrente | Entregue | Concluir, adiar, reagendar, pular, encerrar e desfazer; prévia do próximo ciclo e CRUD de rotinas. Pular não registra cuidado realizado.                                                     |
+| Rascunhos de formulários    | Entregue | Onboarding, pet, saúde e diário: rascunhos por sessão, schema e isolamento por pet/registro. Fotos/anexos não entram; fechar a sessão pode removê-los.                                       |
+| Documentos independentes    | Entregue | PDF e imagens de até 10 MB, metadados/categorias, busca, download original, lixeira e restauração. Arquivos no backup; sem exclusão permanente individual.                                   |
+| Histórico legível por pet   | Entregue | Datas e tipos com contagem; HTML imprimível/salvável como PDF pelo navegador. Inclui planos e correções; fotos e documentos são baixados separadamente.                                      |
+| Recuperação e migração      | Parcial  | Migração localStorage → IndexedDB, conflitos entre abas, falhas de gravação, cópia bruta e restauração. Sem limpeza automática por pressão de espaço; validação em aparelhos reais pendente. |
 
-8. **Resetar scroll e mover foco entre etapas do onboarding.**
-   - Ao avançar a partir do CTA inferior em 320px, a posição de scroll era mantida e o título do passo 4 ficava parcialmente acima da viewport.
-   - Fazer o container da etapa voltar ao topo e focar o heading depois de `setStep`.
-   - Referência: [`src/app/onboarding/page.tsx:143`](../src/app/onboarding/page.tsx#L143).
+Rascunhos usam sessionStorage, não são backup e não são sincronizados. São apagados
+após salvar/cancelar e quando os dados do aparelho são restaurados ou excluídos.
+Reanexe arquivos após recarregar a página.
 
-9. **Corrigir rótulos de cuidado cortados em 320px e zoom.**
-   - “Antiparasitário”, “Medicamento” e “Observação” estouram os botões de duas colunas.
-   - Permitir quebra de linha, empilhar ícone e rótulo mais cedo ou mudar para uma coluna em larguras estreitas.
-   - Referência: [`src/components/record-form.tsx:160`](../src/components/record-form.tsx#L160).
+## Plataforma
 
-10. **Corrigir a recuperação quando a localização é negada.**
-    - O callback de falha define `denied=true` e desabilita imediatamente a localização precisa.
-    - O cálculo de status então resolve para cidade, tornando o card “Localização não autorizada” praticamente inalcançável.
-    - Referência: [`src/lib/geo.ts:53`](../src/lib/geo.ts#L53).
+| Item                           | Estado     | Entrega e próximo limite                                                                                                                                        |
+| ------------------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ciclo de vida da conta         | Parcial    | Conta Neon Auth opcional separada do perfil local. Sessão, recuperação e exclusão de identidade precisam de validação própria; billing permanece pendente.      |
+| Identidade pública atualizável | Parcial    | Link gerenciado atualiza mantendo endereço, expira, troca ou revoga. Modo perdido exige publicação explícita; contato mediado e logs de acesso ainda futuros.   |
+| Entrega de notificações        | Parcial    | Preferências, permissão, agenda, cancelamento e tentativas limitadas implementados. Serviço ainda desativado e sem evidência de entrega em aparelho.            |
+| Ciclo da PWA                   | Parcial    | Aviso de versão, ativação/reabertura manual e bloqueio durante edição. Validar cache, versões, instalação e aparelhos reais.                                    |
+| Analytics e monitoramento      | Incompleto | Eventos locais; Sentry condicionado à configuração com URLs/tokens/corpos sanitizados. Consentimento, retenção e monitoramento operacional completos pendentes. |
 
-11. **Melhorar os controles de descoberta em telas estreitas.**
-    - O placeholder de busca e as linhas de categoria e filtro aparecem cortados em 320px.
-    - Adicionar uma pista visível de rolagem horizontal, snap, um menu compacto de categorias ou colocar filtros secundários atrás de “Filtros”.
+## Rede e parceiros
 
-12. **Deixar a hierarquia da navegação principal explícita.**
-    - Páginas de identidade do pet ativam “Cuidados”, enquanto “Perfil” significa tutor e configurações da conta.
-    - Considerar “Hoje / Meu pet / Descobrir / Conta”, ou oferecer uma rota persistente e explícita para o perfil do pet.
-    - Referência: [`src/components/app-shell.tsx:22`](../src/components/app-shell.tsx#L22).
+| Item                        | Estado        | Entrega e próximo limite                                                                                                                                                     |
+| --------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Catálogo de lugares e mapa  | Protótipo     | Dados fictícios, mapa esquemático, sem rota para locais fictícios. Falta fonte, verificação, horários, geocoding, tiles e cidades reais.                                     |
+| Comunidade compartilhada    | Preview local | Feed, grupos e respostas locais. Falta backend, identidades compartilhadas, moderação, abuso e notificações.                                                                 |
+| Avaliações e reputação      | Incompleto    | Avaliações no aparelho. Falta autenticação de avaliadores, visitas verificadas, duplicidade, moderação, frescor e respostas de negócios.                                     |
+| Produtos e parceiros        | Protótipo     | Matching explicável, preço ilustrativo e compra desabilitada. Falta feed real, estoque, preço recente, atribuição e patrocínio.                                              |
+| Cópia cloud entre aparelhos | Parcial       | Envio/restauração manual de snapshot inteiro, isolamento de conta e controle de revisão. Backend Neon em integração; falta sync contínuo, merge por registro e fila offline. |
+| Família e cuidadores        | Futuro        | Papéis, autoria das ações e resolução de conflitos.                                                                                                                          |
+| Assinaturas e billing       | Futuro        | Planos reais, pagamentos, recuperação e cancelamento.                                                                                                                        |
+| Negócios e ofertas          | Futuro        | Perfis, ofertas administradas e analytics com consentimento.                                                                                                                 |
 
-13. **Encurtar o caminho para compartilhar a carteirinha.**
-    - Hoje o usuário precisa passar por formato e paleta antes de chegar à prévia e às ações de compartilhamento.
-    - Mostrar a prévia antes, recolher estilo avançado ou adicionar uma ação fixa de “Compartilhar”.
+Documentos na lixeira continuam ocupando espaço e entram no backup. O backup local
+aceita até 100 MB, a cópia cloud até 20 MB e cada documento até 10 MB. Remover um
+pet, restaurar uma cópia ou reiniciar os dados elimina mídia sem referência; não
+há exclusão automática de documentos para liberar cota.
 
-14. **Dividir a página de perfil.**
-    - Detalhes da conta, pets, notificações, privacidade, assinatura, exportação/exclusão, analytics e instalação competem em uma tela longa.
-    - Agrupar em Conta, Notificações, Privacidade, Dados e App; isolar ações destrutivas.
+O período do relatório filtra a data do registro. Um medicamento selecionado
+leva seu histórico completo de planos, doses e correções. Nenhuma informação é
+validada clinicamente.
 
-15. **Adicionar frescor e confiança à carteirinha pública.**
-    - Mostrar horário de geração ou atualização, informar se a carteirinha está ativa, exibir um aviso explícito de que a saúde não é avaliação clínica e oferecer um caminho seguro quando nenhum contato foi compartilhado.
+Novas carteirinhas públicas usam `/p/c_<token>`. Links legados `/p/<base64>`
+continuam legíveis e imutáveis; não são convertidos automaticamente. Revogar um
+link gerenciado interrompe novas consultas, sem apagar imagens já recebidas.
 
-## 2. Validação e qualidade
+A integração cloud usa Neon/Postgres e Neon Auth. Depende de configuração e
+validação no ambiente hospedado. Entrar na conta não envia dados automaticamente;
+envio, restauração e exclusão remota exigem escolhas explícitas. Restaurar
+substitui a cópia local inteira. Veja o [README](../README.md) para configuração.
 
-1. **Adicionar cobertura end-to-end em navegador.**
-   - Os 102 testes atuais cobrem domínio e componentes, mas não há uma suíte E2E de rotas.
-   - Adicionar testes de onboarding, layouts 320/375px, foco por teclado, falha de cota de armazenamento, privacidade da carteirinha pública, rotas dinâmicas offline, atualizações do service worker e instalação.
-   - Referência: [`package.json:5`](../package.json#L5).
+## Inteligência e acabamento
 
-2. **Verificar a promessa offline completa.**
-   - O service worker usa cache genérico em runtime e uma página de fallback.
-   - Testar rotas dinâmicas de pet nunca visitadas, anexos, atualizações, navegação após reinício e escritas que falham em vez de presumir que o precache prova local-first.
-   - Referência: [`src/app/sw.ts:16`](../src/app/sw.ts#L16).
+| Item                        | Estado      | Entrega e próximo limite                                                                                              |
+| --------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------- |
+| Assistente não clínico      | Futuro      | Só após dados estruturados confiáveis, recuperáveis e contextualizados.                                               |
+| Recomendações avançadas     | Futuro      | Dependem de dados de usuário, locais e parceiros com fonte e frescor.                                                 |
+| Calm Care Editorial         | Refatoração | Núcleo de cuidados preservado; continuar acabamento das superfícies secundárias.                                      |
+| Comportamento do onboarding | Entregue    | Rascunho, foco, volta/pular, peso decimal e gravação atômica. Promessa não medida de 90 segundos removida.            |
+| Estado de navegação         | Refatoração | Texto dos formulários recuperável por pet. Filtros e scroll de descoberta ainda precisam de persistência entre rotas. |
+| Resíduos de implementação   | Refatoração | Revisar dependência ogl, consolidar primitivas e concluir estados de tema, loading, disabled e movimento reduzido.    |
 
-3. **Fazer um passe dedicado de acessibilidade.**
-   - Semântica, rótulos, alvos e diálogos são geralmente fortes, mas o status WCAG completo ainda precisa de validação.
-   - Validar leitor de tela, teclado apenas, zoom de 200%, forced colors, reduced motion e contraste automatizado.
+## Sequência de conclusão
 
-## 3. Capacidades do produto
-
-1. **Gerenciamento de medicamentos estruturado — incompleto**
-   - Medicamento é atualmente um registro de saúde genérico.
-   - Adicionar dose, unidade, frequência/horários, datas de início e fim, instruções, prescritor ou fonte, estado de dose perdida e recorrência específica de medicamento.
-   - O contrato-alvo está documentado em [`design.md:303`](../design.md#L303).
-
-2. **Ciclo de vida do cuidado recorrente — incompleto**
-   - Concluir, adiar, reagendar e desfazer já funcionam.
-   - Ainda adicionar: pular ocorrência, encerrar recorrência, editar ocorrências futuras e pré-visualizar claramente o que concluir um item vai criar.
-
-3. **Rascunhos e recuperação de formulários — ausente**
-   - Formulários de saúde, diário, onboarding e pet guardam dados apenas no estado do componente.
-   - Adicionar rascunhos locais automáticos, recuperação após navegação ou reload, isolamento de falha de anexos e proteção de formulário sujo ao trocar de pet.
-
-4. **Armazenamento confiável de documentos — incompleto**
-   - “Documentos” atualmente significa imagens anexadas a registros de saúde; apenas `image/*` é aceito.
-   - Adicionar suporte a PDF e arquivos, categorias de documento, CRUD independente, uso de armazenamento, limpeza e recuperação de upload falho.
-
-5. **Exportação do histórico de saúde — incompleto**
-   - A exportação JSON do app inteiro já existe.
-   - Adicionar exportação de histórico legível por pet — idealmente PDF ou impressão — com intervalos de data, filtros, anexos, proveniência e controles de compartilhamento.
-
-6. **Segurança de armazenamento e migração — incompleto**
-   - Todos os registros e fotos ficam em localStorage.
-   - Adicionar migrações de schema, recuperação de dados corrompidos, exportação bruta de emergência, monitoramento de cota, limpeza de mídia e estados claros de pressão de armazenamento.
-   - Referência: [`src/lib/store/app-store.ts:257`](../src/lib/store/app-store.ts#L257).
-
-7. **Linguagem e ciclo de vida da conta — incompleto**
-   - A UI diz “account”, “subscription”, “logout” e “delete account”, mas não existe conta real.
-   - “Logout” apenas limpa o objeto tutor e deixa os dados do pet no aparelho.
-   - Ou relabelar isso como perfil local, ou implementar autenticação, sessões, recuperação e semântica correta de logout e exclusão.
-   - Referência: [`src/app/(app)/profile/page.tsx:307`](../src/app/%28app%29/profile/page.tsx#L307).
-
-8. **Identidade pública do pet e modo perdido — incompleto**
-   - QR sharing, controles de privacidade, exportação PNG e banners de modo perdido já existem.
-   - O QR contém um snapshot na URL; carteirinhas impressas não podem ser atualizadas ou revogadas.
-   - Adicionar identificador estável apoiado por servidor, revogação, atualizações ao vivo do modo perdido, logs de acesso e, de preferência, encaminhamento protegido de contato.
-   - Referência: [`design.md:333`](../design.md#L333).
-
-9. **Entrega de notificações — incompleto**
-   - A central de notificações in-app e as preferências por categoria existem.
-   - Adicionar entrega por sistema ou push, estados de permissão e instalação, agendamento, tratamento de falha de entrega e controles de horário silencioso e frequência.
-
-10. **Ciclo de vida offline/PWA — incompleto**
-    - Service worker, fallback offline, dados locais em cache e banner offline estão presentes.
-    - Ainda adicionar aviso de atualização, atualização segura com rascunhos abertos, recuperação de cache e versão e distinção explícita entre recursos locais e dependentes de rede.
-
-11. **Catálogo de lugares e mapa — protótipo**
-    - Busca, atributos, distância, filtros, avaliações e direções existem.
-    - O catálogo é seeded, a frescura é desconhecida e o mapa é esquemático.
-    - Adicionar ingestão e geocoding reais, tiles de mapa, horários de funcionamento, datas de fonte, verificação e expansão de cidades.
-
-12. **Comunidade — prévia local**
-    - Feed, grupos, posts, comentários, votos úteis, denúncias e bloqueios estão implementados localmente.
-    - Adicionar persistência server-side, identidades, sincronização, filas de moderação, controles contra abuso, notificações e densidade local real.
-    - A UI já sinaliza isso como uma prévia em [`src/app/(app)/community/page.tsx:398`](../src/app/%28app%29/community/page.tsx#L398).
-
-13. **Avaliações e reputação — incompleto**
-    - Avaliações estruturadas e específicas para pets funcionam localmente.
-    - Adicionar avaliadores autenticados, proteção contra duplicidade, visitas verificadas, moderação, frescor, respostas de negócios e um modelo de reputação defensável.
-
-14. **Produtos e recomendações de parceiros — protótipo**
-    - Matching explicável e opt-in comercial existem.
-    - Produtos, preços e links são seeded; alguns links apontam para `example.com` em [`src/lib/domain/seed.ts:342`](../src/lib/domain/seed.ts#L342).
-    - Adicionar feeds reais de parceiros, frescor de preço, atribuição de afiliado, rotulagem de patrocinado, disponibilidade e tracking de conversão.
-
-15. **Analytics e monitoramento operacional reais — ausente**
-    - Eventos de produto ficam armazenados somente no dispositivo.
-    - Adicionar analytics com consentimento, error reporting, medição de funil, retenção orientada por privacidade e monitoramento operacional de saúde.
-
-16. **Sincronização cloud e recuperação em vários aparelhos**
-    - Adicionar sincronização cloud, recuperação entre dispositivos e uma estratégia explícita para conflitos e dados que ainda não chegaram à nuvem.
-
-17. **Papéis de família e cuidadores compartilhados**
-    - Adicionar papéis de familiares e cuidadores, atribuição de ações e resolução de conflitos.
-
-18. **Assinaturas e billing reais**
-    - Implementar assinaturas reais, billing, estados de pagamento, recuperação e cancelamento claro.
-
-19. **Perfis de negócios, ofertas e analytics de parceiros**
-    - Adicionar perfis de negócios, ofertas gerenciadas e analytics para parceiros, sempre com rotulagem e consentimento adequados.
-
-20. **Assistente de IA não clínico, depois de dados estruturados confiáveis**
-    - Criar um assistente não clínico somente quando os dados estruturados de saúde forem confiáveis o suficiente para sustentar respostas honestas e contextualizadas.
-
-21. **Recomendações avançadas baseadas em dados confiáveis**
-    - Adicionar recomendações avançadas somente com dados de usuário, locais e parceiros dignos de confiança.
-
-## 4. Direção visual e acabamento
-
-1. **Completar o refactor “Calm Care Editorial”.**
-   - Home e Agenda estão consideravelmente melhoradas.
-   - Perfil, Explorar, onboarding, carteirinha pública e superfícies secundárias ainda usam tintas concorrentes, raios arbitrários e cards muito proeminentes.
-
-2. **Finalizar o comportamento do onboarding.**
-   - Adicionar preservação de rascunho, gerenciamento de foco entre passos, recuperação limpa de falhas e confirmação medida de que a ativação do primeiro pet permanece abaixo de 90 segundos.
-
-3. **Preservar o estado de navegação.**
-   - A navegação de volta deve preservar filtros, scroll, pet ativo, aba aberta e input ainda não finalizado.
-
-4. **Remover resíduos de implementação.**
-   - O componente Aurora/WebGL sem uso e a dependência `ogl` ainda permanecem.
-   - Consolidar as abas repetidas de Descobrir e finalizar estados dos primitives para loading, disabled, invalid, dark theme e reduced motion.
-
-## Ordem de leitura
-
-O roadmap é intencionalmente sequenciado: primeiro proteger dados e tornar as
-limitações honestas; depois fechar os fluxos de cuidado e a persistência; então
-conectar rede, comércio e parceiros; por fim, adicionar inteligência somente
-quando houver base suficiente para não fabricar confiança.
+1. Validar implementações locais, caminhos de erro, recuperação e isolamento de
+   dados da conta no ambiente hospedado.
+2. Fechar armazenamento durável, documentos, medicamentos e histórico exportável.
+3. Entregar links públicos revogáveis e notificações fora do app.
+4. Integrar catálogos, comunidade e parceiros com fonte e moderação reais.
+5. Adicionar colaboração, monetização e inteligência sobre essa base.

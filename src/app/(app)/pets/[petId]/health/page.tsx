@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { RecordTimelineItem } from "@/components/health-status-card";
+import { HistoryExportPanel } from "@/components/history-export-panel";
 import { CareTabs } from "@/components/care-tabs";
 import { PageHeader } from "@/components/page-header";
 import { PetContextSwitcher } from "@/components/pet-header";
@@ -99,6 +100,8 @@ export default function HealthPage() {
         <p className="text-[0.9rem] text-ink-soft/90">{status.detail}</p>
       </Card>
 
+      <HistoryExportPanel key={pet.id} pet={pet} records={petRecords} />
+
       <div className="flex flex-wrap gap-2">
         <FilterChip
           selected={filter === "todos"}
@@ -133,7 +136,7 @@ export default function HealthPage() {
           }
           description={
             petRecords.length === 0
-              ? "Registre vacinas, consultas e pesagens. Depois o PetHub avisa antes de cada vencimento."
+              ? "Registre vacinas, consultas e pesagens. Depois a Zelupi avisa antes de cada vencimento."
               : "Tente outro tipo de registro ou limpe o filtro."
           }
           action={
@@ -174,7 +177,7 @@ export default function HealthPage() {
       )}
 
       <p className="pt-2 text-meta text-muted">
-        O PetHub organiza o que você registra. Ele não diagnostica nem substitui
+        A Zelupi organiza o que você registra. Ele não diagnostica nem substitui
         a avaliação de um veterinário.
       </p>
     </div>

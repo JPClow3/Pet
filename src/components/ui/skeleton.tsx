@@ -11,7 +11,7 @@ export function Skeleton({ className }: { className?: string }) {
 
 export function SkeletonCard() {
   return (
-    <div className="flex flex-col gap-3 rounded-[20px] border border-line/80 bg-white p-4">
+    <div className="flex flex-col gap-3 rounded-[20px] border border-line/80 bg-paper p-4">
       <Skeleton className="h-4 w-24" />
       <Skeleton className="h-5 w-3/4" />
       <Skeleton className="h-4 w-1/2" />

@@ -11,6 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { toast } from "sonner";
 
@@ -31,26 +32,44 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 import { formatShortDate, todayKey } from "@/lib/domain/dates";
 import { weightTrend } from "@/lib/domain/health";
+import { petWeightMeasurements } from "@/lib/domain/weight";
 import { petAge, petCompletion } from "@/lib/domain/pet";
 import { speciesLabels } from "@/lib/domain/labels";
 import { useAppStore } from "@/lib/store/app-store";
 import { useActivePet, useHydrated, usePetRecords } from "@/lib/store/hooks";
+import { useAsyncAction } from "@/lib/use-async-action";
 
 export default function MyPetPage() {
   const ready = useHydrated();
   const pet = useActivePet();
   const records = usePetRecords(pet?.id ?? null);
   const diary = useAppStore((state) => state.diary);
+  const independentDocuments = useAppStore((state) => state.documents);
   const updatePet = useAppStore((state) => state.updatePet);
+  const action = useAsyncAction();
+  const router = useRouter();
 
   const petDiary = useMemo(
     () => diary.filter((entry) => entry.petId === pet?.id),
     [diary, pet?.id],
   );
-  const trend = useMemo(() => weightTrend(records), [records]);
-  const documents = useMemo(
-    () => records.filter((record) => record.attachmentName),
-    [records],
+  const trend = useMemo(
+    () =>
+      pet?.weightKg != null
+        ? weightTrend(
+            petWeightMeasurements(pet, records, petDiary),
+            pet.weightKg,
+          )
+        : null,
+    [pet, records, petDiary],
+  );
+  const documentCount = useMemo(
+    () =>
+      records.filter((record) => record.attachmentName).length +
+      independentDocuments.filter(
+        (document) => document.petId === pet?.id && !document.deletedAt,
+      ).length,
+    [records, independentDocuments, pet?.id],
   );
 
   if (!ready) return <SkeletonScreen label="Abrindo o perfil" />;
@@ -84,7 +103,7 @@ export default function MyPetPage() {
 
       <CareTabs active={null} pet={pet} />
 
-      <section className="flex flex-col items-center gap-3 rounded-[24px] border border-line bg-white p-6 text-center">
+      <section className="flex flex-col items-center gap-3 rounded-[24px] border border-line bg-paper p-6 text-center">
         <CareHalo
           pet={pet}
           records={records}
@@ -142,22 +161,33 @@ export default function MyPetPage() {
 
         <button
           type="button"
+          disabled={action.pending}
           onClick={() => {
             const active = !pet.lostMode.active;
-            updatePet(pet.id, {
-              lostMode: {
-                active,
-                since: active ? todayKey() : null,
-                note: active
-                  ? (pet.lostMode.note ??
-                    "Se você encontrou este pet, use o contato da carteirinha.")
-                  : null,
-              },
-            });
-            toast(active ? "Modo perdido ativado" : "Modo perdido desativado", {
-              description: active
-                ? "A carteirinha pública passa a mostrar o aviso e o contato."
-                : "A carteirinha volta ao estado normal.",
+            void action.run(async () => {
+              await updatePet(pet.id, {
+                lostMode: {
+                  active,
+                  since: active ? todayKey() : null,
+                  note: active
+                    ? (pet.lostMode.note ??
+                      "Se você encontrou este pet, use o contato da carteirinha.")
+                    : null,
+                },
+              });
+              toast(
+                active
+                  ? "Modo perdido ativado neste aparelho"
+                  : "Modo perdido desativado neste aparelho",
+                {
+                  description:
+                    "Abra a carteirinha e revise a publicação para atualizar o link público.",
+                  action: {
+                    label: "Revisar publicação",
+                    onClick: () => router.push(`/pets/${pet.id}/card`),
+                  },
+                },
+              );
             });
           }}
           className={`inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-[0.85rem] font-medium ${
@@ -266,7 +296,7 @@ export default function MyPetPage() {
         {petDiary.length === 0 ? (
           <EmptyState
             title="Nenhum momento guardado"
-            description="O diário é privado por padrão e você escolhe o que publica na comunidade."
+            description="Guarde seus momentos neste aparelho. O diário não publica conteúdo na comunidade."
             action={
               <ButtonLink
                 href={`/pets/${pet.id}/diary`}
@@ -308,9 +338,9 @@ export default function MyPetPage() {
         <div className="flex-1">
           <CardTitle>Documentos</CardTitle>
           <p className="text-meta text-muted">
-            {documents.length === 0
-              ? "Anexe fotos de exames e da carteirinha de vacinação."
-              : `${documents.length} arquivo${documents.length > 1 ? "s" : ""} anexado${documents.length > 1 ? "s" : ""}`}
+            {documentCount === 0
+              ? "Guarde PDFs, exames, receitas e carteirinhas."
+              : `${documentCount} arquivo${documentCount > 1 ? "s" : ""} guardado${documentCount > 1 ? "s" : ""}`}
           </p>
         </div>
         <Link

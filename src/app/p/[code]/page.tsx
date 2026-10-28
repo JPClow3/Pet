@@ -9,49 +9,68 @@ import {
 import Link from "next/link";
 import type { Metadata } from "next";
 
+import { Brand } from "@/components/brand";
 import { Chip } from "@/components/ui/chip";
 import { decodePublicCard } from "@/lib/domain/card";
+import { MANAGED_CARD_TOKEN } from "@/lib/domain/managed-card";
+import { readManagedPublicCard } from "@/lib/cloud/server-cards";
+import type { PublicPetCard } from "@/lib/domain/schema";
 import { formatShortDate } from "@/lib/domain/dates";
-import { speciesLabels, speciesPluralLabels } from "@/lib/domain/labels";
+import { speciesLabels } from "@/lib/domain/labels";
 
 type Params = Promise<{ code: string }>;
+export const dynamic = "force-dynamic";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Params;
-}): Promise<Metadata> {
-  const { code } = await params;
-  const card = decodePublicCard(code);
-  if (!card) return { title: "Carteirinha não encontrada" };
-  return {
-    title: `Carteirinha de ${card.name}`,
-    description: `Dados públicos de ${card.name} no PetHub.`,
-  };
-}
+export const metadata: Metadata = {
+  title: "Carteirinha compartilhada",
+  description:
+    "Informações do pet escolhidas pelo tutor para este compartilhamento.",
+  referrer: "no-referrer",
+  robots: { index: false, follow: false, noarchive: true, nosnippet: true },
+  openGraph: {
+    title: "Carteirinha compartilhada · Zelupi",
+    description:
+      "Informações do pet escolhidas pelo tutor para este compartilhamento.",
+  },
+};
 
 export default async function PublicCardPage({ params }: { params: Params }) {
   const { code } = await params;
-  const card = decodePublicCard(code);
+  let card: PublicPetCard | null = null;
+  let managed: Awaited<ReturnType<typeof readManagedPublicCard>> = null;
+  let unavailable = false;
+  if (MANAGED_CARD_TOKEN.test(code)) {
+    try {
+      managed = await readManagedPublicCard(code);
+      card = managed?.card ?? null;
+    } catch {
+      unavailable = true;
+    }
+  } else if (!code.startsWith("c_") && code.length <= 20000)
+    card = decodePublicCard(code);
 
   if (!card) {
     return (
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+        <Brand href="/welcome" className="mb-3" />
         <span className="flex size-14 items-center justify-center rounded-full bg-surface text-muted">
           <PawPrint aria-hidden="true" className="size-6" />
         </span>
         <h1 className="text-xl font-semibold text-ink">
-          Carteirinha não encontrada
+          {unavailable
+            ? "Carteirinha temporariamente indisponível"
+            : "Carteirinha não encontrada"}
         </h1>
         <p className="text-[0.95rem] text-muted">
-          Este link pode estar incompleto. Peça para o tutor compartilhar
-          novamente.
+          {unavailable
+            ? "Não foi possível consultar a publicação. Tente novamente quando estiver conectado."
+            : "Este link pode estar incompleto, ter expirado ou ter sido encerrado pelo tutor. Peça um novo compartilhamento."}
         </p>
         <Link
           href="/"
           className="mt-2 inline-flex min-h-11 items-center rounded-full bg-teal-ink px-5 font-medium text-white"
         >
-          Conhecer o PetHub
+          Conhecer a Zelupi
         </Link>
       </main>
     );
@@ -65,10 +84,20 @@ export default async function PublicCardPage({ params }: { params: Params }) {
         : card.health?.status === "em_dia"
           ? "Em dia"
           : null;
+  const phone = card.contact?.replace(/[^\d+]/g, "") ?? "";
+  const canCall = /^\+?\d{7,15}$/.test(phone);
+  const generatedAt = card.generatedAt
+    ? new Intl.DateTimeFormat("pt-BR", {
+        dateStyle: "short",
+        timeStyle: "short",
+        timeZone: "UTC",
+      }).format(new Date(card.generatedAt))
+    : null;
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-5 py-10">
-      <section className="flex flex-col items-center gap-3 rounded-[24px] border border-line/80 bg-white p-6 text-center shadow-card">
+      <Brand href="/welcome" className="mb-2 self-center" />
+      <section className="flex flex-col items-center gap-3 rounded-[24px] border border-line/80 bg-paper p-6 text-center shadow-card">
         <span className="flex size-20 items-center justify-center rounded-2xl bg-blue-soft text-blue-deep">
           <PawPrint aria-hidden="true" className="size-9" />
         </span>
@@ -81,18 +110,33 @@ export default async function PublicCardPage({ params }: { params: Params }) {
           </p>
         </div>
 
+        <p className="text-meta leading-relaxed text-muted">
+          {managed
+            ? `Publicação atualizada em ${generatedAt} (UTC). O tutor pode alterar ou encerrar este link.`
+            : generatedAt
+              ? `Cópia gerada em ${generatedAt} (UTC).`
+              : "Cópia sem data de geração disponível."}{" "}
+          {!managed
+            ? "As informações refletem esse momento e não são atualizadas neste link."
+            : `Válida até ${new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "UTC" }).format(new Date(managed.expiresAt))} (UTC).`}
+        </p>
+
         {card.lost ? (
           <div className="flex w-full flex-col gap-1 rounded-2xl bg-danger/12 p-3 text-left">
             <p className="flex items-center gap-2 font-semibold text-danger-ink">
               <Siren aria-hidden="true" className="size-4" />
-              Pet perdido
+              {managed
+                ? "Modo perdido nesta publicação"
+                : "Modo perdido nesta cópia"}
               {card.lost.since
                 ? ` desde ${formatShortDate(card.lost.since)}`
                 : ""}
             </p>
             <p className="text-[0.9rem] text-danger-ink/90">
               {card.lost.note ??
-                "Se você encontrou este pet, entre em contato pelo número abaixo."}
+                (card.contact
+                  ? "Se você encontrou este pet, use o contato compartilhado abaixo."
+                  : "Se você encontrou este pet, procure ajuda de um serviço veterinário ou de proteção animal local.")}
             </p>
           </div>
         ) : null}
@@ -101,7 +145,8 @@ export default async function PublicCardPage({ params }: { params: Params }) {
           {healthLabel ? (
             <Chip tone={card.health?.status === "vencido" ? "danger" : "teal"}>
               <BadgeCheck aria-hidden="true" className="size-3.5" />
-              Saúde: {healthLabel}
+              {managed ? "Cuidados publicados" : "Cuidados na geração"}:{" "}
+              {healthLabel}
             </Chip>
           ) : null}
           {card.health?.nextDueDate ? (
@@ -118,25 +163,37 @@ export default async function PublicCardPage({ params }: { params: Params }) {
           ) : null}
         </div>
 
-        {card.contact ? (
+        {card.health ? (
+          <p className="text-meta leading-relaxed text-muted">
+            Resumo dos registros informados pelo tutor. Não é uma avaliação
+            clínica nem comprova a saúde atual do pet.
+          </p>
+        ) : null}
+
+        {card.contact && canCall ? (
           <a
-            href={`tel:${card.contact.replace(/[^\d+]/g, "")}`}
+            href={`tel:${phone}`}
             className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-teal-ink px-5 font-semibold text-white transition-colors hover:bg-teal-deep"
           >
             <Phone aria-hidden="true" className="size-4" />
             Falar com o tutor
           </a>
+        ) : card.contact ? (
+          <p className="break-words text-meta text-ink">
+            Contato compartilhado pelo tutor: {card.contact}
+          </p>
         ) : (
           <p className="text-meta text-muted">
-            O tutor não disponibilizou contato nesta carteirinha.
+            Não há contato nesta cópia. Se encontrou o pet, procure um serviço
+            veterinário ou de proteção animal local para orientação segura.
           </p>
         )}
       </section>
 
       <p className="text-center text-meta text-muted">
-        Página pública controlada pelo tutor.{" "}
-        {speciesPluralLabels[card.species]} também podem ter uma carteirinha
-        como esta.
+        {managed
+          ? "Informações selecionadas e publicadas pelo tutor. O link mostra a última publicação aprovada; mudanças no aparelho do tutor não são publicadas automaticamente. Imagens ou capturas já salvas podem continuar existindo após a revogação."
+          : "Esta cópia foi compartilhada pelo tutor. Links já enviados continuam acessíveis mesmo após mudanças de privacidade ou do modo perdido."}
       </p>
 
       <Link

@@ -5,6 +5,7 @@ import {
   decodePublicCard,
   encodePublicCard,
   publicCardPath,
+  toBase64Url,
 } from "./card";
 import type { HealthRecord, Pet } from "./schema";
 
@@ -59,6 +60,33 @@ function record(overrides: Partial<HealthRecord> = {}): HealthRecord {
 }
 
 describe("código do QR", () => {
+  it("inclui a data de geração e mantém links antigos sem timestamp legíveis", () => {
+    const card = buildPublicCard({
+      pet: pet(),
+      records: [],
+      city: null,
+      now: NOW,
+    });
+    expect(card.generatedAt).toBe(NOW.toISOString());
+    const legacy = { ...card };
+    delete legacy.generatedAt;
+    expect(decodePublicCard(encodePublicCard(legacy))).toEqual(legacy);
+  });
+
+  it("rejeita timestamps inválidos na cópia compartilhada", () => {
+    const card = buildPublicCard({
+      pet: pet(),
+      records: [],
+      city: null,
+      now: NOW,
+    });
+    expect(
+      decodePublicCard(
+        toBase64Url(JSON.stringify({ ...card, generatedAt: "amanhã" })),
+      ),
+    ).toBeNull();
+  });
+
   it("faz ida e volta preservando acentos", () => {
     const card = buildPublicCard({
       pet: pet({ name: "Fumaça" }),

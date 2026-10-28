@@ -34,6 +34,7 @@ import type { PlaceAttribute, PlaceCategory } from "@/lib/domain/schema";
 import { placeCategoryIcons } from "@/lib/icons";
 import { useOrigin } from "@/lib/geo";
 import { useAppStore } from "@/lib/store/app-store";
+import { useAsyncAction } from "@/lib/use-async-action";
 import { useHydrated } from "@/lib/store/hooks";
 
 const categories = Object.keys(placeCategoryMeta) as PlaceCategory[];
@@ -48,7 +49,7 @@ function ViewToggle({
 }) {
   return (
     <div
-      className="flex rounded-xl border border-line bg-white p-1"
+      className="flex rounded-xl border border-line bg-paper p-1"
       role="group"
       aria-label="Modo de visualização"
     >
@@ -89,6 +90,7 @@ export default function ExplorePage() {
   const settings = useAppStore((state) => state.settings);
   const updateSettings = useAppStore((state) => state.updateSettings);
   const track = useAppStore((state) => state.track);
+  const action = useAsyncAction();
   const { origin, status, request } = useOrigin();
 
   const [filters, setFilters] = useState<PlaceFilters>(emptyFilters);
@@ -107,7 +109,10 @@ export default function ExplorePage() {
     filters.categories.length +
     filters.attributes.length +
     (filters.verifiedOnly ? 1 : 0);
-  const locationLabel = settings.city || "sua cidade";
+  const locationLabel =
+    status === "precisa"
+      ? "sua localização"
+      : "São Paulo · catálogo de exemplo";
 
   function toggleCategory(category: PlaceCategory) {
     setFilters((current) => ({
@@ -138,7 +143,7 @@ export default function ExplorePage() {
     <div className="flex flex-col gap-4 pb-24">
       <PageHeader
         title="Descobrir"
-        subtitle="Lugares que combinam com a rotina de vocês."
+        subtitle="Explore um catálogo de demonstração de São Paulo."
       />
       <DiscoveryTabs active="locais" />
 
@@ -162,15 +167,15 @@ export default function ExplorePage() {
         </div>
       </section>
 
-      <div className="sticky top-[3.5rem] z-10 -mx-4 border-b border-line/70 bg-white/95 px-4 pb-3 pt-1 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+      <div className="sticky top-[3.5rem] z-10 -mx-4 border-b border-line/70 bg-paper/95 px-4 pb-3 pt-1 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
         <form
           role="search"
           onSubmit={(event) => {
             event.preventDefault();
-            track("explore_search", {
+            void track("explore_search", {
               query: query.trim(),
               results: results.length,
-            });
+            }).catch(() => {});
           }}
           className="flex flex-col gap-3"
         >
@@ -208,7 +213,7 @@ export default function ExplorePage() {
             </Button>
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-0.5 no-scrollbar">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => request()}
@@ -217,7 +222,7 @@ export default function ExplorePage() {
               className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[0.82rem] font-semibold transition-colors disabled:cursor-wait disabled:opacity-60 ${
                 settings.usePreciseLocation
                   ? "border-teal-ink bg-teal-ink text-white"
-                  : "border-line bg-white text-ink-soft hover:bg-mint"
+                  : "border-line bg-paper text-ink-soft hover:bg-mint"
               }`}
             >
               <LocateFixed aria-hidden="true" className="size-4" />
@@ -229,7 +234,7 @@ export default function ExplorePage() {
                 setLocationDraft(settings.city);
                 setLocationOpen(true);
               }}
-              className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-line bg-white px-3 text-[0.82rem] font-semibold text-ink-soft transition-colors hover:bg-mint"
+              className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-line bg-paper px-3 text-[0.82rem] font-semibold text-ink-soft transition-colors hover:bg-mint"
             >
               <span
                 aria-hidden="true"
@@ -246,7 +251,7 @@ export default function ExplorePage() {
                   selected={selected}
                   onClick={() => {
                     toggleCategory(category);
-                    track("explore_search", { category });
+                    void track("explore_search", { category }).catch(() => {});
                   }}
                   className="min-h-10"
                 >
@@ -259,19 +264,27 @@ export default function ExplorePage() {
         </form>
       </div>
 
-      {status === "negado" ? (
-        <Card className="flex items-start gap-3 border-warning/40 bg-warning/10 p-4">
+      {status === "negado" || status === "indisponivel" ? (
+        <Card
+          className="flex items-start gap-3 border-warning/40 bg-warning/10 p-4"
+          role="status"
+        >
           <LocateFixed
             aria-hidden="true"
             className="mt-0.5 size-5 shrink-0 text-warning-ink"
           />
           <div className="flex-1">
             <p className="text-[0.92rem] font-semibold text-ink">
-              Localização não autorizada
+              {status === "negado"
+                ? "Localização não autorizada"
+                : "Localização indisponível"}
             </p>
             <p className="mt-1 text-meta leading-relaxed text-muted">
-              Continuamos mostrando o catálogo de {locationLabel}. Escolha um
-              bairro ou tente liberar a localização do navegador.
+              As distâncias usam o centro de São Paulo enquanto sua posição não
+              está disponível.{" "}
+              {status === "negado"
+                ? "Libere a localização nas configurações do navegador e tente novamente."
+                : "Verifique a localização do aparelho e tente novamente."}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button
@@ -279,7 +292,7 @@ export default function ExplorePage() {
                 variant="secondary"
                 onClick={() => setLocationOpen(true)}
               >
-                Informar bairro
+                Editar minha cidade
               </Button>
               <Button size="sm" variant="ghost" onClick={request}>
                 Tentar de novo
@@ -433,9 +446,11 @@ export default function ExplorePage() {
 
       <BottomSheet
         open={locationOpen}
-        onClose={() => setLocationOpen(false)}
-        title="Escolha uma região"
-        description="Usaremos essa cidade ou bairro para orientar os resultados. Não é uma localização exata."
+        onClose={() => {
+          if (!action.pending) setLocationOpen(false);
+        }}
+        title="Sua cidade"
+        description="Esta preferência fica no seu perfil. O catálogo de exemplo ainda é de São Paulo; escrever outra cidade não altera suas coordenadas."
       >
         <form
           className="flex flex-col gap-4"
@@ -443,13 +458,16 @@ export default function ExplorePage() {
             event.preventDefault();
             const next = locationDraft.trim();
             if (!next) return;
-            updateSettings({ city: next, usePreciseLocation: false });
-            setLocationOpen(false);
+            void action.run(async () => {
+              await updateSettings({ city: next, usePreciseLocation: false });
+              setLocationOpen(false);
+            });
           }}
         >
           <Field label="Cidade ou bairro" htmlFor="explore-location">
             <Input
               id="explore-location"
+              disabled={action.pending}
               value={locationDraft}
               onChange={(event) => setLocationDraft(event.target.value)}
               placeholder="Ex.: Pinheiros, São Paulo"
@@ -460,13 +478,14 @@ export default function ExplorePage() {
             <Button
               type="submit"
               className="flex-1"
-              disabled={!locationDraft.trim()}
+              disabled={action.pending || !locationDraft.trim()}
             >
-              Usar esta região
+              Salvar cidade
             </Button>
             <Button
               type="button"
               variant="secondary"
+              disabled={action.pending}
               onClick={() => setLocationOpen(false)}
             >
               Cancelar

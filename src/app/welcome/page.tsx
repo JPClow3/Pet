@@ -3,22 +3,24 @@
 import {
   ArrowUpRight,
   Check,
+  FileHeart,
+  History,
   LockKeyhole,
-  PawPrint,
   ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
+import { Brand, BrandMark } from "@/components/brand";
 import { ButtonLink } from "@/components/ui/button";
 import { useAppStore } from "@/lib/store/app-store";
 import { useHydrated } from "@/lib/store/hooks";
 
 const promises = [
-  "Veja o que precisa de atenção hoje",
-  "Guarde saúde, rotina e memórias",
-  "Compartilhe só o que você escolher",
+  "Saiba qual é o próximo cuidado",
+  "Guarde documentos e momentos",
+  "Escolha o que compartilhar",
 ];
 
 export default function WelcomePage() {
@@ -34,89 +36,74 @@ export default function WelcomePage() {
   useEffect(() => {
     if (tracked.current) return;
     tracked.current = true;
-    useAppStore.getState().track("onboarding_started");
+    void useAppStore
+      .getState()
+      .track("onboarding_started")
+      .catch(() => {});
   }, []);
 
   return (
-    <main className="relative isolate flex min-h-dvh overflow-hidden bg-canvas">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden opacity-50"
-      >
-        <div className="absolute -left-24 -top-24 size-96 rounded-full bg-sun-soft/60 blur-3xl" />
-        <div className="absolute -right-24 top-1/3 size-96 rounded-full bg-blue-soft/60 blur-3xl" />
-      </div>
-
-      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 pb-8 pt-5 sm:px-8 lg:px-12 lg:py-8">
-        <header className="flex items-center justify-between gap-4">
-          <Link
-            href="/welcome"
-            aria-label="PetHub, início"
-            className="group inline-flex min-h-11 items-center gap-2 rounded-full text-ink transition-opacity hover:opacity-80"
-          >
-            <span className="flex size-9 items-center justify-center rounded-[12px] bg-blue text-white">
-              <PawPrint aria-hidden="true" className="size-4" />
-            </span>
-            <span className="font-semibold tracking-tight">PetHub</span>
-          </Link>
-
-          <span className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-blue/20 bg-blue-soft px-3 text-meta font-semibold text-blue-deep">
-            <LockKeyhole aria-hidden="true" className="size-3.5" />
-            Privado por padrão
+    <main className="min-h-dvh bg-canvas">
+      <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-7 pt-5 sm:px-8 lg:px-12 lg:py-8">
+        <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <Brand href="/welcome" />
+          <span className="inline-flex items-center gap-1.5 text-meta text-muted">
+            <LockKeyhole
+              aria-hidden="true"
+              className="size-3.5 shrink-0 text-teal-ink"
+            />
+            Sem conta para começar
           </span>
         </header>
 
-        <div className="grid flex-1 items-center gap-12 py-12 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,28rem)] lg:gap-20 lg:py-16">
-          <section className="max-w-2xl">
-            <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-warning/30 bg-sun-soft px-3.5 py-1 text-meta font-bold text-warning-ink">
+        <div className="grid flex-1 items-center gap-12 py-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)] lg:gap-16 lg:py-16">
+          <section>
+            <p className="mb-5 flex items-center gap-2 text-meta font-semibold text-teal-ink">
               <span
-                className="size-2 rounded-full bg-accent"
+                className="size-1.5 rounded-full bg-accent"
                 aria-hidden="true"
               />
-              Cuidado que acompanha a vida
+              Zelo para a vida que vocês dividem
             </p>
-            <h1 className="max-w-[14ch] font-editorial text-[clamp(2.55rem,11vw,5rem)] font-semibold leading-[0.98] tracking-[-0.04em] text-ink">
-              O cuidado de hoje. A história inteira do seu pet.
+            <h1 className="max-w-[13ch] font-editorial text-[clamp(2.8rem,10.5vw,4.8rem)] font-medium leading-[1.04] tracking-[-0.045em] text-ink">
+              O cuidado de hoje.{" "}
+              <span className="text-blue">A história inteira</span> do seu pet.
             </h1>
-            <p className="mt-6 max-w-[38rem] text-[1.05rem] leading-relaxed text-ink-soft sm:text-xl sm:leading-relaxed">
-              Um espaço calmo para organizar a rotina, registrar o que aconteceu
-              e encontrar a informação certa quando você precisar.
+            <p className="mt-6 max-w-[43ch] text-base leading-relaxed text-ink-soft sm:text-lg sm:leading-relaxed">
+              Organize os cuidados, os documentos e os momentos que fazem parte
+              da vida do seu pet. Tudo começa com vocês dois.
             </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="mt-8 flex flex-col items-stretch gap-3 sm:items-start">
               <ButtonLink
                 href="/onboarding"
-                variant="blue"
+                variant="brand"
                 size="lg"
-                className="group w-full sm:w-auto"
+                className="group sm:w-auto"
               >
-                Criar meu espaço
+                Começar com meu pet
                 <ArrowUpRight
                   aria-hidden="true"
-                  className="size-5 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                  className="size-5 transition-transform duration-150 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
                 />
               </ButtonLink>
-              <span className="text-center text-meta text-muted sm:text-left">
-                Leva menos de 90 segundos
-              </span>
+              <Link
+                href="/account#restore-backup"
+                className="inline-flex min-h-11 items-center justify-center text-sm font-semibold text-ink-soft underline decoration-line underline-offset-4 hover:text-blue sm:justify-start"
+              >
+                Já tenho um backup
+              </Link>
             </div>
-
-            <ul
-              className="mt-9 grid gap-3 sm:grid-cols-3 sm:gap-5"
-              aria-label="O que você encontra"
-            >
+            <ul className="mt-6 space-y-3" aria-label="O que você encontra">
               {promises.map((promise) => (
                 <li
                   key={promise}
-                  className="flex items-start gap-2 text-meta leading-relaxed text-ink-soft"
+                  className="flex items-center gap-2.5 text-sm text-ink-soft"
                 >
-                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-lime text-ink">
-                    <Check
-                      aria-hidden="true"
-                      className="size-3"
-                      strokeWidth={2.5}
-                    />
-                  </span>
+                  <Check
+                    aria-hidden="true"
+                    className="size-4 shrink-0 text-teal-ink"
+                    strokeWidth={2}
+                  />
                   {promise}
                 </li>
               ))}
@@ -124,71 +111,80 @@ export default function WelcomePage() {
           </section>
 
           <section
-            aria-label="Prévia do cuidado"
-            className="relative mx-auto w-full max-w-md lg:mx-0 lg:justify-self-end"
+            aria-label="Exemplo de organização na Zelupi"
+            className="relative mx-auto w-full max-w-sm lg:justify-self-end"
           >
-            <div className="relative overflow-hidden rounded-[28px] border border-blue-deep/30 bg-blue p-5 text-white shadow-soft sm:p-7">
-              <div className="flex items-center justify-between gap-3">
+            <div
+              aria-hidden="true"
+              className="absolute -inset-x-4 inset-y-8 rounded-[44%_56%_48%_52%] bg-mint sm:-inset-x-7"
+            />
+            <div className="relative rotate-[-2deg] rounded-[24px] border border-line bg-paper p-5 shadow-card sm:p-7">
+              <div className="flex items-center gap-3 border-b border-line pb-5">
+                <BrandMark className="size-12" />
                 <div>
-                  <p className="text-meta font-medium text-white/75">
-                    Seu espaço de cuidado
+                  <p className="font-editorial text-2xl font-medium text-ink">
+                    Um dia de cada vez.
                   </p>
-                  <p className="mt-1 text-lg font-semibold tracking-tight text-white">
-                    Começa simples.
-                  </p>
+                  <p className="mt-1 text-xs text-muted">Exemplo ilustrativo</p>
                 </div>
-                <span className="relative flex size-10 items-center justify-center rounded-2xl bg-white/20 text-white backdrop-blur-xs">
-                  <ShieldCheck aria-hidden="true" className="size-5" />
-                </span>
               </div>
-
-              <div className="relative mx-auto my-8 flex size-44 items-center justify-center rounded-3xl border border-white/20 bg-blue-deep/40">
-                <span className="flex size-24 items-center justify-center rounded-2xl bg-white text-blue shadow-soft">
-                  <PawPrint
-                    aria-hidden="true"
-                    className="size-10"
-                    strokeWidth={1.6}
-                  />
-                </span>
-                <span className="absolute -bottom-2 rounded-full bg-sun px-3 py-0.5 text-meta font-bold text-ink shadow-sm">
-                  Tudo no seu ritmo
-                </span>
+              <div className="space-y-6 py-6">
+                <div className="flex items-start gap-3">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-blue-soft text-blue-deep">
+                    <FileHeart aria-hidden="true" className="size-5" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-semibold text-muted">
+                      NA AGENDA
+                    </p>
+                    <p className="mt-1 font-semibold text-ink">
+                      O próximo cuidado da Luna
+                    </p>
+                    <p className="mt-1 text-sm text-muted">
+                      Uma data, um passo de cada vez.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-mint text-teal-ink">
+                    <History aria-hidden="true" className="size-5" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-semibold text-muted">
+                      NA HISTÓRIA
+                    </p>
+                    <p className="mt-1 font-semibold text-ink">
+                      O que vocês já viveram
+                    </p>
+                    <p className="mt-1 text-sm text-muted">
+                      Saúde, documentos e memórias.
+                    </p>
+                  </div>
+                </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-2xl bg-white/15 p-3 backdrop-blur-xs">
-                  <p className="text-meta text-white/75">Hoje</p>
-                  <p className="mt-1 text-sm font-semibold text-white">
-                    Próximo cuidado
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-white/15 p-3 backdrop-blur-xs">
-                  <p className="text-meta text-white/75">História</p>
-                  <p className="mt-1 text-sm font-semibold text-white">
-                    Sempre por perto
-                  </p>
-                </div>
+              <div className="flex items-start gap-2.5 rounded-2xl bg-canvas p-3.5 text-sm leading-relaxed text-ink-soft">
+                <ShieldCheck
+                  aria-hidden="true"
+                  className="mt-0.5 size-4 shrink-0 text-teal-ink"
+                />
+                Você escolhe o que fica privado e o que é compartilhado.
               </div>
             </div>
-            <p className="mt-4 flex items-center justify-center gap-2 text-center text-meta text-muted">
-              <ShieldCheck
-                aria-hidden="true"
-                className="size-4 text-teal-ink"
-              />
-              Você controla o que fica privado e o que é compartilhado.
+            <p className="relative mx-auto mt-6 w-fit rounded-full bg-accent-soft px-4 py-2 text-meta font-medium text-accent-ink">
+              Pequenos cuidados. Uma vida inteira.
             </p>
           </section>
         </div>
 
-        <footer className="flex flex-col gap-2 border-t border-line/70 pt-5 text-meta text-muted sm:flex-row sm:items-center sm:justify-between">
-          <span>Feito para a rotina real de quem cuida.</span>
-          <span className="inline-flex items-center gap-1.5">
-            <span
-              className="size-1.5 rounded-full bg-teal-ink"
-              aria-hidden="true"
-            />
-            Dados salvos neste aparelho
-          </span>
+        <footer className="flex flex-col gap-2 border-t border-line pt-5 text-meta text-muted sm:flex-row sm:items-center sm:justify-between">
+          <span>Dados neste aparelho. Conta opcional.</span>
+          <Link
+            href="/roadmap"
+            className="inline-flex min-h-11 items-center gap-1.5 font-medium text-ink-soft hover:text-blue"
+          >
+            O que estamos construindo{" "}
+            <ArrowUpRight aria-hidden="true" className="size-3.5" />
+          </Link>
         </footer>
       </div>
     </main>

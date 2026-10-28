@@ -8,7 +8,6 @@ import {
   House,
   PawPrint,
   UserRound,
-  CalendarHeart,
   ArrowUpRight,
   ShieldCheck,
 } from "lucide-react";
@@ -17,6 +16,7 @@ import { useMemo, type ReactNode } from "react";
 import { unreadCount } from "@/lib/domain/notifications";
 import { useAppStore } from "@/lib/store/app-store";
 import { cn } from "@/lib/utils";
+import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-provider";
 
 const NAV_ITEMS = [
@@ -26,9 +26,9 @@ const NAV_ITEMS = [
     icon: House,
   },
   {
-    href: "/reminders",
-    label: "Cuidados",
-    icon: CalendarHeart,
+    href: "/pets",
+    label: "Meu pet",
+    icon: PawPrint,
   },
   {
     href: "/explore",
@@ -37,14 +37,14 @@ const NAV_ITEMS = [
   },
   {
     href: "/profile",
-    label: "Perfil",
+    label: "Ajustes",
     icon: UserRound,
   },
 ];
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
-  if (href === "/reminders")
+  if (href === "/pets")
     return ["/pets", "/reminders", "/record"].some((prefix) =>
       pathname.startsWith(prefix),
     );
@@ -53,20 +53,6 @@ function isActive(pathname: string, href: string): boolean {
       pathname.startsWith(prefix),
     );
   return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-function Brand() {
-  return (
-    <Link href="/" className="flex min-h-12 items-center gap-2.5">
-      <span className="relative flex size-10 items-center justify-center rounded-[13px] bg-blue text-white">
-        <PawPrint aria-hidden="true" className="size-5" />
-      </span>
-      <span className="text-xl font-extrabold tracking-[-0.04em] text-ink">
-        pet<span className="text-blue">hub</span>
-        <span className="text-accent">.</span>
-      </span>
-    </Link>
-  );
 }
 
 function NotificationBell() {
@@ -82,7 +68,7 @@ function NotificationBell() {
       aria-label={
         unread > 0 ? `Notificações, ${unread} não lidas` : "Notificações"
       }
-      className="relative flex size-12 items-center justify-center rounded-full border border-line/70 bg-white text-ink hover:bg-surface"
+      className="relative flex size-12 items-center justify-center rounded-full border border-line/70 bg-paper text-ink hover:bg-surface"
     >
       <Bell aria-hidden="true" className="size-5" />
       {unread > 0 ? (
@@ -108,9 +94,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         Ir para o conteúdo
       </a>
-      <aside className="sticky top-0 hidden h-dvh border-r border-line/70 bg-white px-3 py-7 md:flex md:flex-col md:gap-2 lg:px-5">
-        <div className="mb-10 overflow-hidden px-1 max-lg:[&_a>span:nth-child(2)]:hidden">
-          <Brand />
+      <aside className="sticky top-0 hidden h-dvh border-r border-line/70 bg-paper px-3 py-7 md:flex md:flex-col md:gap-2 lg:px-5">
+        <div className="mb-10 overflow-hidden px-1">
+          <Brand compactOnTablet />
         </div>
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
@@ -129,14 +115,20 @@ export function AppShell({ children }: { children: ReactNode }) {
             >
               <Icon
                 aria-hidden="true"
-                className={cn("size-5", active ? "text-teal-ink" : "text-muted")}
+                className={cn(
+                  "size-5",
+                  active ? "text-teal-ink" : "text-muted",
+                )}
               />
               <span className="sr-only lg:not-sr-only">{item.label}</span>
             </Link>
           );
         })}
         <div className="mt-auto hidden rounded-[18px] border border-line/80 bg-surface/60 p-4 shadow-none lg:block">
-          <ShieldCheck className="mb-2 size-5 text-teal-ink" aria-hidden="true" />
+          <ShieldCheck
+            className="mb-2 size-5 text-teal-ink"
+            aria-hidden="true"
+          />
           <p className="text-sm font-semibold text-ink">
             Um cuidado de cada vez.
           </p>
@@ -196,7 +188,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <nav
           aria-label="Navegação principal"
-          className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-white/95 shadow-[0_-4px_16px_rgb(23_33_58/0.04)] backdrop-blur safe-bottom md:hidden"
+          className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-paper/95 shadow-[0_-4px_16px_rgb(23_33_58/0.04)] backdrop-blur safe-bottom md:hidden"
         >
           <ul className="mx-auto flex w-full max-w-lg items-stretch justify-between px-2 pt-1">
             {NAV_ITEMS.map((item) => {

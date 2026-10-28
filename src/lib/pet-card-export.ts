@@ -1,5 +1,7 @@
 import { encode } from "uqr";
 
+import { brand, brandColors, brandMark } from "@/lib/brand";
+
 import { formatShortDate } from "@/lib/domain/dates";
 import { speciesLabels } from "@/lib/domain/labels";
 import type { PublicPetCard } from "@/lib/domain/schema";
@@ -10,7 +12,7 @@ export type PetCardTheme = "coral" | "ocean" | "berry";
 export type PetCardArtworkInput = {
   card: PublicPetCard;
   photo: string | null;
-  publicUrl: string;
+  publicUrl: string | null;
   format: PetCardFormat;
   theme: PetCardTheme;
 };
@@ -45,15 +47,15 @@ export const PET_CARD_THEMES: Record<
 > = {
   coral: {
     label: "Pôr do sol",
-    accent: "#f2553f",
-    soft: "#ffe1d9",
-    mist: "#dfe6ff",
-    paper: "#fff9ef",
+    accent: "#d9826b",
+    soft: "#f9e6de",
+    mist: "#e5ebfc",
+    paper: "#fbf8f2",
   },
   ocean: {
     label: "Maré mansa",
-    accent: "#006b5b",
-    soft: "#d7f7eb",
+    accent: "#216b5f",
+    soft: "#e3f0e8",
     mist: "#dcefff",
     paper: "#f7fcfa",
   },
@@ -67,20 +69,20 @@ export const PET_CARD_THEMES: Record<
 };
 
 const COLORS = {
-  ink: "#17213a",
-  inkSoft: "#34405f",
-  muted: "#65708a",
-  cream: "#fff9ef",
-  white: "#ffffff",
-  coral: "#f2553f",
-  coralSoft: "#ffe1d9",
-  blue: "#3457d5",
-  blueSoft: "#dfe6ff",
-  teal: "#006b5b",
-  mint: "#d7f7eb",
-  sun: "#ffd45c",
-  danger: "#b42318",
-  dangerSoft: "#fce8e6",
+  ink: brandColors.ink,
+  inkSoft: brandColors["ink-soft"],
+  muted: brandColors.muted,
+  cream: brandColors.canvas,
+  white: brandColors.paper,
+  coral: brandColors.accent,
+  coralSoft: brandColors["accent-soft"],
+  blue: brandColors.blue,
+  blueSoft: brandColors["blue-soft"],
+  teal: brandColors["teal-ink"],
+  mint: brandColors.mint,
+  sun: brandColors.sun,
+  danger: brandColors.danger,
+  dangerSoft: brandColors["danger-soft"],
 } as const;
 
 type CardCopy = {
@@ -366,13 +368,31 @@ function drawBrand(
     52 * scale,
     52 * scale,
     16 * scale,
-    COLORS.sun,
+    brandColors.brand,
   );
-  drawPaw(context, x + 26 * scale, y + 28 * scale, 28 * scale, COLORS.ink);
+  context.save();
+  context.translate(x, y);
+  context.scale((52 * scale) / 64, (52 * scale) / 64);
+  context.strokeStyle = brandColors.canvas;
+  context.lineWidth = brandMark.strokeWidth;
+  context.lineCap = "round";
+  context.lineJoin = "round";
+  context.stroke(new Path2D(brandMark.path));
+  context.beginPath();
+  context.arc(
+    brandMark.dot.cx,
+    brandMark.dot.cy,
+    brandMark.dot.r,
+    0,
+    Math.PI * 2,
+  );
+  context.fillStyle = brandColors.accent;
+  context.fill();
+  context.restore();
   context.fillStyle = COLORS.ink;
   context.textAlign = "left";
   context.font = `800 ${28 * scale}px Manrope, Arial, sans-serif`;
-  context.fillText("PetHub", x + 66 * scale, y + 37 * scale);
+  context.fillText(brand.wordmark, x + 66 * scale, y + 37 * scale);
 }
 
 function drawPill(
@@ -478,27 +498,37 @@ function drawWallet(
   );
   context.font = "800 31px Manrope, Arial, sans-serif";
   context.fillText(
-    ellipsize(context, copy.contact ?? "Escaneie o QR Code", 750),
+    ellipsize(
+      context,
+      copy.contact ??
+        (publicUrl ? "Escaneie o QR Code" : "Contato não informado"),
+      750,
+    ),
     120,
     635,
   );
 
   fillRoundedRect(context, 926, 180, 184, 184, 30, COLORS.white);
-  drawQrCode(context, publicUrl, 944, 198, 148);
+  if (publicUrl) drawQrCode(context, publicUrl, 944, 198, 148);
+  else drawPaw(context, 1018, 280, 90, theme.accent);
   context.fillStyle = COLORS.inkSoft;
   context.textAlign = "center";
   context.font = "700 19px Manrope, Arial, sans-serif";
-  context.fillText("Escaneie para ver", 1018, 400);
+  context.fillText(publicUrl ? "Escaneie para ver" : "Cópia local", 1018, 400);
   context.font = "500 17px Manrope, Arial, sans-serif";
-  context.fillText("os dados públicos", 1018, 428);
+  context.fillText(
+    publicUrl ? "os dados públicos" : "sem link público",
+    1018,
+    428,
+  );
   context.fillStyle = theme.accent;
   context.fillRect(926, 464, 184, 8);
   context.fillStyle = COLORS.muted;
   context.font = "600 16px Manrope, Arial, sans-serif";
   context.fillText("Feito com carinho", 1018, 515);
-  context.fillText("no PetHub", 1018, 541);
+  context.fillText("na Zelupi", 1018, 541);
   context.font = "600 14px Manrope, Arial, sans-serif";
-  context.fillText(`Gerado em ${generatedOn()}`, 1018, 578);
+  context.fillText(`Cópia de ${generatedOn(card)}`, 1018, 578);
 }
 
 function drawSocial(
@@ -679,13 +709,22 @@ function drawSocial(
     story ? 38 : 24,
     COLORS.white,
   );
-  drawQrCode(
-    context,
-    publicUrl,
-    margin + 98,
-    footerY + (story ? 51 : 38),
-    qrSize - 40,
-  );
+  if (publicUrl)
+    drawQrCode(
+      context,
+      publicUrl,
+      margin + 98,
+      footerY + (story ? 51 : 38),
+      qrSize - 40,
+    );
+  else
+    drawPaw(
+      context,
+      margin + 78 + qrSize / 2,
+      footerY + (story ? 31 : 18) + qrSize / 2,
+      qrSize * 0.55,
+      theme.accent,
+    );
 
   const copyX = margin + 78 + qrSize + (story ? 46 : 30);
   const copyWidth = width - margin - 70 - copyX;
@@ -697,7 +736,8 @@ function drawSocial(
   context.font = `800 ${story ? 39 : 25}px Manrope, Arial, sans-serif`;
   const contactLines = wrapText(
     context,
-    copy.contact ?? "Escaneie para ajudar este pet",
+    copy.contact ??
+      (publicUrl ? "Escaneie para ajudar este pet" : "Contato não informado"),
     copyWidth,
     story ? 3 : 2,
   );
@@ -718,7 +758,7 @@ function drawSocial(
       footerY + 302,
     );
     context.font = "600 19px Manrope, Arial, sans-serif";
-    context.fillText(`Gerado em ${generatedOn()}`, copyX, footerY + 332);
+    context.fillText(`Cópia de ${generatedOn(card)}`, copyX, footerY + 332);
   }
 
   if (!story) {
@@ -727,7 +767,7 @@ function drawSocial(
     context.textAlign = "center";
     context.font = "600 16px Manrope, Arial, sans-serif";
     context.fillText(
-      `Gerado em ${generatedOn()} · atualize a arte após mudar os dados`,
+      `Imagem de ${generatedOn(card)} · a imagem não muda após o download`,
       width / 2,
       1038,
     );
@@ -743,12 +783,14 @@ function drawSocial(
   }
 }
 
-function generatedOn() {
+function generatedOn(card: PublicPetCard) {
+  if (!card.generatedAt) return "data não informada";
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
-  }).format(new Date());
+    timeZone: "UTC",
+  }).format(new Date(card.generatedAt));
 }
 
 export async function createPetCardPng(

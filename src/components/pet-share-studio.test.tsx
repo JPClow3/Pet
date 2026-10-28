@@ -47,6 +47,20 @@ describe("PetShareStudio", () => {
     });
   });
 
+  it("exporta o PNG sem conta ou publicação de link", async () => {
+    const user = userEvent.setup();
+    render(<PetShareStudio card={card} photo={null} publicUrl={null} />);
+    expect(screen.getByRole("button", { name: "Baixar PNG" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Copiar link público" }),
+    ).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Baixar PNG" }));
+    await waitFor(() => expect(downloadPetCard).toHaveBeenCalledOnce());
+    expect(createPetCardPng).toHaveBeenLastCalledWith(
+      expect.objectContaining({ publicUrl: null }),
+    );
+  });
+
   it("permite escolher os três formatos e personalizar a paleta", async () => {
     const user = userEvent.setup();
     render(
@@ -130,9 +144,11 @@ describe("PetShareStudio", () => {
   });
 
   it("não baixa nem copia quando a pessoa cancela o compartilhamento", async () => {
-    const share = vi.fn().mockRejectedValue(
-      new DOMException("Compartilhamento cancelado", "AbortError"),
-    );
+    const share = vi
+      .fn()
+      .mockRejectedValue(
+        new DOMException("Compartilhamento cancelado", "AbortError"),
+      );
     Object.defineProperty(navigator, "share", {
       configurable: true,
       value: share,

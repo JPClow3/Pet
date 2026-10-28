@@ -64,7 +64,7 @@ export function Field({
 }
 
 const controlClasses =
-  "w-full min-h-12 rounded-[14px] border border-line bg-white px-3.5 text-base text-ink-soft placeholder:text-muted/75 focus:border-teal-ink focus-visible:ring-2 focus-visible:ring-teal-ink/20 aria-invalid:border-danger-ink transition-colors";
+  "w-full min-h-12 rounded-[14px] border border-line bg-paper px-3.5 text-base text-ink-soft placeholder:text-muted/75 focus:border-teal-ink focus-visible:ring-2 focus-visible:ring-teal-ink/20 aria-invalid:border-danger-ink transition-colors";
 
 export function Input({ className, ...props }: ComponentProps<"input">) {
   return <input className={cn(controlClasses, className)} {...props} />;

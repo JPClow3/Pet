@@ -12,6 +12,7 @@ import { healthTypeIcons } from "@/lib/icons";
 import type { HealthRecordType } from "@/lib/domain/schema";
 import { useAppStore } from "@/lib/store/app-store";
 import { useHydrated } from "@/lib/store/hooks";
+import { useAsyncAction } from "@/lib/use-async-action";
 
 export default function QuickRecordPage() {
   const ready = useHydrated();
@@ -19,6 +20,7 @@ export default function QuickRecordPage() {
   const activePetId = useAppStore((state) => state.activePetId);
   const setActivePet = useAppStore((state) => state.setActivePet);
   const router = useRouter();
+  const action = useAsyncAction();
 
   if (!ready) return null;
 
@@ -55,11 +57,12 @@ export default function QuickRecordPage() {
                 key={item.id}
                 type="button"
                 aria-pressed={item.id === pet.id}
-                onClick={() => setActivePet(item.id)}
+                disabled={action.pending}
+                onClick={() => void action.run(() => setActivePet(item.id))}
                 className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-3 text-[0.9rem] font-medium ${
                   item.id === pet.id
                     ? "border-teal-ink bg-mint text-teal-ink"
-                    : "border-line bg-white text-ink-soft"
+                    : "border-line bg-paper text-ink-soft"
                 }`}
               >
                 <PetAvatar pet={item} size="sm" />
@@ -70,6 +73,12 @@ export default function QuickRecordPage() {
         </Card>
       ) : null}
 
+      {action.pending ? (
+        <p role="status" className="text-sm text-muted">
+          Salvando pet escolhido…
+        </p>
+      ) : null}
+
       <div className="grid grid-cols-2 gap-2">
         {HEALTH_TYPES.map((type: HealthRecordType) => {
           const Icon = healthTypeIcons[type];
@@ -77,10 +86,11 @@ export default function QuickRecordPage() {
             <button
               key={type}
               type="button"
+              disabled={action.pending}
               onClick={() =>
                 router.push(`/pets/${pet.id}/health/new?type=${type}`)
               }
-              className="flex min-h-20 flex-col items-start justify-center gap-1.5 rounded-3xl border border-line bg-white p-4 text-left hover:bg-surface"
+              className="flex min-h-20 flex-col items-start justify-center gap-1.5 rounded-3xl border border-line bg-paper p-4 text-left hover:bg-surface"
             >
               <Icon aria-hidden="true" className="size-5 text-teal-ink" />
               <span className="text-[0.92rem] font-medium text-ink">
@@ -93,6 +103,7 @@ export default function QuickRecordPage() {
 
       <Button
         variant="secondary"
+        disabled={action.pending}
         onClick={() => router.push(`/pets/${pet.id}/diary`)}
       >
         Guardar um momento no diário

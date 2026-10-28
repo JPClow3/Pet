@@ -61,6 +61,7 @@ export function buildPublicCard(input: {
   const status = healthStatus(records, now);
   const card: PublicPetCard = {
     v: 1,
+    generatedAt: now.toISOString(),
     name: pet.name,
     species: pet.species,
     breed: pet.card.shareBreed ? pet.breed : null,

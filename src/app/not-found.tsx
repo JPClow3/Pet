@@ -4,7 +4,7 @@ import { ButtonLink } from "@/components/ui/button";
 export default function NotFound() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center gap-5 px-6 text-center">
-      <title>Página não encontrada · PetHub</title>
+      <title>Página não encontrada · Zelupi</title>
       <PawPrint className="size-12 text-teal-ink" aria-hidden="true" />
       <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted">
         Caminho não encontrado

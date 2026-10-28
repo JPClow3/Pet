@@ -20,6 +20,11 @@ import { healthTypeMeta } from "@/lib/domain/labels";
 import { healthTypeIcons } from "@/lib/icons";
 import type { HealthRecord } from "@/lib/domain/schema";
 import { cn } from "@/lib/utils";
+import {
+  activeMedicationSchedule,
+  nextMedicationOccurrence,
+} from "@/lib/domain/medication";
+import { useCurrentTime } from "@/lib/use-current-time";
 
 const stateTone: Record<string, ChipTone> = {
   vazio: "muted",
@@ -43,7 +48,7 @@ const stateLabel = {
 } as const;
 
 const stateSurface = {
-  vazio: "border-line bg-white hover:border-teal/35",
+  vazio: "border-line bg-paper hover:border-teal/35",
   em_dia: "border-success-ink/30 bg-success-soft hover:border-success-ink/55",
   atencao: "border-warning/45 bg-warning-soft hover:border-warning-ink/65",
   vencido: "border-danger/35 bg-danger-soft hover:border-danger/60",
@@ -58,10 +63,11 @@ export function HealthStatusCard({
   href: string;
   title?: string;
 }) {
-  const status = healthStatus(records);
+  const now = useCurrentTime();
+  const status = healthStatus(records, now);
   const Icon = stateIcon[status.state];
   const tone = stateTone[status.state];
-  const upcoming = upcomingRecords(records, new Date(), 3);
+  const upcoming = upcomingRecords(records, now, 3);
 
   return (
     <Link
@@ -137,6 +143,12 @@ export function HealthStatusCard({
 export function RecordTimelineItem({ record }: { record: HealthRecord }) {
   const Icon = healthTypeIcons[record.type];
   const meta = healthTypeMeta[record.type];
+  const plan = record.medication
+    ? activeMedicationSchedule(record.medication)
+    : null;
+  const nextDose = record.medication
+    ? nextMedicationOccurrence(record.medication)
+    : null;
 
   return (
     <div
@@ -173,7 +185,17 @@ export function RecordTimelineItem({ record }: { record: HealthRecord }) {
             {record.notes}
           </p>
         ) : null}
-        {record.nextDueDate ? (
+        {record.medication ? (
+          <p className="mt-1 text-meta font-semibold text-teal-ink">
+            {plan
+              ? `${plan.amount} ${plan.unit} · ${plan.times.join(", ")}`
+              : "Plano encerrado"}
+            {nextDose
+              ? ` · próximo horário sem confirmação: ${formatShortDate(nextDose.date)} às ${nextDose.time}`
+              : " · histórico de doses disponível"}
+          </p>
+        ) : null}
+        {!record.medication && record.nextDueDate ? (
           <p className="mt-1 text-meta font-semibold text-teal-ink">
             Próximo: {formatShortDate(record.nextDueDate)}
           </p>

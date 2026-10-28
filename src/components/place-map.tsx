@@ -117,7 +117,7 @@ export function PlaceMap({
             );
           })}
 
-          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-3 py-1.5 text-[0.7rem] font-semibold text-ink-soft shadow-sm backdrop-blur-sm">
+          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-paper/90 px-3 py-1.5 text-[0.7rem] font-semibold text-ink-soft shadow-sm backdrop-blur-sm">
             <LocateFixed
               aria-hidden="true"
               className="size-3.5 text-teal-ink"
@@ -126,7 +126,7 @@ export function PlaceMap({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-line bg-white px-4 py-3">
+        <div className="flex items-center justify-between gap-3 border-t border-line bg-paper px-4 py-3">
           <p className="text-meta text-muted">
             Mapa esquemático · {places.length} locais
           </p>
@@ -150,7 +150,7 @@ export function PlaceMap({
               type="button"
               aria-pressed={active}
               onClick={() => setSelectedId(place.id)}
-              className={`flex min-h-12 items-center gap-3 rounded-2xl border px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2 ${active ? "border-teal/40 bg-mint/70" : "border-line bg-white hover:bg-surface"}`}
+              className={`flex min-h-12 items-center gap-3 rounded-2xl border px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2 ${active ? "border-teal/40 bg-mint/70" : "border-line bg-paper hover:bg-surface"}`}
             >
               <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-mint text-teal-ink">
                 <MapPin aria-hidden="true" className="size-4" />
@@ -174,7 +174,7 @@ export function PlaceMap({
       </div>
 
       {selected ? (
-        <div className="mt-3 rounded-[20px] border border-line/80 bg-white p-4 shadow-card">
+        <div className="mt-3 rounded-[20px] border border-line/80 bg-paper p-4 shadow-card">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[1rem] font-semibold text-ink">

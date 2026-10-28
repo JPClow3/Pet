@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import type { Metadata } from "next";
 
+import { Brand } from "@/components/brand";
 import { ButtonLink } from "@/components/ui/button";
 import { Chip, type ChipTone } from "@/components/ui/chip";
 import {
@@ -28,6 +29,8 @@ export const metadata: Metadata = {
 };
 
 const statusTones: Record<RoadmapStatus, ChipTone> = {
+  Entregue: "teal",
+  Parcial: "warning",
   Agora: "teal",
   Validação: "warning",
   Incompleto: "mint",
@@ -36,24 +39,6 @@ const statusTones: Record<RoadmapStatus, ChipTone> = {
   Futuro: "ink",
   Refatoração: "muted",
 };
-
-function Brand() {
-  return (
-    <Link
-      href="/welcome"
-      aria-label="PetHub, início"
-      className="inline-flex min-h-12 items-center gap-2.5 rounded-full"
-    >
-      <span className="flex size-10 items-center justify-center rounded-[13px] bg-blue text-white">
-        <PawPrint aria-hidden="true" className="size-5" />
-      </span>
-      <span className="text-xl font-extrabold tracking-[-0.04em] text-ink">
-        pet<span className="text-blue">hub</span>
-        <span className="text-accent">.</span>
-      </span>
-    </Link>
-  );
-}
 
 function PhaseDot({ accent }: { accent: string }) {
   const color =
@@ -176,7 +161,7 @@ function PhaseSection({
         </div>
       </div>
 
-      <div className="mt-4 rounded-[20px] border border-line/80 bg-white p-5 shadow-none sm:p-6">
+      <div className="mt-4 rounded-[20px] border border-line/80 bg-paper p-5 shadow-none sm:p-6">
         {items.map((item, index) => (
           <RoadmapItemCard
             key={item.id}
@@ -207,7 +192,7 @@ export default function RoadmapPage() {
 
       <header className="sticky top-0 z-20 border-b border-line/60 bg-canvas">
         <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-10">
-          <Brand />
+          <Brand href="/welcome" />
           <nav
             aria-label="Navegação do roadmap"
             className="flex items-center gap-1 sm:gap-2"
@@ -220,7 +205,7 @@ export default function RoadmapPage() {
             </a>
             <ButtonLink href="/welcome" variant="secondary" size="sm">
               <span className="hidden sm:inline">Conhecer o app</span>
-              <span className="sm:hidden">PetHub</span>
+              <span className="sm:hidden">Zelupi</span>
               <ArrowUpRight aria-hidden="true" className="size-3.5" />
             </ButtonLink>
           </nav>
@@ -232,15 +217,20 @@ export default function RoadmapPage() {
           <div className="min-w-0">
             <p className="inline-flex min-h-8 items-center gap-2 rounded-full border border-blue/20 bg-blue-soft px-3 text-meta font-bold text-blue-deep">
               <Waypoints aria-hidden="true" className="size-3.5" />
-              Roadmap público · setembro de 2026
+              Roadmap público · outubro de 2026
             </p>
             <h1 className="mt-3 max-w-[18ch] font-editorial text-[clamp(2.35rem,6vw,4rem)] font-semibold leading-[0.96] tracking-[-0.045em] text-ink">
               Confiança antes de complexidade.
             </h1>
             <p className="mt-4 max-w-[58ch] text-[0.98rem] leading-relaxed text-ink-soft sm:text-[1.05rem]">
-              O mapa aberto do PetHub: o que estamos corrigindo, o que precisa
+              O mapa aberto da Zelupi: o que estamos corrigindo, o que precisa
               de uma base mais forte e o que só faz sentido quando a confiança
               vier primeiro.
+            </p>
+            <p className="mt-3 max-w-[58ch] text-meta leading-relaxed text-muted">
+              Entregue descreve o escopo implementado no app. Serviços na nuvem
+              dependem de configuração; validação em produção e em aparelhos
+              reais é acompanhada separadamente.
             </p>
             <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
               <ButtonLink href="#roadmap" variant="blue" size="sm">
@@ -278,7 +268,7 @@ export default function RoadmapPage() {
               {principles.map(([number, label, detail]) => (
                 <li
                   key={number}
-                  className="flex min-w-0 items-start gap-3 rounded-[16px] border border-line/70 bg-white/60 p-3"
+                  className="flex min-w-0 items-start gap-3 rounded-[16px] border border-line/70 bg-paper/60 p-3"
                 >
                   <span className="font-mono text-[0.68rem] font-bold text-blue-deep">
                     {number}
@@ -348,7 +338,7 @@ export default function RoadmapPage() {
                   <li key={phase.id}>
                     <a
                       href={`#${phase.id}`}
-                      className="group flex min-h-11 items-center gap-3 rounded-2xl px-3 text-meta font-semibold text-muted transition-colors hover:bg-white hover:text-ink"
+                      className="group flex min-h-11 items-center gap-3 rounded-2xl px-3 text-meta font-semibold text-muted transition-colors hover:bg-paper hover:text-ink"
                     >
                       <span className="font-mono text-[0.68rem] text-blue group-hover:text-blue-deep">
                         {String(index + 1).padStart(2, "0")}
@@ -397,7 +387,7 @@ export default function RoadmapPage() {
             href="/welcome"
             className="inline-flex min-h-11 items-center gap-1.5 font-bold text-teal-ink hover:text-teal-deep"
           >
-            Conhecer o PetHub
+            Conhecer a Zelupi
             <ArrowUpRight aria-hidden="true" className="size-3.5" />
           </Link>
         </footer>

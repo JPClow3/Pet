@@ -1,11 +1,14 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "pethub",
-  "main": ".open-next/worker.js",
+  "account_id": "3c40024664aa7a397235ba6029faed8f",
+  "main": "custom-worker.ts",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
+  "vars": { "SITE_URL": "https://pethub.joaopaulo-grv4.workers.dev", "PUSH_ENABLED": "false" },
+  "triggers": { "crons": ["* * * * *"] },
   "assets": {
     "directory": ".open-next/assets",
-    "binding": "ASSETS"
-  }
+    "binding": "ASSETS",
+  },
 }
