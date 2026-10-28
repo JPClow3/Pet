@@ -9,12 +9,25 @@ import {
   TriangleAlert,
   WifiOff,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 
-import { QrCode } from "@/components/qr-code";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
+
+const QrCode = dynamic(
+  () => import("@/components/qr-code").then((mod) => mod.QrCode),
+  {
+    loading: () => (
+      <div
+        role="status"
+        aria-label="Gerando QR Code"
+        className="size-[116px] animate-pulse rounded-xl bg-surface"
+      />
+    ),
+  },
+);
 import {
   createPetCardPng,
   downloadPetCard,

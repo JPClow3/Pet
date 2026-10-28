@@ -11,11 +11,17 @@ import {
   backupContentSignature,
   CloudConflictError,
   deleteCloudSnapshot,
+  patchCloudSnapshot,
   readCloudSnapshot,
   saveCloudSnapshot,
   type CloudSnapshot,
 } from "@/lib/cloud/snapshots";
 import { parseBackup } from "@/lib/domain/backup";
+import {
+  mergeBackupsByRecord,
+  type BackupDelta,
+  type DeltaSyncStats,
+} from "@/lib/domain/delta-sync";
 import { disconnectPushForAccount } from "@/lib/push/client";
 import {
   exportSnapshot,
@@ -25,10 +31,12 @@ import {
 } from "@/lib/store/app-store";
 
 type PendingAction = {
-  kind: "upload" | "restore" | "delete";
+  kind: "upload" | "delta" | "restore" | "delete";
   localText: string;
   signature: string;
   remote: CloudSnapshot | null;
+  delta?: BackupDelta;
+  deltaStats?: DeltaSyncStats;
 };
 
 function downloadBackup(text: string, prefix: string) {
@@ -469,11 +477,21 @@ function CloudSyncPanel({
     try {
       const text = kind === "delete" ? "" : await exportSnapshot();
       if (operation.current !== current) return;
+      let delta: BackupDelta | undefined;
+      let deltaStats: DeltaSyncStats | undefined;
+      if (kind === "delta" && remote) {
+        const localBackup = parseBackup(text);
+        const mergedResult = mergeBackupsByRecord(remote.backup, localBackup);
+        delta = mergedResult.delta;
+        deltaStats = mergedResult.stats;
+      }
       setPending({
         kind,
         localText: text,
         signature: kind === "delete" ? "" : backupContentSignature(text),
         remote,
+        delta,
+        deltaStats,
       });
       setError("");
       setMessage("");
@@ -516,6 +534,28 @@ function CloudSyncPanel({
         setMessage(
           "Cópia salva na nuvem. Novas alterações ficam neste aparelho até você enviá-las novamente.",
         );
+      } else if (
+        action.kind === "delta" &&
+        action.remote &&
+        action.delta
+      ) {
+        const saved = await patchCloudSnapshot(
+          user.id,
+          action.delta,
+          action.remote.revision,
+          action.remote.generation,
+        );
+        if (operation.current !== current) return;
+        await restoreSnapshot(JSON.stringify(saved.backup), {
+          expectedLocalState: deviceContentSignature(
+            parseBackup(action.localText),
+          ),
+        });
+        setRemote(saved);
+        setMessage(
+          `Sincronização incremental concluída (versão ${saved.revision}). Registros deste aparelho e da nuvem foram reconciliados.`,
+        );
+        onRestored?.();
       } else if (action.kind === "restore" && action.remote) {
         const { data, error: sessionError } = await getCloudClient().getSession(
           { query: { disableCookieCache: true } },
@@ -625,6 +665,14 @@ function CloudSyncPanel({
             <>
               <Button
                 variant="secondary"
+                disabled={busy || !ready || !consent}
+                onClick={() => prepare("delta")}
+              >
+                <RefreshCw aria-hidden="true" className="size-4" />
+                Revisar sincronização incremental (Delta)
+              </Button>
+              <Button
+                variant="secondary"
                 disabled={busy || !ready}
                 onClick={() => prepare("restore")}
               >
@@ -661,16 +709,20 @@ function CloudSyncPanel({
           <h3 className="font-semibold text-ink">
             {pending.kind === "upload"
               ? "Confirmar envio"
-              : pending.kind === "restore"
-                ? "Confirmar substituição dos dados locais"
-                : "Confirmar exclusão da cópia na nuvem"}
+              : pending.kind === "delta"
+                ? "Confirmar sincronização incremental (Delta)"
+                : pending.kind === "restore"
+                  ? "Confirmar substituição dos dados locais"
+                  : "Confirmar exclusão da cópia na nuvem"}
           </h3>
           <p className="text-meta leading-relaxed text-ink">
             {pending.kind === "upload"
               ? `Enviar ${parseBackup(pending.localText).pets.length} pets deste aparelho para ${user.email}. ${pending.remote ? `A versão ${pending.remote.revision} na nuvem será substituída.` : "Será criada a primeira cópia da conta."}`
-              : pending.kind === "restore"
-                ? `Os dados deste aparelho serão substituídos pela versão ${pending.remote?.revision} da nuvem, sem mesclar registros. Baixe um backup local para preservar ambas as versões.`
-                : "Essa ação remove a cópia recuperável da nuvem. Os dados locais e sua conta não serão excluídos."}
+              : pending.kind === "delta"
+                ? `Mesclar registros por horário de atualização (updatedAt) com a versão ${pending.remote?.revision} da nuvem: ${pending.deltaStats?.changedRecords ?? 0} registro(s) alterado(s), ${pending.deltaStats?.deletedRecords ?? 0} exclusão(ões) e ${pending.deltaStats?.transferredFiles ?? 0} arquivo(s) enviado(s) (${pending.deltaStats?.skippedFiles ?? 0} documento(s) já idêntico(s) na nuvem preservado(s) sem reenvio).`
+                : pending.kind === "restore"
+                  ? `Os dados deste aparelho serão substituídos pela versão ${pending.remote?.revision} da nuvem, sem mesclar registros. Baixe um backup local para preservar ambas as versões.`
+                  : "Essa ação remove a cópia recuperável da nuvem. Os dados locais e sua conta não serão excluídos."}
           </p>
           {pending.kind === "restore" ? (
             <Button
@@ -685,7 +737,11 @@ function CloudSyncPanel({
             </Button>
           ) : null}
           <Button
-            variant={pending.kind === "upload" ? "primary" : "danger"}
+            variant={
+              pending.kind === "upload" || pending.kind === "delta"
+                ? "primary"
+                : "danger"
+            }
             disabled={busy}
             onClick={() => void confirm()}
           >
@@ -693,9 +749,11 @@ function CloudSyncPanel({
               ? "Aguarde…"
               : pending.kind === "upload"
                 ? "Confirmar envio"
-                : pending.kind === "restore"
-                  ? "Substituir dados deste aparelho"
-                  : "Excluir cópia na nuvem"}
+                : pending.kind === "delta"
+                  ? "Confirmar sincronização incremental"
+                  : pending.kind === "restore"
+                    ? "Substituir dados deste aparelho"
+                    : "Excluir cópia na nuvem"}
           </Button>
           <Button
             variant="ghost"

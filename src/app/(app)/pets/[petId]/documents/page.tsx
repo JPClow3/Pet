@@ -1,12 +1,20 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
-import { DocumentLibrary } from "@/components/document-library";
 import { ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 import { useAppStore } from "@/lib/store/app-store";
 import { useHydrated } from "@/lib/store/hooks";
+
+const DocumentLibrary = dynamic(
+  () =>
+    import("@/components/document-library").then((mod) => mod.DocumentLibrary),
+  {
+    loading: () => <SkeletonScreen label="Abrindo biblioteca de documentos" />,
+  },
+);
 
 export default function DocumentsPage() {
   const params = useParams<{ petId: string }>();

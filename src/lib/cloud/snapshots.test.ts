@@ -6,9 +6,11 @@ import {
   CloudConflictError,
   deleteCloudSnapshot,
   parseCloudSnapshot,
+  patchCloudSnapshot,
   readCloudSnapshot,
   saveCloudSnapshot,
 } from "./snapshots";
+import { computeBackupDelta } from "@/lib/domain/delta-sync";
 
 const backup = createBackup(useAppStore.getInitialState());
 const row = {
@@ -91,5 +93,23 @@ describe("cópias cloud via API autenticada", () => {
         }),
       ),
     ).not.toBe(backupContentSignature(original));
+  });
+  it("envia delta incremental validado via PATCH", async () => {
+    fetchMock.mockResolvedValue(
+      Response.json({ snapshot: { ...row, revision: 2 } }),
+    );
+    const next = structuredClone(backup);
+    next.settings.city = "Curitiba";
+    const { delta } = computeBackupDelta(backup, next);
+    await patchCloudSnapshot("user-a", delta, 1, row.generation);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/cloud/snapshot",
+      expect.objectContaining({ method: "PATCH" }),
+    );
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      expectedRevision: 1,
+      expectedGeneration: row.generation,
+      delta,
+    });
   });
 });

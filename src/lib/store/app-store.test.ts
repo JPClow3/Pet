@@ -291,4 +291,68 @@ describe("store da Zelupi", () => {
     expect(state.tutor).toBeNull();
     expect(state.ready).toBe(true);
   });
+
+  it("gerencia locais de confiança, favoritos, importação OSM e tombstones de sync", async () => {
+    const placeId = await useAppStore.getState().addPlace({
+      name: "Hospital Veterinário 24h",
+      category: "veterinario",
+      city: "São Paulo",
+      neighborhood: "Vila Mariana",
+      address: "Rua Domingos de Morais, 1200",
+      lat: -23.588,
+      lng: -46.638,
+      notes: "Emergência 24h com UTI",
+      phone: "1155720000",
+      whatsapp: "11988881111",
+      favorite: false,
+      source: "local",
+      attributes: ["emergencia_24h"],
+      priceLevel: 3,
+      verified: false,
+      openNow: true,
+    });
+
+    await useAppStore.getState().toggleFavoritePlace(placeId);
+    expect(
+      useAppStore.getState().places.find((p) => p.id === placeId)?.favorite,
+    ).toBe(true);
+
+    await useAppStore.getState().updatePlace(placeId, {
+      notes: "Falar com plantonista na recepção B.",
+    });
+    expect(
+      useAppStore.getState().places.find((p) => p.id === placeId)?.notes,
+    ).toBe("Falar com plantonista na recepção B.");
+
+    const imported = await useAppStore.getState().importOsmPlaces([
+      {
+        id: "osm-node-99",
+        osmId: "node:99",
+        source: "osm",
+        name: "Clínica Vet OSM",
+        category: "veterinario",
+        city: "São Paulo",
+        neighborhood: "Centro",
+        address: "Rua Augusta, 100",
+        lat: -23.55,
+        lng: -46.65,
+        notes: "Importado do OpenStreetMap",
+        attributes: ["emergencia_24h"],
+        priceLevel: 2,
+        verified: false,
+        openNow: true,
+        seeded: false,
+      },
+    ]);
+    expect(imported).toBe(1);
+
+    await useAppStore.getState().removePlace(placeId);
+    const state = useAppStore.getState();
+    expect(state.places.find((p) => p.id === placeId)).toBeUndefined();
+    expect(state.syncTombstones).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ collection: "places", id: placeId }),
+      ]),
+    );
+  });
 });

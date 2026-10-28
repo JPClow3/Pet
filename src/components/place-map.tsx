@@ -12,14 +12,24 @@ export function PlaceMap({
   places,
   origin,
   className,
+  selectedId: controlledSelectedId,
+  onSelect,
 }: {
   places: PlaceWithDistance[];
   origin: Coordinates;
   className?: string;
+  selectedId?: string | null;
+  onSelect?: (id: string | null) => void;
 }) {
-  const [selectedId, setSelectedId] = useState<string | null>(
+  const [internalSelectedId, setInternalSelectedId] = useState<string | null>(
     places[0]?.id ?? null,
   );
+  const selectedId =
+    controlledSelectedId !== undefined ? controlledSelectedId : internalSelectedId;
+  const handleSelect = (id: string | null) => {
+    setInternalSelectedId(id);
+    onSelect?.(id);
+  };
 
   const bounds = useMemo(() => {
     const points = [
@@ -101,7 +111,7 @@ export function PlaceMap({
                 type="button"
                 aria-pressed={active}
                 aria-label={`${place.name}, ${placeCategoryMeta[place.category].label}, ${place.distanceKm} km de distância estimada`}
-                onClick={() => setSelectedId(place.id)}
+                onClick={() => handleSelect(place.id)}
                 className={`absolute flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-transform duration-200 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 ${active ? "scale-110" : "hover:scale-105"}`}
                 style={{ left: `${point.x}%`, top: `${point.y}%` }}
               >
@@ -149,7 +159,7 @@ export function PlaceMap({
               key={place.id}
               type="button"
               aria-pressed={active}
-              onClick={() => setSelectedId(place.id)}
+              onClick={() => handleSelect(place.id)}
               className={`flex min-h-12 items-center gap-3 rounded-2xl border px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2 ${active ? "border-teal/40 bg-mint/70" : "border-line bg-paper hover:bg-surface"}`}
             >
               <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-mint text-teal-ink">

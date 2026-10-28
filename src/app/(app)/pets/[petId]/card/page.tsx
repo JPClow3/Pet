@@ -1,13 +1,13 @@
 "use client";
 
-import { ChevronRight, Eye, ShieldCheck, Siren } from "lucide-react";
+import { ChevronRight, Eye, FileText, Printer, QrCode, ShieldCheck, Siren } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
-import { PetShareStudio } from "@/components/pet-share-studio";
 import { ManagedCardPanel } from "@/components/managed-card-panel";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,30 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { buildPublicCard } from "@/lib/domain/card";
 import { todayKey } from "@/lib/domain/dates";
 import { useAppStore } from "@/lib/store/app-store";
+
+const PetShareStudio = dynamic(
+  () =>
+    import("@/components/pet-share-studio").then((mod) => mod.PetShareStudio),
+  {
+    loading: () => (
+      <Card role="status" className="py-8 text-center text-meta text-muted">
+        Preparando estúdio da carteirinha…
+      </Card>
+    ),
+  },
+);
+
+const LostPetPosterModal = dynamic(() =>
+  import("@/components/lost-pet-poster-modal").then(
+    (mod) => mod.LostPetPosterModal,
+  ),
+);
+
+const MicrochipGuideModal = dynamic(() =>
+  import("@/components/microchip-guide-modal").then(
+    (mod) => mod.MicrochipGuideModal,
+  ),
+);
 
 export default function PetCardPage() {
   const params = useParams<{ petId: string }>();
@@ -27,6 +51,26 @@ export default function PetCardPage() {
   const updatePet = useAppStore((state) => state.updatePet);
   const track = useAppStore((state) => state.track);
   const [url, setUrl] = useState<string | null>(null);
+  const [posterModalOpen, setPosterModalOpen] = useState(false);
+  const [microchipModalOpen, setMicrochipModalOpen] = useState(false);
+
+  const handleSaveLostDetails = async (details: {
+    neighborhood: string;
+    contactPhone: string;
+    reward: string;
+    note: string;
+  }) => {
+    if (!pet) return;
+    await updatePet(pet.id, {
+      lostMode: {
+        ...pet.lostMode,
+        neighborhood: details.neighborhood || null,
+        contactPhone: details.contactPhone || null,
+        reward: details.reward || null,
+        note: details.note || null,
+      },
+    });
+  };
 
   useEffect(() => {
     if (pet) track("qr_viewed", { petId: pet.id });
@@ -112,6 +156,7 @@ export default function PetCardPage() {
               const active = !pet.lostMode.active;
               await updatePet(pet.id, {
                 lostMode: {
+                  ...pet.lostMode,
                   active,
                   since: active ? todayKey() : null,
                   note: active
@@ -127,6 +172,9 @@ export default function PetCardPage() {
                     "Atualize a publicação gerenciada para mudar o link. Imagens e links antigos de cópia não mudam.",
                 },
               );
+              if (active) {
+                setPosterModalOpen(true);
+              }
             } catch (caught) {
               toast.error(
                 caught instanceof Error
@@ -141,6 +189,40 @@ export default function PetCardPage() {
             ? "Desativar modo perdido"
             : "Ativar modo perdido"}
         </Button>
+
+        {pet.lostMode.active ? (
+          <div className="flex flex-col gap-2 rounded-2xl border border-danger/30 bg-danger/10 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-bold text-danger-ink flex items-center gap-1.5">
+                <Siren className="size-4" /> Cartaz de Pet Perdido Pronto
+              </span>
+              <Chip tone="danger">A4 e WhatsApp</Chip>
+            </div>
+            <p className="text-meta text-danger-ink/90">
+              Baixe instantaneamente o cartaz A4 pronto para impressão com foto
+              grande, QR Code e dados para contato.
+            </p>
+            <Button
+              variant="danger"
+              onClick={() => setPosterModalOpen(true)}
+              className="gap-2 font-bold shadow-sm"
+            >
+              <Printer aria-hidden="true" className="size-4" />
+              Baixar / Imprimir Cartaz A4 de Pet Perdido
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setPosterModalOpen(true)}
+            className="self-start gap-1.5 text-meta text-muted hover:text-ink"
+          >
+            <FileText aria-hidden="true" className="size-4" />
+            Configurar / pré-visualizar cartaz de pet perdido
+          </Button>
+        )}
+
         {pet.lostMode.active && !pet.card.contact ? (
           <p
             role="status"
@@ -150,6 +232,52 @@ export default function PetCardPage() {
             privacidade para que quem encontrar o pet consiga falar com você.
           </p>
         ) : null}
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <CardTitle>Microchip e Bancos Nacionais</CardTitle>
+          {pet.microchip ? (
+            <Chip tone="teal">Cadastrado</Chip>
+          ) : (
+            <Chip tone="muted">Não cadastrado</Chip>
+          )}
+        </div>
+        <p className="text-meta leading-relaxed text-muted">
+          No Brasil, a leitura de microchip pode ser feita gratuitamente em
+          qualquer clínica veterinária ou CCZ. Verifique se o número do seu pet
+          está registrado em bancos como SIRAA, Abrasp e PetMaxx.
+        </p>
+        {pet.microchip ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface p-3">
+            <span className="font-mono text-sm font-bold text-ink">
+              Microchip: {pet.microchip}
+            </span>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setMicrochipModalOpen(true)}
+              className="gap-1.5"
+            >
+              Abrir Guia de Microchips
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-meta text-muted">
+              Seu pet já tem microchip? Cadastre o código nas configurações do
+              pet.
+            </p>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setMicrochipModalOpen(true)}
+              className="gap-1.5"
+            >
+              Conhecer bancos de microchip
+            </Button>
+          </div>
+        )}
       </Card>
 
       <Card className="flex flex-col gap-2">
@@ -210,6 +338,21 @@ export default function PetCardPage() {
           <ChevronRight aria-hidden="true" className="size-4" />
         </Link>
       </Card>
+
+      <LostPetPosterModal
+        pet={pet}
+        publicUrl={url}
+        open={posterModalOpen}
+        onClose={() => setPosterModalOpen(false)}
+        onSaveLostDetails={handleSaveLostDetails}
+      />
+
+      <MicrochipGuideModal
+        microchip={pet.microchip}
+        petName={pet.name}
+        open={microchipModalOpen}
+        onClose={() => setMicrochipModalOpen(false)}
+      />
     </div>
   );
 }

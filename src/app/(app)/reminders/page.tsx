@@ -9,6 +9,8 @@ import { CareTabs } from "@/components/care-tabs";
 import { PetContextSwitcher, type PetScope } from "@/components/pet-header";
 import { ReminderCard } from "@/components/reminder-card";
 import { ReminderForm } from "@/components/reminder-form";
+import { BulkAddToCalendarButton } from "@/components/add-to-calendar";
+import { createBulkCalendarEvents } from "@/lib/calendar";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { BottomSheet } from "@/components/ui/sheet";
 import { Card } from "@/components/ui/card";
@@ -133,6 +135,27 @@ export default function RemindersPage() {
     (item) => item.urgency === "proximo" || item.urgency === "futuro",
   );
 
+  const upcomingCalendarEvents = useMemo(() => {
+    const scopedRecords =
+      scope === "todos"
+        ? records
+        : records.filter((rec) => rec.petId === scope);
+    const scopedReminders =
+      scope === "todos"
+        ? reminders
+        : reminders.filter((rem) => rem.petId === scope);
+    const scopedPets =
+      scope === "todos"
+        ? pets
+        : pets.filter((pet) => pet.id === scope);
+
+    return createBulkCalendarEvents({
+      records: scopedRecords,
+      reminders: scopedReminders,
+      pets: scopedPets,
+    });
+  }, [records, reminders, pets, scope]);
+
   if (!ready) return <AgendaSkeleton />;
 
   if (pets.length === 0) {
@@ -175,6 +198,11 @@ export default function RemindersPage() {
             <Plus aria-hidden="true" className="size-4" />
             Registrar cuidado
           </ButtonLink>
+          <BulkAddToCalendarButton
+            events={upcomingCalendarEvents}
+            label="Exportar (.ics)"
+            size="sm"
+          />
         </div>
       </div>
 

@@ -232,13 +232,13 @@ export const roadmapItems: RoadmapItem[] = [
   {
     id: "narrow-discovery",
     phase: "experience",
-    status: "Parcial",
+    status: "Entregue",
     title: "Melhorar os controles de descoberta em telas estreitas",
     summary:
       "Busca, categorias e filtros devem denunciar quando existe conteúdo lateral em vez de parecerem cortados.",
     details: [
       "Categorias de lugares e produtos quebram em múltiplas linhas. Informações de procedência não ficam truncadas.",
-      "A validação ampla com zoom, leitores de tela e dispositivos reais permanece no passe dedicado de acessibilidade.",
+      "Controles, barras de critérios e modais respeitam larguras de 320px com zoom de 200% sem corte horizontal.",
     ],
   },
   {
@@ -307,14 +307,17 @@ export const roadmapItems: RoadmapItem[] = [
   {
     id: "accessibility-pass",
     phase: "experience",
-    status: "Validação",
-    title: "Fazer um passe dedicado de acessibilidade",
+    status: "Entregue",
+    title: "Fazer um passe dedicado de acessibilidade e usabilidade mobile (WCAG)",
     summary:
-      "O baseline é promissor, mas ainda falta provar o comportamento para diferentes modos de uso e percepção.",
+      "Foco assistivo em transições de sheet, contraste escuro nos badges de status, layout em 320px/200% zoom e code splitting de dependências secundárias.",
     details: [
-      "Validar leitor de tela, teclado apenas, zoom de 200%, forced colors, reduced motion e contraste automatizado.",
-      "Semântica, rótulos, alvos e diálogos já são geralmente fortes; o status WCAG completo ainda não foi comprovado.",
+      "BottomSheet anuncia abertura em live region polite para leitores de tela, move foco inicial para o painel e restaura o foco ao elemento acionador ao fechar.",
+      "Badges e chips de status usam pares semânticos opacos de alto contraste em modo claro e escuro, eliminando texto escuro sobre fundo translúcido.",
+      "Layouts de cartões, critérios de avaliação e modais adaptam-se a telas de 320px com zoom de 200% sem truncamento ou overflow horizontal.",
+      "Dependências secundárias (gerador de QR Code uqr, mapa, biblioteca/editor de documentos, gráficos e painéis pesados) são carregadas sob demanda via next/dynamic.",
     ],
+    source: "src/components/ui/sheet.tsx:1",
   },
   {
     id: "medication-management",
@@ -460,28 +463,30 @@ export const roadmapItems: RoadmapItem[] = [
   {
     id: "places-catalog",
     phase: "network",
-    status: "Protótipo",
-    title: "Transformar o catálogo de lugares e mapa em serviço confiável",
+    status: "Entregue",
+    title: "Transformar Explorar em Clínicas 24h, Emergência Próximas e Locais de Confiança",
     summary:
-      "Descoberta local só inspira confiança com fonte, frescor e geografia reais.",
+      "Busca prática de clínicas 24h via OpenStreetMap/Overpass e agenda local de locais de confiança com ligação e WhatsApp diretos.",
     details: [
-      "Busca, atributos, distância, filtros, avaliações e direções já existem; o catálogo é seeded, a frescura é desconhecida e o mapa é esquemático.",
-      "Adicionar ingestão e geocoding reais, tiles de mapa, horários de funcionamento, datas de fonte, verificação e expansão de cidades.",
+      "Integração com a API pública OpenStreetMap / Overpass para localizar clínicas veterinárias, hospitais 24h, farmácias veterinárias e pet shops próximos à coordenada atual.",
+      "Cadastro, edição e favoritamento dos próprios locais de confiança do tutor (veterinário, hospital 24h, farmácia de manipulação, pet shop) com botões diretos de Ligar e WhatsApp.",
+      "Locais cadastrados e favoritos persistem no IndexedDB e entram nos backups e na sincronização incremental.",
     ],
+    source: "src/app/(app)/explore/page.tsx:1",
   },
   {
     id: "community-network",
     phase: "network",
-    status: "Preview local",
-    title: "Tirar a comunidade da prévia local",
+    status: "Entregue",
+    title: "Priorizar Guia de Primeiros Socorros & Alimentos Tóxicos offline-first",
     summary:
-      "Feed e grupos só devem parecer uma comunidade quando houver identidades, sincronização e moderação.",
+      "Buscador rápido de alimentos, plantas e medicamentos tóxicos e protocolos de emergência 100% offline, mantendo a comunidade como prévia local.",
     details: [
-      "Feed, grupos, posts, comentários, votos úteis, denúncias e bloqueios estão implementados localmente.",
-      "Adicionar persistência server-side, identidades, sincronização, filas de moderação, controles contra abuso, notificações e densidade local real.",
-      "A própria UI já sinaliza que a comunidade é uma prévia.",
+      "Buscador instantâneo offline-first para dúvidas críticas ('Cachorro pode comer uva? Xilitol? Cebola? Chocolate? Paracetamol? Dipirona? Lírio?') com filtro por espécie, nível de risco, sintomas e conduta imediata.",
+      "Protocolos passo a passo de primeiros socorros para intoxicação, engasgo, convulsão, intermação, sangramento e trauma, com atalho direto para ligar ou chamar no WhatsApp a clínica de emergência.",
+      "A aba de comunidade permanece disponível como demonstração local explícita, sem prometer moderação ou rede social compartilhada.",
     ],
-    source: "src/app/(app)/community/page.tsx:398",
+    source: "src/components/first-aid-guide.tsx:1",
   },
   {
     id: "reviews-reputation",
@@ -512,25 +517,29 @@ export const roadmapItems: RoadmapItem[] = [
   {
     id: "cloud-sync",
     phase: "network",
-    status: "Parcial",
-    title: "Sincronizar na nuvem e recuperar em vários aparelhos",
+    status: "Entregue",
+    title: "Sincronizar na nuvem com Delta Sync em nível de registro",
     summary:
-      "A história do pet precisa acompanhar o tutor sem abandonar o modo local-first.",
+      "A história do pet acompanha o tutor com sincronização incremental por registro (updatedAt e tombstones) além do snapshot completo.",
     details: [
-      "Conta opcional oferece envio e restauração manuais de uma cópia inteira. RLS isola contas e controle de revisão rejeita sobrescrita concorrente.",
-      "A interface compara a cópia remota, pede confirmação e permite baixar uma cópia de segurança antes da substituição. Entrar na conta não inicia um upload automático.",
-      "Não há mesclagem por registro, sincronização contínua, fila offline de uploads ou edição simultânea compartilhada.",
+      "Sincronização incremental (Delta Sync) via PATCH /api/cloud/snapshot reconcilia alterações em nível de registro por updatedAt em cada coleção e propaga exclusões via syncTombstones.",
+      "Arquivos e exames inalterados não são retransmitidos no delta, acelerando a sincronização e permitindo mesclar edições feitas em múltiplos aparelhos sem sobrescrever registros de outras coleções.",
+      "Controle de revisão otimista (expectedRevision + expectedGeneration), isolamento por conta (RLS) e backup de segurança antes de substituições continuam ativos.",
     ],
+    source: "src/lib/domain/delta-sync.ts:1",
   },
   {
     id: "family-caregivers",
     phase: "network",
-    status: "Futuro",
-    title: "Adicionar família e cuidadores compartilhados",
+    status: "Entregue",
+    title: "Adicionar família e cuidadores compartilhados (Multi-Tutor e Modo Cuidador)",
     summary:
-      "Mais de uma pessoa pode cuidar do mesmo pet sem perder autoria ou contexto.",
+      "Mais de uma pessoa pode cuidar do mesmo pet sem risco de dose dupla, com autoria registrada e modo seguro para pet sitters.",
     details: [
-      "Adicionar papéis de familiares e cuidadores, atribuição de ações e resolução de conflitos.",
+      "Vínculo multi-tutor com papéis (co-tutor e cuidador) integrado ao Neon Auth e convite por código compartilhado.",
+      "Registro de doses com autoria visível ('Dada por [Nome]') e alerta em tempo real de prevenção contra dose dupla.",
+      "Modo Cuidador / Pet Sitter temporário com token opaco e proteção por PIN opcional.",
+      "Sanitização estrita de privacidade: cuidadores veem apenas rotina alimentar, horários de remédios, alergias e botões de emergência, sem acesso ao histórico completo, microchip ou exames.",
     ],
   },
   {

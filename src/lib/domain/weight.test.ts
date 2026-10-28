@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { DiaryEntry, HealthRecord, Pet } from "./schema";
-import { petWeightMeasurements, reconcileWeights } from "./weight";
+import {
+  detectSuddenWeightChange,
+  petWeightMeasurements,
+  reconcileWeights,
+} from "./weight";
 
 describe("ordenação de pesagens importadas", () => {
   it("compara o instante real de fusos diferentes entre saúde, diário e perfil", () => {
@@ -71,3 +75,72 @@ describe("ordenação de pesagens importadas", () => {
     expect(reconcileWeights(state, {}, [pet.id]).pets[0].weightKg).toBe(11);
   });
 });
+
+describe("detectSuddenWeightChange", () => {
+  it("returns null when fewer than 2 measurements", () => {
+    expect(detectSuddenWeightChange([])).toBeNull();
+    expect(detectSuddenWeightChange([{ date: "2026-01-01", weightKg: 10 }])).toBeNull();
+  });
+
+  it("returns null when weight change is stable or under threshold", () => {
+    const measurements = [
+      { date: "2026-01-01", weightKg: 10 },
+      { date: "2026-02-01", weightKg: 10.2 },
+    ];
+    expect(detectSuddenWeightChange(measurements, 5)).toBeNull();
+  });
+
+  it("detects sudden weight loss greater than threshold", () => {
+    const measurements = [
+      { date: "2026-01-01", weightKg: 10 },
+      { date: "2026-01-20", weightKg: 9.1 }, // 9% drop
+    ];
+    const alert = detectSuddenWeightChange(measurements, 5);
+    expect(alert).not.toBeNull();
+    expect(alert?.type).toBe("loss");
+    expect(alert?.percentage).toBe(9);
+    expect(alert?.deltaKg).toBe(-0.9);
+  });
+
+  it("detects sudden weight gain greater than threshold", () => {
+    const measurements = [
+      { date: "2026-01-01", weightKg: 10 },
+      { date: "2026-02-01", weightKg: 11.2 }, // 12% increase
+    ];
+    const alert = detectSuddenWeightChange(measurements, 5);
+    expect(alert).not.toBeNull();
+    expect(alert?.type).toBe("gain");
+    expect(alert?.percentage).toBe(12);
+    expect(alert?.deltaKg).toBe(1.2);
+  });
+
+  it("ignores changes beyond maxDays", () => {
+    const measurements = [
+      { date: "2025-01-01", weightKg: 10 },
+      { date: "2026-01-01", weightKg: 8.5 }, // 365 days apart
+    ];
+    expect(detectSuddenWeightChange(measurements, 5, 90)).toBeNull();
+  });
+
+  it("does not trigger false alarm for multiple measurements on the same day", () => {
+    const measurements = [
+      { date: "2026-01-01", weightKg: 10 },
+      { date: "2026-01-01", weightKg: 11 }, // typo correction on same day
+    ];
+    expect(detectSuddenWeightChange(measurements, 5)).toBeNull();
+  });
+
+  it("deduplicates same-day entries and compares across distinct dates", () => {
+    const measurements = [
+      { date: "2026-01-01", weightKg: 10 },
+      { date: "2026-01-10", weightKg: 10.1 },
+      { date: "2026-01-10", weightKg: 9.0 }, // corrected to 9.0 on day 10 (10% drop vs day 1)
+    ];
+    const alert = detectSuddenWeightChange(measurements, 5);
+    expect(alert).not.toBeNull();
+    expect(alert?.type).toBe("loss");
+    expect(alert?.percentage).toBe(10);
+    expect(alert?.days).toBe(9);
+  });
+});
+

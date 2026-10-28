@@ -7,6 +7,7 @@ import {
   latestDoseEvent,
   medicationClock,
   medicationDayOccurrences,
+  medication24HoursOccurrences,
   nextMedicationOccurrence,
   recordMedicationDose,
   reviseMedicationCourse,
@@ -421,5 +422,26 @@ describe("medicação na agenda de cuidados", () => {
         ],
       }),
     ).toEqual([]);
+  });
+
+  it("calcula ocorrências das próximas 24 horas agrupadas por horário", () => {
+    const medCourse = course();
+    // At noon on 2026-10-25: 08:00 is due/past, 20:00 is future today, 08:00 tomorrow is future within 24h
+    const doses = medication24HoursOccurrences(medCourse, now);
+    expect(doses.length).toBe(3);
+    expect(doses[0].date).toBe("2026-10-25");
+    expect(doses[0].time).toBe("08:00");
+    expect(doses[0].due).toBe(true);
+    expect(doses[0].future).toBe(false);
+
+    expect(doses[1].date).toBe("2026-10-25");
+    expect(doses[1].time).toBe("20:00");
+    expect(doses[1].due).toBe(false);
+    expect(doses[1].future).toBe(true);
+
+    expect(doses[2].date).toBe("2026-10-26");
+    expect(doses[2].time).toBe("08:00");
+    expect(doses[2].due).toBe(false);
+    expect(doses[2].future).toBe(true);
   });
 });

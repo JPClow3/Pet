@@ -5,22 +5,30 @@ import {
   Check,
   ChevronRight,
   ExternalLink,
+  Globe,
+  Heart,
   MapPin,
+  MessageCircle,
   Navigation,
+  Pencil,
+  Phone,
   ShieldAlert,
+  Siren,
   Star,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
+import { placeVisualThemes } from "@/components/place-card";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Field, Textarea } from "@/components/ui/field";
+import { CheckboxRow, Field, Input, Textarea } from "@/components/ui/field";
 import { BottomSheet } from "@/components/ui/sheet";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 import { relativeTimeLabel } from "@/lib/domain/dates";
@@ -33,8 +41,11 @@ import {
   criterionScores,
   directionsUrl,
   distanceKm,
+  isEmergency24hPlace,
+  phoneCallUrl,
   placeRating,
   reviewsForPlace,
+  whatsappUrl,
 } from "@/lib/domain/places";
 import type { PlaceAttribute } from "@/lib/domain/schema";
 import { placeCategoryIcons } from "@/lib/icons";
@@ -43,31 +54,35 @@ import { useAppStore } from "@/lib/store/app-store";
 import { useHydrated } from "@/lib/store/hooks";
 import { useAsyncAction } from "@/lib/use-async-action";
 
-const visualThemes = {
-  parque: { surface: "bg-lime-soft", rail: "border-l-teal" },
-  restaurante: { surface: "bg-sun-soft", rail: "border-l-sun" },
-  veterinario: { surface: "bg-blue-soft", rail: "border-l-blue" },
-  banho_tosa: { surface: "bg-violet-soft", rail: "border-l-violet" },
-  hospedagem: { surface: "bg-surface", rail: "border-l-teal" },
-  passeador_adestrador: { surface: "bg-accent-soft", rail: "border-l-accent" },
-} as const;
-
 export default function PlaceDetailPage() {
   const ready = useHydrated();
   const params = useParams<{ placeId: string }>();
+  const router = useRouter();
   const place = useAppStore((state) =>
     state.places.find((item) => item.id === params.placeId),
   );
   const reviews = useAppStore((state) => state.reviews);
   const addReview = useAppStore((state) => state.addReview);
+  const updatePlace = useAppStore((state) => state.updatePlace);
+  const removePlace = useAppStore((state) => state.removePlace);
+  const toggleFavoritePlace = useAppStore((state) => state.toggleFavoritePlace);
   const track = useAppStore((state) => state.track);
   const { origin, status } = useOrigin();
 
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [rating, setRating] = useState(5);
   const [criteria, setCriteria] = useState<PlaceAttribute[]>([]);
   const [text, setText] = useState("");
   const action = useAsyncAction();
+
+  // Edit contact/notes state
+  const [editPhone, setEditPhone] = useState("");
+  const [editWhatsapp, setEditWhatsapp] = useState("");
+  const [editHours, setEditHours] = useState("");
+  const [editAddress, setEditAddress] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [editIs24h, setEditIs24h] = useState(false);
 
   useEffect(() => {
     if (place)
@@ -101,9 +116,30 @@ export default function PlaceDetailPage() {
 
   const Icon = placeCategoryIcons[place.category];
   const distance = distanceKm(origin, place);
-  const sourceLabel = place.seeded
-    ? "Exemplo do catálogo"
-    : "Adicionado neste aparelho";
+  const is24h = isEmergency24hPlace(place);
+  const callHref = phoneCallUrl(place.phone);
+  const waHref = whatsappUrl(
+    place.whatsapp ?? place.phone,
+    `Olá! Vi o contato de ${place.name} na Zelupi e gostaria de atendimento veterinário.`,
+  );
+  const sourceLabel =
+    place.source === "osm"
+      ? "OpenStreetMap"
+      : place.seeded
+        ? "Exemplo do catálogo"
+        : "Adicionado neste aparelho";
+  const theme = placeVisualThemes[place.category];
+
+  function openEditSheet() {
+    if (!place) return;
+    setEditPhone(place.phone ?? "");
+    setEditWhatsapp(place.whatsapp ?? "");
+    setEditHours(place.openingHours ?? "");
+    setEditAddress(place.address ?? "");
+    setEditNotes(place.notes ?? "");
+    setEditIs24h(place.attributes.includes("emergencia_24h"));
+    setEditOpen(true);
+  }
 
   return (
     <div className="flex flex-col gap-4 pb-10">
@@ -111,20 +147,56 @@ export default function PlaceDetailPage() {
         title={place.name}
         subtitle={`${placeCategoryMeta[place.category].label} · ${place.neighborhood}`}
         backHref="/explore"
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant={place.favorite ? "danger" : "secondary"}
+              aria-pressed={Boolean(place.favorite)}
+              onClick={() => {
+                void toggleFavoritePlace(place.id).then((fav) => {
+                  toast(
+                    fav
+                      ? "Marcado como local de confiança"
+                      : "Removido dos favoritos",
+                  );
+                });
+              }}
+            >
+              <Heart
+                aria-hidden="true"
+                className={`size-4 ${place.favorite ? "fill-current" : ""}`}
+              />
+              {place.favorite ? "Favorito" : "Favoritar"}
+            </Button>
+            <Button size="sm" variant="secondary" onClick={openEditSheet}>
+              <Pencil aria-hidden="true" className="size-4" />
+              Editar contato
+            </Button>
+          </div>
+        }
       />
 
       <section
-        className={`relative overflow-hidden rounded-[28px] border-l-[6px] ${visualThemes[place.category].surface} ${visualThemes[place.category].rail} p-5`}
+        className={`relative overflow-hidden rounded-[28px] border-l-[6px] ${theme.surface} ${theme.rail} p-5`}
       >
-        <div className="relative flex items-end justify-between gap-4">
-          <span className="flex size-16 items-center justify-center rounded-[22px] border border-white/70 bg-paper/80 text-teal-ink shadow-sm backdrop-blur-sm">
+        <div className="relative flex flex-wrap items-end justify-between gap-4">
+          <span className="flex size-16 items-center justify-center rounded-[22px] border border-line/60 bg-paper/90 text-teal-ink shadow-sm backdrop-blur-sm">
             <Icon aria-hidden="true" className="size-8" />
           </span>
           <div className="flex flex-col items-end gap-2 text-right">
-            <span className="rounded-full bg-paper/80 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.08em] text-ink-soft/80">
-              {placeCategoryMeta[place.category].label}
-            </span>
-            <span className="text-[0.72rem] font-semibold text-ink-soft/70">
+            <div className="flex flex-wrap justify-end gap-1.5">
+              {is24h ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-danger-soft px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.08em] text-danger-ink">
+                  <Siren aria-hidden="true" className="size-3.5" />
+                  Emergência 24h
+                </span>
+              ) : null}
+              <span className="rounded-full bg-paper/85 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.08em] text-ink-soft">
+                {placeCategoryMeta[place.category].label}
+              </span>
+            </div>
+            <span className="text-[0.72rem] font-semibold text-ink-soft">
               {sourceLabel}
             </span>
           </div>
@@ -133,16 +205,26 @@ export default function PlaceDetailPage() {
 
       <Card className="flex flex-col gap-4 p-5">
         <div className="flex flex-wrap items-center gap-2">
-          <Chip tone="warning">
-            <ShieldAlert aria-hidden="true" className="size-3.5" />
-            Atualização não informada
-          </Chip>
-          {place.seeded ? (
-            <Chip tone="muted">Local fictício · sem verificação real</Chip>
+          {place.favorite ? (
+            <Chip tone="teal">
+              <Heart aria-hidden="true" className="size-3.5 fill-current" />
+              Local de confiança
+            </Chip>
+          ) : null}
+          {place.source === "osm" ? (
+            <Chip tone="info">
+              <Globe aria-hidden="true" className="size-3.5" />
+              Dados colaborativos OpenStreetMap
+            </Chip>
+          ) : place.seeded ? (
+            <Chip tone="warning">
+              <ShieldAlert aria-hidden="true" className="size-3.5" />
+              Exemplo do catálogo · edite para usar seus contatos reais
+            </Chip>
           ) : place.verified ? (
-            <Chip tone="muted">
+            <Chip tone="teal">
               <BadgeCheck aria-hidden="true" className="size-3.5" />
-              Verificação cadastrada
+              Cadastrado neste aparelho
             </Chip>
           ) : (
             <Chip tone="muted">Verificação não cadastrada</Chip>
@@ -165,7 +247,56 @@ export default function PlaceDetailPage() {
               ? "da sua localização"
               : "do centro de São Paulo"}
           </p>
+          {place.openingHours ? (
+            <p className="mt-1 pl-7 text-meta font-semibold text-ink-soft">
+              Horário: {place.openingHours}
+            </p>
+          ) : null}
+          {place.notes ? (
+            <p className="mt-2 rounded-2xl bg-surface px-3.5 py-2.5 text-[0.88rem] leading-relaxed text-ink-soft">
+              {place.notes}
+            </p>
+          ) : null}
         </div>
+
+        {(callHref || waHref) ? (
+          <div className="flex flex-col gap-2 sm:flex-row">
+            {callHref ? (
+              <a
+                href={callHref}
+                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-[14px] bg-teal px-4 text-[0.92rem] font-semibold text-white transition-colors hover:bg-teal-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
+              >
+                <Phone aria-hidden="true" className="size-4" />
+                Ligar ({place.phone})
+              </a>
+            ) : null}
+            {waHref ? (
+              <a
+                href={waHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-[14px] border border-success-ink/35 bg-success-soft px-4 text-[0.92rem] font-semibold text-success-ink transition-colors hover:border-success-ink/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success-ink focus-visible:ring-offset-2"
+              >
+                <MessageCircle aria-hidden="true" className="size-4" />
+                Chamar no WhatsApp
+                <ExternalLink aria-hidden="true" className="size-3.5 opacity-75" />
+              </a>
+            ) : null}
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-dashed border-line bg-surface/50 px-3.5 py-2.5">
+            <span className="text-meta text-muted">
+              Nenhum telefone ou WhatsApp salvo para acionamento rápido.
+            </span>
+            <button
+              type="button"
+              onClick={openEditSheet}
+              className="text-meta font-semibold text-teal-ink hover:underline"
+            >
+              Adicionar telefone / WhatsApp
+            </button>
+          </div>
+        )}
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-line/70 py-3">
           <span className="inline-flex items-center gap-1.5 text-meta text-ink-soft">
@@ -200,7 +331,7 @@ export default function PlaceDetailPage() {
         <div className="flex flex-col gap-2 sm:flex-row">
           {place.seeded ? (
             <p className="flex min-h-12 flex-1 items-center rounded-[14px] bg-surface px-4 text-meta font-semibold text-muted">
-              Rotas indisponíveis para locais fictícios
+              Rotas indisponíveis para locais fictícios do exemplo
             </p>
           ) : (
             <a
@@ -215,7 +346,7 @@ export default function PlaceDetailPage() {
               className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-[14px] bg-blue px-4 text-[0.9rem] font-semibold text-white transition-colors hover:bg-blue-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
             >
               <Navigation aria-hidden="true" className="size-4" />
-              Abrir rota
+              Abrir rota no mapa
               <ExternalLink
                 aria-hidden="true"
                 className="size-3.5 opacity-75"
@@ -228,8 +359,8 @@ export default function PlaceDetailPage() {
         </div>
         <p className="text-[0.7rem] leading-relaxed text-muted">
           {place.seeded
-            ? "Este endereço é ilustrativo. Não use os exemplos para planejar uma visita."
-            : "A rota abre em outro aplicativo. Confirme horário, contato e disponibilidade antes de visitar."}
+            ? "Este endereço é ilustrativo. Edite os contatos ou cadastre sua própria clínica de confiança para uso real."
+            : "A rota abre em outro aplicativo. Confirme horário, plantão e disponibilidade por telefone antes de visitar."}
         </p>
       </Card>
 
@@ -260,11 +391,14 @@ export default function PlaceDetailPage() {
             aria-label="Atributos observados por tutores"
           >
             {scores.map((score) => (
-              <li key={score.attribute} className="flex items-center gap-3">
-                <span className="w-36 shrink-0 text-[0.88rem] text-ink-soft">
+              <li
+                key={score.attribute}
+                className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3"
+              >
+                <span className="min-w-[7.5rem] flex-1 text-[0.88rem] text-ink-soft sm:w-40 sm:flex-none">
                   {placeAttributeLabels[score.attribute].label}
                 </span>
-                <span className="h-2 flex-1 overflow-hidden rounded-full bg-paper">
+                <span className="h-2 min-w-[5rem] flex-1 overflow-hidden rounded-full bg-paper">
                   <span
                     className={`block h-full rounded-full ${placeAttributeLabels[score.attribute].negative ? "bg-sun" : "bg-teal"}`}
                     style={{
@@ -272,7 +406,7 @@ export default function PlaceDetailPage() {
                     }}
                   />
                 </span>
-                <span className="text-meta text-muted">
+                <span className="text-meta tabular-nums text-muted">
                   {score.positive}/{score.total}
                 </span>
               </li>
@@ -361,10 +495,30 @@ export default function PlaceDetailPage() {
           <strong className="font-semibold text-accent-deep">
             Fonte e atualização:
           </strong>{" "}
-          este local vem de uma prévia do catálogo. Ainda não temos uma fonte,
-          data de atualização ou confirmação de horário atual no app.
+          {place.source === "osm"
+            ? "dados importados do OpenStreetMap. Confirme plantão e telefone antes de se deslocar."
+            : place.seeded
+              ? "este local vem de uma prévia do catálogo. Você pode editar os contatos acima para personalizar neste aparelho."
+              : "local cadastrado e gerenciado por você neste aparelho."}
         </p>
       </Card>
+
+      {!place.seeded ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="self-start text-danger-ink"
+          onClick={() => {
+            void removePlace(place.id).then(() => {
+              toast("Local removido deste aparelho");
+              router.push("/explore");
+            });
+          }}
+        >
+          <Trash2 aria-hidden="true" className="size-4" />
+          Remover este local do aparelho
+        </Button>
+      ) : null}
 
       <Link
         href="/explore"
@@ -373,6 +527,102 @@ export default function PlaceDetailPage() {
         <ChevronRight aria-hidden="true" className="size-4 rotate-180" />
         Voltar para Locais
       </Link>
+
+      <BottomSheet
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        title={`Contatos de ${place.name}`}
+        description="Atualize telefone, WhatsApp, plantão 24h e observações neste aparelho."
+      >
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void action.run(async () => {
+              const nextAttrs = new Set(place.attributes);
+              if (editIs24h) nextAttrs.add("emergencia_24h");
+              else nextAttrs.delete("emergencia_24h");
+              await updatePlace(place.id, {
+                phone: editPhone.trim() || null,
+                whatsapp: editWhatsapp.trim() || null,
+                openingHours: editHours.trim() || null,
+                address: editAddress.trim() || place.address,
+                notes: editNotes.trim() || null,
+                attributes: [...nextAttrs],
+                seeded: false,
+                verified: true,
+              });
+              setEditOpen(false);
+              toast.success("Contatos atualizados neste aparelho!");
+            });
+          }}
+          className="flex flex-col gap-3"
+        >
+          <Field htmlFor="edit-phone" label="Telefone">
+            <Input
+              id="edit-phone"
+              type="tel"
+              maxLength={40}
+              placeholder="(11) 3062-0100"
+              value={editPhone}
+              onChange={(event) => setEditPhone(event.target.value)}
+            />
+          </Field>
+          <Field htmlFor="edit-whatsapp" label="WhatsApp">
+            <Input
+              id="edit-whatsapp"
+              type="tel"
+              maxLength={40}
+              placeholder="(11) 99000-0100"
+              value={editWhatsapp}
+              onChange={(event) => setEditWhatsapp(event.target.value)}
+            />
+          </Field>
+          <Field htmlFor="edit-hours" label="Horário / Plantão">
+            <Input
+              id="edit-hours"
+              maxLength={160}
+              placeholder="Plantão 24h todos os dias"
+              value={editHours}
+              onChange={(event) => setEditHours(event.target.value)}
+            />
+          </Field>
+          <Field htmlFor="edit-address" label="Endereço">
+            <Input
+              id="edit-address"
+              maxLength={160}
+              value={editAddress}
+              onChange={(event) => setEditAddress(event.target.value)}
+            />
+          </Field>
+          <Field htmlFor="edit-notes" label="Observações">
+            <Textarea
+              id="edit-notes"
+              rows={2}
+              maxLength={400}
+              value={editNotes}
+              onChange={(event) => setEditNotes(event.target.value)}
+            />
+          </Field>
+          <CheckboxRow
+            checked={editIs24h}
+            onChange={setEditIs24h}
+            label="Atende emergência 24 horas"
+            description="Destaca este local nas buscas de urgência."
+          />
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Button
+              variant="secondary"
+              className="flex-1"
+              onClick={() => setEditOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" className="flex-1" disabled={action.pending}>
+              Salvar contatos
+            </Button>
+          </div>
+        </form>
+      </BottomSheet>
 
       <BottomSheet
         open={open}
@@ -390,7 +640,7 @@ export default function PlaceDetailPage() {
             <legend className="text-[0.88rem] font-semibold text-ink">
               Nota geral
             </legend>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {[1, 2, 3, 4, 5].map((value) => (
                 <button
                   key={value}
@@ -452,7 +702,7 @@ export default function PlaceDetailPage() {
             />
           </Field>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               size="lg"
               className="flex-1"

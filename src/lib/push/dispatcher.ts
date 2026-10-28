@@ -9,6 +9,7 @@ export type PushEnvironment = {
   PUSH_VAPID_PRIVATE_KEY?: string;
   PUSH_VAPID_SUBJECT?: string;
 };
+
 export type PushJob = {
   job_id: string;
   installation_id: string;
@@ -19,11 +20,13 @@ export type PushJob = {
   expires_at: string;
   attempts: number;
 };
+
 type Outcome = {
   status: "accepted" | "retry" | "failed" | "expired" | "suppressed";
   code: number | null;
   retryAt: string | null;
 };
+
 export function pushOutcome(
   code: number | null,
   attempts: number,
@@ -51,6 +54,7 @@ export function pushOutcome(
     ? { status: "expired", code, retryAt: null }
     : { status: "retry", code, retryAt: new Date(retry).toISOString() };
 }
+
 export async function sendPushJob(
   job: PushJob,
   env: PushEnvironment,
@@ -134,43 +138,129 @@ export async function sendPushJob(
     return pushOutcome(null, job.attempts, job.expires_at, now);
   }
 }
-export async function dispatchPush(env: PushEnvironment) {
+
+export type DispatchOptions = {
+  maxBatches?: number;
+  batchSize?: number;
+  fetcher?: typeof fetch;
+  now?: () => Date;
+  executeOverride?: (query: unknown) => Promise<unknown>;
+};
+
+export type DispatchResult = {
+  configured: boolean;
+  attempted: number;
+  accepted: number;
+  failed: number;
+  suppressed: number;
+  retried: number;
+  expired: number;
+  batches: number;
+};
+
+export async function dispatchPush(
+  env: PushEnvironment,
+  options: DispatchOptions = {},
+): Promise<DispatchResult> {
+  const emptyResult = (configured: boolean): DispatchResult => ({
+    configured,
+    attempted: 0,
+    accepted: 0,
+    failed: 0,
+    suppressed: 0,
+    retried: 0,
+    expired: 0,
+    batches: 0,
+  });
+
   if (
     env.PUSH_ENABLED !== "true" ||
     !env.PUSH_DATABASE_URL ||
     !env.PUSH_VAPID_PUBLIC_KEY ||
     !env.PUSH_VAPID_PRIVATE_KEY ||
     !env.PUSH_VAPID_SUBJECT
-  )
-    return { configured: false, attempted: 0 };
-  const sql = neon(env.PUSH_DATABASE_URL);
-  const execute = async (query: ReturnType<typeof sql>) => {
-    const result = await sql.transaction([
-      sql`set local role pethub_push_dispatcher`,
-      query,
-    ]);
-    return result[1];
-  };
-  const jobs = (await execute(
-    sql`select * from pethub.claim_push_jobs(20)`,
-  )) as PushJob[];
-  // Keep network concurrency bounded; a batch finishes within the lease window.
-  for (let start = 0; start < jobs.length; start += 4) {
-    await Promise.all(
-      jobs.slice(start, start + 4).map(async (job) => {
-        const valid = await execute(
-          sql`select pethub.push_claim_valid(${job.job_id}::uuid,${job.lease_id}::uuid) as valid, preferences from pethub.push_devices where installation_id=${job.installation_id}::uuid`,
-        );
-        if (!valid[0]?.valid) return;
-        const outcome = await sendPushJob(
-          { ...job, preferences: valid[0].preferences },
-          env,
-        );
-        await execute(
-          sql`select pethub.finish_push_job(${job.job_id}::uuid,${job.lease_id}::uuid,${outcome.status},${outcome.code},${outcome.retryAt}::timestamptz)`,
-        );
-      }),
-    );
+  ) {
+    return emptyResult(false);
   }
-  return { configured: true, attempted: jobs.length };
+
+  const maxBatches = Math.min(Math.max(options.maxBatches ?? 5, 1), 20);
+  const batchSize = Math.min(Math.max(options.batchSize ?? 20, 1), 25);
+  const fetcher = options.fetcher ?? fetch;
+  const now = options.now ? options.now() : new Date();
+
+  const sql = neon(env.PUSH_DATABASE_URL);
+  let execute: (query: unknown) => Promise<unknown>;
+
+  if (options.executeOverride) {
+    execute = options.executeOverride;
+  } else {
+    execute = async (query: unknown) => {
+      const result = await sql.transaction([
+        sql`set local role pethub_push_dispatcher`,
+        query as ReturnType<typeof sql>,
+      ]);
+      return result[1];
+    };
+  }
+
+  let attempted = 0;
+  let accepted = 0;
+  let failed = 0;
+  let suppressed = 0;
+  let retried = 0;
+  let expired = 0;
+  let batchCount = 0;
+
+  for (let batch = 0; batch < maxBatches; batch++) {
+    const jobs = (await execute(
+      sql`select * from pethub.claim_push_jobs(${batchSize})`,
+    )) as PushJob[];
+
+    if (!Array.isArray(jobs) || jobs.length === 0) break;
+    batchCount++;
+    attempted += jobs.length;
+
+    // Keep network concurrency bounded; a batch finishes within the lease window.
+    for (let start = 0; start < jobs.length; start += 4) {
+      await Promise.all(
+        jobs.slice(start, start + 4).map(async (job) => {
+          const valid = (await execute(
+            sql`select pethub.push_claim_valid(${job.job_id}::uuid,${job.lease_id}::uuid) as valid, preferences from pethub.push_devices where installation_id=${job.installation_id}::uuid`,
+          )) as Array<{ valid: boolean; preferences: unknown }>;
+
+          if (!valid[0]?.valid) return;
+
+          const outcome = await sendPushJob(
+            { ...job, preferences: valid[0].preferences },
+            env,
+            fetcher,
+            now,
+          );
+
+          if (outcome.status === "accepted") accepted++;
+          else if (outcome.status === "failed") failed++;
+          else if (outcome.status === "suppressed") suppressed++;
+          else if (outcome.status === "retry") retried++;
+          else if (outcome.status === "expired") expired++;
+
+          await execute(
+            sql`select pethub.finish_push_job(${job.job_id}::uuid,${job.lease_id}::uuid,${outcome.status},${outcome.code},${outcome.retryAt}::timestamptz)`,
+          );
+        }),
+      );
+    }
+
+    if (jobs.length < batchSize) break;
+  }
+
+  return {
+    configured: true,
+    attempted,
+    accepted,
+    failed,
+    suppressed,
+    retried,
+    expired,
+    batches: batchCount,
+  };
 }

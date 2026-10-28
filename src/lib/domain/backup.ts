@@ -16,6 +16,7 @@ import {
   reminderSchema,
   reviewSchema,
   settingsSchema,
+  syncTombstoneSchema,
   tutorSchema,
   isoDate,
   isoDateTime,
@@ -56,6 +57,7 @@ export const persistedStateSchema = z
     memberGroupIds: z.array(z.string()),
     seededAt: isoDateTime.nullable(),
     lastSweepAt: isoDateTime.nullable(),
+    syncTombstones: z.array(syncTombstoneSchema).optional(),
   })
   .superRefine((state, ctx) => {
     const issue = (message: string) =>

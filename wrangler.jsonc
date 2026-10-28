@@ -5,10 +5,15 @@
   "main": "custom-worker.ts",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
-  "vars": { "SITE_URL": "https://pethub.joaopaulo-grv4.workers.dev", "PUSH_ENABLED": "false" },
-  "triggers": { "crons": ["* * * * *"] },
+  "vars": {
+    "SITE_URL": "https://pethub.joaopaulo-grv4.workers.dev",
+    "PUSH_ENABLED": "false"
+  },
+  "triggers": {
+    "crons": ["*/15 * * * *"]
+  },
   "assets": {
     "directory": ".open-next/assets",
-    "binding": "ASSETS",
-  },
+    "binding": "ASSETS"
+  }
 }

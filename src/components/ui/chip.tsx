@@ -1,25 +1,30 @@
-import type { ComponentProps, ReactNode } from "react";
+import type { ButtonHTMLAttributes, HTMLAttributes } from "react";
 
 import { cn } from "@/lib/utils";
 
-export type ChipTone = "teal" | "mint" | "warning" | "danger" | "ink" | "muted";
+export type ChipTone =
+  | "teal"
+  | "mint"
+  | "sun"
+  | "warning"
+  | "danger"
+  | "success"
+  | "info"
+  | "ink"
+  | "muted"
+  | "violet";
 
 const toneClasses: Record<ChipTone, string> = {
-  teal: "bg-teal/12 text-teal-ink",
-  mint: "bg-mint text-teal-ink",
-  warning: "bg-warning/18 text-warning-ink",
-  danger: "bg-danger/15 text-danger-ink",
-  ink: "bg-ink/8 text-ink",
-  muted: "bg-surface text-ink-soft",
-};
-
-export const toneSurfaceClasses: Record<ChipTone, string> = {
-  teal: "border-teal/25 bg-teal/8",
-  mint: "border-teal/20 bg-mint/70",
-  warning: "border-warning/40 bg-warning/10",
-  danger: "border-danger/30 bg-danger/8",
-  ink: "border-line bg-surface",
-  muted: "border-line bg-paper",
+  teal: "border border-teal-ink/25 bg-mint text-teal-ink",
+  mint: "border border-teal-deep/20 bg-mint text-teal-deep",
+  sun: "border border-warning-ink/25 bg-sun-soft text-warning-ink",
+  warning: "border border-warning-ink/30 bg-warning-soft text-warning-ink",
+  danger: "border border-danger-ink/30 bg-danger-soft text-danger-ink",
+  success: "border border-success-ink/30 bg-success-soft text-success-ink",
+  info: "border border-info-ink/30 bg-info-soft text-info-ink",
+  ink: "border border-ink bg-ink text-paper",
+  muted: "border border-line/80 bg-surface text-ink-soft",
+  violet: "border border-violet/25 bg-violet-soft text-violet",
 };
 
 export function Chip({
@@ -27,11 +32,11 @@ export function Chip({
   className,
   children,
   ...props
-}: ComponentProps<"span"> & { tone?: ChipTone }) {
+}: HTMLAttributes<HTMLSpanElement> & { tone?: ChipTone }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-meta font-medium",
+        "inline-flex max-w-full items-center gap-1 rounded-full px-3 py-1 text-[0.76rem] font-semibold leading-tight",
         toneClasses[tone],
         className,
       )}
@@ -42,38 +47,21 @@ export function Chip({
   );
 }
 
-export function StatusChip({
-  tone,
-  icon,
-  label,
-}: {
-  tone: ChipTone;
-  icon?: ReactNode;
-  label: string;
-}) {
-  return (
-    <Chip tone={tone}>
-      {icon ? <span aria-hidden="true">{icon}</span> : null}
-      {label}
-    </Chip>
-  );
-}
-
 export function FilterChip({
-  selected,
-  children,
+  selected = false,
   className,
+  children,
   ...props
-}: ComponentProps<"button"> & { selected: boolean }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { selected?: boolean }) {
   return (
     <button
       type="button"
       aria-pressed={selected}
       className={cn(
-        "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[0.85rem] font-semibold transition-colors",
+        "inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[0.82rem] font-semibold transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2",
         selected
-          ? "border-teal-ink bg-teal-ink text-white"
-          : "border-line bg-paper text-ink-soft hover:bg-surface",
+          ? "border-brand bg-brand text-white"
+          : "border-line bg-paper text-ink-soft hover:border-teal/50 hover:text-ink",
         className,
       )}
       {...props}

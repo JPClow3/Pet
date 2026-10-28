@@ -4,6 +4,10 @@ import {
   parseBackup,
   type Backup,
 } from "@/lib/domain/backup";
+import {
+  backupDeltaSchema,
+  type BackupDelta,
+} from "@/lib/domain/delta-sync";
 
 export type CloudSnapshot = {
   userId: string;
@@ -95,6 +99,36 @@ export async function saveCloudSnapshot(
       expectedRevision,
       expectedGeneration,
       snapshot: backup,
+    }),
+  });
+  return parseCloudSnapshot(result.snapshot, userId);
+}
+export async function patchCloudSnapshot(
+  userId: string,
+  delta: BackupDelta,
+  expectedRevision: number,
+  expectedGeneration: string,
+): Promise<CloudSnapshot> {
+  const validDelta = backupDeltaSchema.parse(delta);
+  if (
+    new TextEncoder().encode(JSON.stringify(validDelta)).byteLength >
+    MAX_CLOUD_BACKUP_BYTES
+  )
+    throw new Error(
+      "Esta atualização incremental ultrapassa os 20 MB da nuvem. Baixe o backup completo em arquivo para guardar todos os documentos.",
+    );
+  if (
+    !Number.isSafeInteger(expectedRevision) ||
+    expectedRevision <= 0 ||
+    !expectedGeneration
+  )
+    throw new Error("Consulte a nuvem antes de sincronizar alterações.");
+  const result = await cloudRequest(userId, {
+    method: "PATCH",
+    body: JSON.stringify({
+      expectedRevision,
+      expectedGeneration,
+      delta: validDelta,
     }),
   });
   return parseCloudSnapshot(result.snapshot, userId);

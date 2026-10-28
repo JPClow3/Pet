@@ -1,11 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
+import { placeCategorySchema } from "./schema";
 import {
+  buildOverpassQuery,
   criterionScores,
   distanceKm,
   emptyFilters,
+  fetchNearbyOsmPlaces,
   filterPlaces,
+  isEmergency24hPlace,
+  parseOverpassResponse,
+  phoneCallUrl,
   placeRating,
+  whatsappUrl,
 } from "./places";
 import { seedPlaces } from "./seed";
 import type { Place, Review } from "./schema";
@@ -144,7 +151,7 @@ describe("placeRating", () => {
 describe("seed", () => {
   it("cobre todas as categorias do mapa", () => {
     const categories = new Set(seedPlaces.map((item) => item.category));
-    expect(categories.size).toBe(6);
+    expect(categories.size).toBe(placeCategorySchema.options.length);
   });
 
   it("mantém identificadores únicos", () => {
@@ -154,5 +161,108 @@ describe("seed", () => {
 
   it("não marca lugar nenhum como visitado por padrão", () => {
     expect(place({ seeded: true }).seeded).toBe(true);
+  });
+
+  it("filtra clínicas 24h e favoritos de confiança priorizando emergência", () => {
+    const customPlaces: Place[] = [
+      ...seedPlaces,
+      place({
+        id: "place-fav-vet",
+        name: "Hospital 24h de Confiança",
+        category: "veterinario",
+        attributes: ["emergencia_24h"],
+        favorite: true,
+        seeded: false,
+        lat: -23.58,
+        lng: -46.68,
+      }),
+    ];
+    const emergency = filterPlaces(
+      customPlaces,
+      { ...emptyFilters, emergencyOnly: true },
+      origin,
+    );
+    expect(emergency.length).toBeGreaterThanOrEqual(3);
+    expect(emergency.every((item) => isEmergency24hPlace(item))).toBe(true);
+    expect(emergency[0].id).toBe("place-fav-vet");
+
+    const favorites = filterPlaces(
+      customPlaces,
+      { ...emptyFilters, favoritesOnly: true },
+      origin,
+    );
+    expect(favorites).toHaveLength(1);
+    expect(favorites[0].id).toBe("place-fav-vet");
+  });
+
+  it("formata links diretos de ligação e WhatsApp com segurança", () => {
+    expect(phoneCallUrl("(11) 3062-0100")).toBe("tel:1130620100");
+    expect(phoneCallUrl("+55 11 99000-0100")).toBe("tel:+5511990000100");
+    expect(phoneCallUrl("12")).toBeNull();
+
+    expect(whatsappUrl("(11) 99000-0100")).toBe("https://wa.me/5511990000100");
+    expect(whatsappUrl("5511990000100", "Emergência veterinária")).toContain(
+      "https://wa.me/5511990000100?text=Emerg%C3%AAncia",
+    );
+    expect(whatsappUrl("123")).toBeNull();
+  });
+
+  it("constrói consulta Overpass e converte nós OpenStreetMap em locais", async () => {
+    const query = buildOverpassQuery(origin, 4000);
+    expect(query).toContain('["amenity"="veterinary"]');
+    expect(query).toContain("around:4000");
+
+    const payload = {
+      elements: [
+        {
+          type: "node",
+          id: 901,
+          lat: -23.56,
+          lon: -46.66,
+          tags: {
+            name: "Hospital Veterinário 24h Paulista",
+            amenity: "veterinary",
+            opening_hours: "24/7",
+            "contact:phone": "+55 11 3222-1111",
+            "contact:whatsapp": "11988887777",
+            "addr:street": "Avenida Paulista",
+            "addr:housenumber": "1000",
+            "addr:suburb": "Bela Vista",
+          },
+        },
+        {
+          type: "way",
+          id: 902,
+          center: { lat: -23.565, lon: -46.67 },
+          tags: {
+            name: "Farmácia Vet Manipulação",
+            amenity: "pharmacy",
+            veterinary: "yes",
+          },
+        },
+      ],
+    };
+
+    const parsed = parseOverpassResponse(payload, "São Paulo");
+    expect(parsed).toHaveLength(2);
+    expect(parsed[0]).toMatchObject({
+      id: "osm-node-901",
+      name: "Hospital Veterinário 24h Paulista",
+      category: "veterinario",
+      attributes: ["emergencia_24h"],
+      source: "osm",
+      phone: "+55 11 3222-1111",
+      whatsapp: "11988887777",
+    });
+    expect(parsed[1].category).toBe("farmacia");
+
+    const fetchMock = vi.fn().mockResolvedValue(Response.json(payload));
+    const fetched = await fetchNearbyOsmPlaces({
+      origin,
+      city: "São Paulo",
+      fetchImpl: fetchMock,
+    });
+    expect(fetched).toHaveLength(2);
+    expect(fetchMock).toHaveBeenCalledOnce();
   });
 });

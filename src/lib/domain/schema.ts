@@ -37,6 +37,9 @@ export const lostModeSchema = z.object({
   active: z.boolean(),
   since: isoDate.nullable(),
   note: z.string().max(280).nullable(),
+  reward: z.string().max(80).nullable().optional(),
+  neighborhood: z.string().max(80).nullable().optional(),
+  contactPhone: z.string().max(40).nullable().optional(),
 });
 export type LostMode = z.infer<typeof lostModeSchema>;
 
@@ -56,6 +59,7 @@ export const petSchema = z.object({
   sex: sexSchema,
   birthDate: isoDate.nullable(),
   weightKg: z.number().positive().max(120).nullable(),
+  targetWeightKg: z.number().positive().max(120).nullable().optional(),
   weightBaseline: z
     .object({
       weightKg: z.number().positive().max(120).nullable(),
@@ -69,6 +73,33 @@ export const petSchema = z.object({
   microchip: z.string().max(40).nullable(),
   notes: z.string().max(600).nullable(),
   routine: z.array(z.string().max(40)).max(12),
+  allergies: z.array(z.string().max(80)).max(20).optional(),
+  chronicConditions: z
+    .array(z.string().max(100))
+    .max(20)
+    .optional(),
+  feedingRoutine: z
+    .array(
+      z.object({
+        id: z.string(),
+        time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+        description: z.string().max(120),
+        amount: z.string().max(60),
+        notes: z.string().max(200).nullable().optional(),
+      }),
+    )
+    .max(10)
+    .optional(),
+  emergencyVet: z
+    .object({
+      name: z.string().max(80),
+      phone: z.string().max(30),
+      clinicName: z.string().max(100).nullable().optional(),
+      address: z.string().max(200).nullable().optional(),
+      is24h: z.boolean().default(true),
+    })
+    .nullable()
+    .optional(),
   card: petCardSettingsSchema,
   lostMode: lostModeSchema,
   createdAt: isoDateTime,
@@ -159,6 +190,8 @@ export const medicationDoseEventSchema = z.object({
   recordedAt: isoDateTime,
   note: z.string().max(300).nullable(),
   correctsId: id.nullable(),
+  recordedBy: z.string().max(80).nullable().optional(),
+  actorRole: z.enum(["tutor", "co_tutor", "cuidador"]).nullable().optional(),
 });
 export const medicationCourseSchema = z
   .object({
@@ -230,6 +263,8 @@ export const healthRecordSchema = z
     leadDays: z.number().int().min(0).max(365),
     recurrenceMonths: z.number().int().min(0).max(60).nullable(),
     professional: z.string().max(80).nullable(),
+    manufacturer: z.string().max(80).nullable().optional(),
+    batchNumber: z.string().max(80).nullable().optional(),
     notes: z.string().max(600).nullable(),
     attachmentName: z.string().max(120).nullable(),
     attachmentData: z.string().nullable(),
@@ -238,6 +273,7 @@ export const healthRecordSchema = z
     medication: medicationCourseSchema.nullable().optional(),
     completedAt: isoDateTime.nullable(),
     createdAt: isoDateTime,
+    updatedAt: isoDateTime.optional(),
   })
   .refine(
     (record) =>
@@ -261,6 +297,7 @@ export const reminderSchema = z.object({
   done: z.boolean(),
   completedAt: isoDateTime.nullable().optional(),
   createdAt: isoDateTime,
+  updatedAt: isoDateTime.optional(),
 });
 export type Reminder = z.infer<typeof reminderSchema>;
 
@@ -276,6 +313,7 @@ export const diaryEntrySchema = z.object({
   weightUpdatedAt: isoDateTime.optional(),
   visibility: z.enum(["privado", "publico"]),
   createdAt: isoDateTime,
+  updatedAt: isoDateTime.optional(),
 });
 export type DiaryEntry = z.infer<typeof diaryEntrySchema>;
 
@@ -283,6 +321,8 @@ export const placeCategorySchema = z.enum([
   "parque",
   "restaurante",
   "veterinario",
+  "farmacia",
+  "pet_shop",
   "banho_tosa",
   "hospedagem",
   "passeador_adestrador",
@@ -303,6 +343,9 @@ export const placeAttributeSchema = z.enum([
 ]);
 export type PlaceAttribute = z.infer<typeof placeAttributeSchema>;
 
+export const placeSourceSchema = z.enum(["seed", "local", "osm"]);
+export type PlaceSource = z.infer<typeof placeSourceSchema>;
+
 export const placeSchema = z.object({
   id,
   name: z.string().min(1).max(80),
@@ -317,6 +360,15 @@ export const placeSchema = z.object({
   verified: z.boolean(),
   openNow: z.boolean().nullable(),
   seeded: z.boolean(),
+  phone: z.string().max(40).nullable().optional(),
+  whatsapp: z.string().max(40).nullable().optional(),
+  favorite: z.boolean().optional(),
+  notes: z.string().max(400).nullable().optional(),
+  source: placeSourceSchema.optional(),
+  osmId: z.string().max(80).nullable().optional(),
+  openingHours: z.string().max(160).nullable().optional(),
+  createdAt: isoDateTime.optional(),
+  updatedAt: isoDateTime.optional(),
 });
 export type Place = z.infer<typeof placeSchema>;
 
@@ -328,6 +380,7 @@ export const reviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
   text: z.string().max(600).nullable(),
   createdAt: isoDateTime,
+  updatedAt: isoDateTime.optional(),
 });
 export type Review = z.infer<typeof reviewSchema>;
 
@@ -352,6 +405,7 @@ export const postSchema = z.object({
   body: z.string().max(1200),
   city: z.string().max(60).nullable(),
   createdAt: isoDateTime,
+  updatedAt: isoDateTime.optional(),
   helpfulCount: z.number().int().min(0),
   reported: z.boolean(),
   hidden: z.boolean(),
@@ -367,6 +421,7 @@ export const commentSchema = z.object({
   helpful: z.boolean(),
   reported: z.boolean(),
   createdAt: isoDateTime,
+  updatedAt: isoDateTime.optional(),
 });
 export type Comment = z.infer<typeof commentSchema>;
 
@@ -419,10 +474,32 @@ export const notificationSchema = z.object({
   body: z.string().max(240),
   href: z.string().max(200).nullable(),
   createdAt: isoDateTime,
+  updatedAt: isoDateTime.optional(),
   readAt: isoDateTime.nullable(),
   dismissed: z.boolean(),
 });
 export type AppNotification = z.infer<typeof notificationSchema>;
+
+export const syncCollectionSchema = z.enum([
+  "pets",
+  "records",
+  "reminders",
+  "diary",
+  "documents",
+  "places",
+  "reviews",
+  "posts",
+  "comments",
+  "notifications",
+]);
+export type SyncCollection = z.infer<typeof syncCollectionSchema>;
+
+export const syncTombstoneSchema = z.object({
+  collection: syncCollectionSchema,
+  id,
+  deletedAt: isoDateTime,
+});
+export type SyncTombstone = z.infer<typeof syncTombstoneSchema>;
 
 export const analyticsEventSchema = z.object({
   name: z.string().min(1).max(60),
@@ -464,10 +541,14 @@ export const publicPetCardSchema = z.object({
   species: speciesSchema,
   breed: z.string().max(60).nullable(),
   city: z.string().max(60).nullable(),
+  microchip: z.string().max(40).nullable().optional(),
   lost: z
     .object({
       since: isoDate.nullable(),
       note: z.string().max(280).nullable(),
+      reward: z.string().max(80).nullable().optional(),
+      neighborhood: z.string().max(80).nullable().optional(),
+      contactPhone: z.string().max(40).nullable().optional(),
     })
     .nullable(),
   health: z

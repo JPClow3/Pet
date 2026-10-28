@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createBackup } from "@/lib/domain/backup";
+import { computeBackupDelta } from "@/lib/domain/delta-sync";
 import { useAppStore } from "@/lib/store/app-store";
 import { createSnapshotHandlers } from "./snapshot-handler";
 
@@ -142,5 +143,34 @@ describe("autorização de snapshots no servidor", () => {
     );
     expect(result.status).toBe(400);
     expect(services.save).not.toHaveBeenCalled();
+  });
+  it("aplica delta incremental via PATCH preservando controle de revisão", async () => {
+    services.read.mockResolvedValue({
+      user_id: "user-a",
+      snapshot: backup,
+      revision: 1,
+      generation,
+      updated_at: "2026-10-28T10:00:00.000Z",
+    });
+    const updated = structuredClone(backup);
+    updated.settings.city = "Campinas";
+    const { delta } = computeBackupDelta(backup, updated);
+
+    const result = await handlers.PATCH(
+      request("PATCH", {
+        expectedRevision: 1,
+        expectedGeneration: generation,
+        delta,
+      }),
+    );
+    expect(result.status).toBe(200);
+    expect(services.save).toHaveBeenCalledWith(
+      "user-a",
+      expect.objectContaining({
+        settings: expect.objectContaining({ city: "Campinas" }),
+      }),
+      1,
+      generation,
+    );
   });
 });

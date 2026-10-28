@@ -10,10 +10,12 @@ import {
   Scale,
   Siren,
   Syringe,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { BatchCareModal } from "@/components/batch-care-modal";
 import { CareHalo, PetAvatar } from "@/components/pet-avatar";
 import { HealthStatusCard } from "@/components/health-status-card";
 import { PetContextSwitcher, type PetScope } from "@/components/pet-header";
@@ -172,6 +174,7 @@ export default function HomePage() {
   const blocked = useAppStore((state) => state.blockedAuthorIds);
   const { origin } = useOrigin();
   const [requestedScope, setScope] = useState<PetScope | null>(null);
+  const [batchModalOpen, setBatchModalOpen] = useState(false);
   const scope = requestedScope ?? activePet?.id ?? "todos";
 
   const reminders = useMemo(
@@ -282,7 +285,7 @@ export default function HomePage() {
             )}
           </div>
         </div>
-        <div className="relative mt-5 flex flex-col gap-2 sm:max-w-md sm:flex-row">
+        <div className="relative mt-5 flex flex-col gap-2 sm:max-w-xl sm:flex-row">
           <ButtonLink
             href={
               scope === "todos"
@@ -295,6 +298,16 @@ export default function HomePage() {
             <ClipboardPlus aria-hidden="true" className="size-4" />
             Registrar cuidado
           </ButtonLink>
+          {pets.length >= 2 ? (
+            <button
+              type="button"
+              onClick={() => setBatchModalOpen(true)}
+              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[14px] border border-teal-ink/30 bg-mint/50 px-3 text-[0.85rem] font-semibold text-teal-deep transition-colors hover:bg-mint hover:border-teal-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink"
+            >
+              <Users aria-hidden="true" className="size-4 text-teal-ink" />
+              Cuidado compartilhado
+            </button>
+          ) : null}
           <ButtonLink
             href={scope === "todos" ? "/pets" : `/pets/${activePet.id}/card`}
             size="sm"
@@ -459,6 +472,30 @@ export default function HomePage() {
                 />{" "}
                 Abrir carteirinha
               </Link>
+              {pets.length >= 2 ? (
+                <button
+                  type="button"
+                  onClick={() => setBatchModalOpen(true)}
+                  className="group col-span-2 flex min-h-16 flex-row items-center justify-between rounded-[18px] border border-teal-ink/30 bg-mint/35 p-3 text-left text-[0.88rem] font-bold text-ink transition-colors hover:border-teal/55 hover:bg-mint/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex size-9 items-center justify-center rounded-full bg-white dark:bg-card">
+                      <Users aria-hidden="true" className="size-5 text-teal-ink" />
+                    </span>
+                    <div>
+                      <p className="leading-tight font-bold text-teal-deep">
+                        Cuidado compartilhado
+                      </p>
+                      <p className="text-[11px] font-normal text-muted">
+                        Passeio, alimentação, etc. para vários pets de uma vez
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-meta font-bold text-teal-ink">
+                    Abrir →
+                  </span>
+                </button>
+              ) : null}
             </div>
           </section>
 
@@ -595,6 +632,14 @@ export default function HomePage() {
             </div>
           </div>
         </Card>
+      ) : null}
+
+      {pets.length >= 2 ? (
+        <BatchCareModal
+          open={batchModalOpen}
+          onClose={() => setBatchModalOpen(false)}
+          pets={pets}
+        />
       ) : null}
     </div>
   );

@@ -95,3 +95,69 @@ export function reconcileWeights<T extends Partial<WeightState>>(
     }),
   };
 }
+
+export type WeightAlert = {
+  type: "loss" | "gain";
+  percentage: number;
+  deltaKg: number;
+  days: number;
+  previousDate: string;
+  currentDate: string;
+};
+
+export function detectSuddenWeightChange(
+  measurements: { date: string; weightKg: number }[],
+  thresholdPercent = 5,
+  maxDays = 90,
+): WeightAlert | null {
+  if (measurements.length < 2) return null;
+  // Deduplicate points on the same date by keeping the latest, then sort chronologically
+  const byDate = new Map<string, number>();
+  for (const m of measurements) {
+    if (m.weightKg > 0) {
+      byDate.set(m.date, m.weightKg);
+    }
+  }
+  const points = Array.from(byDate.entries())
+    .map(([date, weightKg]) => ({ date, weightKg }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (points.length < 2) return null;
+
+  // Examine consecutive points from newest to oldest
+  for (let i = points.length - 1; i >= 1; i--) {
+    const current = points[i];
+    const previous = points[i - 1];
+    if (previous.weightKg <= 0 || current.weightKg <= 0) continue;
+    const daysDiff = Math.abs(
+      Math.round(
+        (Date.parse(`${current.date}T12:00:00Z`) -
+          Date.parse(`${previous.date}T12:00:00Z`)) /
+          86400000,
+      ),
+    );
+    if (daysDiff >= 1 && daysDiff <= maxDays) {
+      const deltaKg =
+        Math.round((current.weightKg - previous.weightKg) * 10) / 10;
+      const percentage =
+        Math.round(
+          (Math.abs(current.weightKg - previous.weightKg) /
+            previous.weightKg) *
+            100 *
+            10,
+        ) / 10;
+      if (percentage >= thresholdPercent && Math.abs(deltaKg) >= 0.2) {
+        return {
+          type: deltaKg < 0 ? "loss" : "gain",
+          percentage,
+          deltaKg,
+          days: daysDiff,
+          previousDate: previous.date,
+          currentDate: current.date,
+        };
+      }
+    }
+  }
+  return null;
+}
+
