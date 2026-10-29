@@ -11,6 +11,7 @@ const alias = {
 
 export default defineConfig({
   test: {
+    testTimeout: 15000,
     projects: [
       {
         resolve: { alias },

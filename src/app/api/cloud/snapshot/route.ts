@@ -7,7 +7,7 @@ import {
 } from "@/lib/cloud/server-snapshots";
 
 export const dynamic = "force-dynamic";
-export const { GET, PUT, DELETE } = createSnapshotHandlers({
+export const { GET, PUT, PATCH, DELETE } = createSnapshotHandlers({
   currentUser: verifiedCloudUser,
   read: readServerSnapshot,
   save: saveServerSnapshot,

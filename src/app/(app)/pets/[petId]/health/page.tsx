@@ -1,12 +1,14 @@
 "use client";
 
-import { ClipboardList, Plus } from "lucide-react";
+import { ClipboardList, Plus, Stethoscope } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { RecordTimelineItem } from "@/components/health-status-card";
-import { HistoryExportPanel } from "@/components/history-export-panel";
+import { BulkAddToCalendarButton } from "@/components/add-to-calendar";
+import { createBulkCalendarEvents } from "@/lib/calendar";
 import { CareTabs } from "@/components/care-tabs";
 import { PageHeader } from "@/components/page-header";
 import { PetContextSwitcher } from "@/components/pet-header";
@@ -18,9 +20,35 @@ import { SkeletonScreen } from "@/components/ui/skeleton";
 import { countByType, healthStatus, sortByDateDesc } from "@/lib/domain/health";
 import { formatShortDate } from "@/lib/domain/dates";
 import { HEALTH_TYPES, healthTypeMeta } from "@/lib/domain/labels";
+import { petWeightMeasurements } from "@/lib/domain/weight";
 import { useAppStore } from "@/lib/store/app-store";
 import { useHydrated } from "@/lib/store/hooks";
 import type { HealthRecordType } from "@/lib/domain/schema";
+
+const HistoryExportPanel = dynamic(
+  () =>
+    import("@/components/history-export-panel").then(
+      (mod) => mod.HistoryExportPanel,
+    ),
+  {
+    loading: () => (
+      <Card role="status" className="py-4 text-meta text-muted">
+        Carregando exportação de histórico…
+      </Card>
+    ),
+  },
+);
+
+const WeightChart = dynamic(
+  () => import("@/components/weight-chart").then((mod) => mod.WeightChart),
+  {
+    loading: () => (
+      <div role="status" className="py-6 text-center text-meta text-muted">
+        Carregando gráfico de peso…
+      </div>
+    ),
+  },
+);
 
 export default function HealthPage() {
   const params = useParams<{ petId: string }>();
@@ -30,6 +58,7 @@ export default function HealthPage() {
     state.pets.find((item) => item.id === params.petId),
   );
   const records = useAppStore((state) => state.records);
+  const diary = useAppStore((state) => state.diary);
   const [filter, setFilter] = useState<HealthRecordType | "todos" | "proximos">(
     "todos",
   );
@@ -50,6 +79,16 @@ export default function HealthPage() {
 
   const status = useMemo(() => healthStatus(petRecords), [petRecords]);
   const counts = useMemo(() => countByType(petRecords), [petRecords]);
+  const petCalendarEvents = useMemo(
+    () =>
+      pet
+        ? createBulkCalendarEvents({
+            records: petRecords,
+            pets: [pet],
+          })
+        : [],
+    [petRecords, pet],
+  );
 
   if (!ready) return <SkeletonScreen label="Abrindo a saúde" />;
 
@@ -100,7 +139,29 @@ export default function HealthPage() {
         <p className="text-[0.9rem] text-ink-soft/90">{status.detail}</p>
       </Card>
 
-      <HistoryExportPanel key={pet.id} pet={pet} records={petRecords} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <HistoryExportPanel key={pet.id} pet={pet} records={petRecords} />
+          {petCalendarEvents.length > 0 ? (
+            <BulkAddToCalendarButton
+              events={petCalendarEvents}
+              filename={`cuidados-${pet.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-zelupi.ics`}
+              calendarName={`Zelupi — Cuidados de ${pet.name}`}
+              label="Exportar calendário (.ics)"
+              size="sm"
+            />
+          ) : null}
+        </div>
+        <ButtonLink
+          href={`/pets/${pet.id}/vet`}
+          variant="secondary"
+          size="sm"
+          className="gap-1.5 font-semibold text-teal-ink border-teal-ink/30 bg-mint/40 hover:bg-mint"
+        >
+          <Stethoscope aria-hidden="true" className="size-4" />
+          Modo Consulta (Dossiê Clínico)
+        </ButtonLink>
+      </div>
 
       <div className="flex flex-wrap gap-2">
         <FilterChip
@@ -125,6 +186,20 @@ export default function HealthPage() {
           </FilterChip>
         ))}
       </div>
+
+      {filter === "peso" ? (
+        <Card className="flex flex-col gap-3">
+          <WeightChart
+            measurements={petWeightMeasurements(
+              pet,
+              petRecords,
+              diary.filter((entry) => entry.petId === pet.id),
+            )}
+            targetWeightKg={pet.targetWeightKg}
+            petName={pet.name}
+          />
+        </Card>
+      ) : null}
 
       {filtered.length === 0 ? (
         <EmptyState

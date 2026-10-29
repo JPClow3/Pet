@@ -4,15 +4,21 @@ import {
   Camera,
   ChevronRight,
   FileText,
+  HeartHandshake,
   Pencil,
+  Printer,
   QrCode,
   Scale,
+  ShieldCheck,
   Siren,
   Sparkles,
+  Stethoscope,
+  Users,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { CareTabs } from "@/components/care-tabs";
@@ -25,7 +31,7 @@ import { CareHalo } from "@/components/pet-avatar";
 import { PetContextSwitcher } from "@/components/pet-header";
 import { Photo } from "@/components/ui/photo";
 import { QuickAddButton } from "@/components/quick-add-button";
-import { ButtonLink } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -33,6 +39,29 @@ import { SkeletonScreen } from "@/components/ui/skeleton";
 import { formatShortDate, todayKey } from "@/lib/domain/dates";
 import { weightTrend } from "@/lib/domain/health";
 import { petWeightMeasurements } from "@/lib/domain/weight";
+
+const PetCollaboratorsPanel = dynamic(() =>
+  import("@/components/pet-collaborators-panel").then(
+    (mod) => mod.PetCollaboratorsPanel,
+  ),
+);
+
+const PetSitterConfigModal = dynamic(() =>
+  import("@/components/pet-sitter-config-modal").then(
+    (mod) => mod.PetSitterConfigModal,
+  ),
+);
+
+const WeightChart = dynamic(
+  () => import("@/components/weight-chart").then((mod) => mod.WeightChart),
+  {
+    loading: () => (
+      <div role="status" className="py-6 text-center text-meta text-muted">
+        Carregando gráfico de peso…
+      </div>
+    ),
+  },
+);
 import { petAge, petCompletion } from "@/lib/domain/pet";
 import { speciesLabels } from "@/lib/domain/labels";
 import { useAppStore } from "@/lib/store/app-store";
@@ -48,20 +77,25 @@ export default function MyPetPage() {
   const updatePet = useAppStore((state) => state.updatePet);
   const action = useAsyncAction();
   const router = useRouter();
+  const [showSitterModal, setShowSitterModal] = useState(false);
 
   const petDiary = useMemo(
     () => diary.filter((entry) => entry.petId === pet?.id),
     [diary, pet?.id],
   );
+  const weightMeasurements = useMemo(
+    () => (pet ? petWeightMeasurements(pet, records, petDiary) : []),
+    [pet, records, petDiary],
+  );
   const trend = useMemo(
     () =>
       pet?.weightKg != null
         ? weightTrend(
-            petWeightMeasurements(pet, records, petDiary),
+            weightMeasurements,
             pet.weightKg,
           )
         : null,
-    [pet, records, petDiary],
+    [pet, weightMeasurements],
   );
   const documentCount = useMemo(
     () =>
@@ -142,6 +176,15 @@ export default function MyPetPage() {
 
         <div className="flex w-full flex-wrap justify-center gap-2 pt-1">
           <ButtonLink
+            href={`/pets/${pet.id}/vet`}
+            size="sm"
+            variant="secondary"
+            className="font-semibold text-teal-ink"
+          >
+            <Stethoscope aria-hidden="true" className="size-4" />
+            Modo Consulta
+          </ButtonLink>
+          <ButtonLink
             href={`/pets/${pet.id}/card`}
             size="sm"
             variant="secondary"
@@ -149,6 +192,14 @@ export default function MyPetPage() {
             <QrCode aria-hidden="true" className="size-4" />
             Carteirinha
           </ButtonLink>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setShowSitterModal(true)}
+          >
+            <ShieldCheck aria-hidden="true" className="size-4" />
+            Modo Cuidador
+          </Button>
           <ButtonLink
             href={`/pets/${pet.id}/edit`}
             size="sm"
@@ -159,48 +210,60 @@ export default function MyPetPage() {
           </ButtonLink>
         </div>
 
-        <button
-          type="button"
-          disabled={action.pending}
-          onClick={() => {
-            const active = !pet.lostMode.active;
-            void action.run(async () => {
-              await updatePet(pet.id, {
-                lostMode: {
-                  active,
-                  since: active ? todayKey() : null,
-                  note: active
-                    ? (pet.lostMode.note ??
-                      "Se você encontrou este pet, use o contato da carteirinha.")
-                    : null,
-                },
-              });
-              toast(
-                active
-                  ? "Modo perdido ativado neste aparelho"
-                  : "Modo perdido desativado neste aparelho",
-                {
-                  description:
-                    "Abra a carteirinha e revise a publicação para atualizar o link público.",
-                  action: {
-                    label: "Revisar publicação",
-                    onClick: () => router.push(`/pets/${pet.id}/card`),
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <button
+            type="button"
+            disabled={action.pending}
+            onClick={() => {
+              const active = !pet.lostMode.active;
+              void action.run(async () => {
+                await updatePet(pet.id, {
+                  lostMode: {
+                    active,
+                    since: active ? todayKey() : null,
+                    note: active
+                      ? (pet.lostMode.note ??
+                        "Se você encontrou este pet, use o contato da carteirinha.")
+                      : null,
                   },
-                },
-              );
-            });
-          }}
-          className={`inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-[0.85rem] font-medium ${
-            pet.lostMode.active
-              ? "bg-danger-ink text-white"
-              : "border border-line text-danger-ink hover:bg-danger/5"
-          }`}
-        >
-          <Siren aria-hidden="true" className="size-4" />
-          {pet.lostMode.active
-            ? "Desativar modo perdido"
-            : "Ativar modo perdido"}
-        </button>
+                });
+                toast(
+                  active
+                    ? "Modo perdido ativado neste aparelho"
+                    : "Modo perdido desativado neste aparelho",
+                  {
+                    description:
+                      "Abra a carteirinha e revise a publicação para atualizar o link público.",
+                    action: {
+                      label: "Revisar publicação",
+                      onClick: () => router.push(`/pets/${pet.id}/card`),
+                    },
+                  },
+                );
+              });
+            }}
+            className={`inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-[0.85rem] font-medium ${
+              pet.lostMode.active
+                ? "bg-danger-ink text-white"
+                : "border border-line text-danger-ink hover:bg-danger/5"
+            }`}
+          >
+            <Siren aria-hidden="true" className="size-4" />
+            {pet.lostMode.active
+              ? "Desativar modo perdido"
+              : "Ativar modo perdido"}
+          </button>
+          {pet.lostMode.active ? (
+            <ButtonLink
+              href={`/pets/${pet.id}/card`}
+              variant="secondary"
+              className="border-danger-ink/40 text-danger-ink hover:bg-danger/10 font-bold"
+            >
+              <Printer aria-hidden="true" className="size-4" />
+              Baixar Cartaz A4
+            </ButtonLink>
+          ) : null}
+        </div>
       </section>
 
       {completion.missing.length > 0 ? (
@@ -224,7 +287,7 @@ export default function MyPetPage() {
 
       <Card className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle>Peso</CardTitle>
+          <CardTitle>Curva de peso</CardTitle>
           <Link
             href={`/pets/${pet.id}/health/new?type=peso`}
             className="text-meta font-medium text-teal-ink"
@@ -232,23 +295,11 @@ export default function MyPetPage() {
             Registrar novo peso
           </Link>
         </div>
-        {trend ? (
-          <div className="flex items-end gap-3">
-            <p className="text-2xl font-semibold text-ink">
-              {trend.latest.toFixed(1).replace(".", ",")} kg
-            </p>
-            <p className="pb-1 text-meta text-muted">
-              {trend.previous
-                ? `${trend.deltaKg === 0 ? "estável" : trend.deltaKg > 0 ? `+${trend.deltaKg}` : trend.deltaKg} kg desde ${trend.sinceLabel}`
-                : "Primeira pesagem registrada"}
-            </p>
-          </div>
-        ) : (
-          <p className="flex items-center gap-2 text-[0.92rem] text-muted">
-            <Scale aria-hidden="true" className="size-4" />
-            Sem pesagens registradas ainda.
-          </p>
-        )}
+        <WeightChart
+          measurements={weightMeasurements}
+          targetWeightKg={pet.targetWeightKg}
+          petName={pet.name}
+        />
       </Card>
 
       <section>
@@ -350,6 +401,48 @@ export default function MyPetPage() {
           Abrir
         </Link>
       </Card>
+
+      {/* Colaboração Familiar e Multi-Tutor */}
+      <PetCollaboratorsPanel pet={pet} />
+
+      {/* Modo Cuidador / Pet Sitter */}
+      <Card className="flex flex-col gap-3 border-teal-ink/20 bg-teal-ink/5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex size-9 items-center justify-center rounded-xl bg-teal-ink text-white">
+              <ShieldCheck aria-hidden="true" className="size-5" />
+            </span>
+            <div>
+              <CardTitle>Modo Cuidador / Pet Sitter</CardTitle>
+              <p className="mt-0.5 text-meta text-muted">
+                Para quando o pet fica em hotelzinho, creche ou com passeador.
+              </p>
+            </div>
+          </div>
+        </div>
+        <p className="text-sm leading-relaxed text-ink-soft">
+          Gere um link temporário protegido por PIN que mostra apenas a rotina alimentar, horários de remédios, alergias e botão de emergência 24h, sem expor dados particulares.
+        </p>
+        <div className="flex flex-wrap gap-2 pt-1">
+          <Button size="sm" onClick={() => setShowSitterModal(true)}>
+            Configurar link do cuidador
+          </Button>
+          <ButtonLink
+            href={`/pets/${pet.id}/sitter`}
+            variant="secondary"
+            size="sm"
+          >
+            Ativar neste aparelho
+          </ButtonLink>
+        </div>
+      </Card>
+
+      <PetSitterConfigModal
+        pet={pet}
+        records={records}
+        open={showSitterModal}
+        onClose={() => setShowSitterModal(false)}
+      />
 
       <QuickAddButton href={`/pets/${pet.id}/health/new`} />
     </div>

@@ -181,7 +181,9 @@ function DoseRow({
         <span className="text-meta font-semibold text-muted">
           {future
             ? "Planejada"
-            : medicationDoseStatusLabels[event?.status ?? "unrecorded"]}
+            : event?.status === "given" && event.recordedBy
+              ? `Dada por ${event.recordedBy}`
+              : medicationDoseStatusLabels[event?.status ?? "unrecorded"]}
         </span>
       </div>
       <p className="break-words text-meta text-muted">

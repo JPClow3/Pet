@@ -29,8 +29,11 @@ const petDraftSchema = z.object({
   birthDate: z.string().max(10),
   breed: z.string().max(60),
   weight: z.string().max(40),
+  targetWeight: z.string().max(40).optional().default(""),
   color: z.string().max(40),
   microchip: z.string().max(40),
+  allergiesText: z.string().max(300).optional().default(""),
+  chronicConditionsText: z.string().max(300).optional().default(""),
   notes: z.string().max(600),
   routine: z.array(z.string().max(40)).max(12),
 });
@@ -64,8 +67,13 @@ export function PetForm({
       birthDate: initial?.birthDate ?? "",
       breed: initial?.breed ?? "",
       weight: initial?.weightKg ? String(initial.weightKg) : "",
+      targetWeight: initial?.targetWeightKg ? String(initial.targetWeightKg) : "",
       color: initial?.color ?? "",
       microchip: initial?.microchip ?? "",
+      allergiesText: initial?.allergies ? initial.allergies.join(", ") : "",
+      chronicConditionsText: initial?.chronicConditions
+        ? initial.chronicConditions.join(", ")
+        : "",
       notes: initial?.notes ?? "",
       routine: initial?.routine ?? [],
     }),
@@ -83,8 +91,11 @@ export function PetForm({
     birthDate,
     breed,
     weight,
+    targetWeight,
     color,
     microchip,
+    allergiesText,
+    chronicConditionsText,
     notes,
     routine,
   } = draft.value;
@@ -102,6 +113,10 @@ export function PetForm({
 
   const parsedWeight =
     weight.trim() === "" ? null : Number(weight.replace(",", "."));
+  const parsedTargetWeight =
+    targetWeight && targetWeight.trim() !== ""
+      ? Number(targetWeight.replace(",", "."))
+      : null;
   const size =
     parsedWeight && Number.isFinite(parsedWeight) && parsedWeight <= 120
       ? petSize(species, parsedWeight)
@@ -127,6 +142,18 @@ export function PetForm({
       );
       return;
     }
+    if (
+      parsedTargetWeight !== null &&
+      (!Number.isFinite(parsedTargetWeight) ||
+        parsedTargetWeight <= 0 ||
+        parsedTargetWeight > 120)
+    ) {
+      setDetailsOpen(true);
+      setError(
+        "Informe um peso ideal/meta maior que zero e de até 120 kg.",
+      );
+      return;
+    }
     if (birthDate && (!isValidDateKey(birthDate) || birthDate > today)) {
       setDetailsOpen(true);
       setError("Informe uma data de nascimento válida, até hoje.");
@@ -135,6 +162,15 @@ export function PetForm({
     setError(null);
     submitting.current = true;
     setPending(true);
+    const parsedAllergies = (allergiesText || "")
+      .split(/[,;\n]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const parsedChronic = (chronicConditionsText || "")
+      .split(/[,;\n]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
     try {
       await onSubmit({
         name: name.trim(),
@@ -143,9 +179,12 @@ export function PetForm({
         birthDate: birthDate || null,
         breed: breed.trim() || null,
         weightKg: parsedWeight,
+        targetWeightKg: parsedTargetWeight,
         photo,
         color: color.trim() || null,
         microchip: microchip.trim() || null,
+        allergies: parsedAllergies,
+        chronicConditions: parsedChronic,
         notes: notes.trim() || null,
         routine,
       });
@@ -323,6 +362,24 @@ export function PetForm({
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field
+                label="Peso ideal / meta"
+                htmlFor="pet-target-weight"
+                hint="Referência no gráfico (opcional)"
+              >
+                <Input
+                  id="pet-target-weight"
+                  inputMode="decimal"
+                  value={targetWeight ?? ""}
+                  onChange={(event) =>
+                    setField("targetWeight", event.target.value)
+                  }
+                  placeholder="12,0"
+                />
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Field label="Cor" htmlFor="pet-color" hint="Ajuda a identificar">
                 <Input
                   id="pet-color"
@@ -370,10 +427,43 @@ export function PetForm({
               ))}
             </fieldset>
 
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field
+                label="Alergias conhecidas"
+                htmlFor="pet-allergies"
+                hint="Separadas por vírgula"
+              >
+                <Input
+                  id="pet-allergies"
+                  value={allergiesText}
+                  onChange={(event) =>
+                    setField("allergiesText", event.target.value)
+                  }
+                  placeholder="Ex.: Dipirona, Frango, Picada de pulga"
+                  maxLength={300}
+                />
+              </Field>
+              <Field
+                label="Condições crônicas"
+                htmlFor="pet-chronic"
+                hint="Diagnósticos ou tratamentos contínuos"
+              >
+                <Input
+                  id="pet-chronic"
+                  value={chronicConditionsText}
+                  onChange={(event) =>
+                    setField("chronicConditionsText", event.target.value)
+                  }
+                  placeholder="Ex.: Displasia, Doença Renal, Cardiopatia"
+                  maxLength={300}
+                />
+              </Field>
+            </div>
+
             <Field
               label="Observações"
               htmlFor="pet-notes"
-              hint="Alergias, medos, preferências"
+              hint="Medos, preferências ou rotina específica"
             >
               <Textarea
                 id="pet-notes"

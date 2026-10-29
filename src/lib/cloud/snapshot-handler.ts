@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { isSameOriginRequest } from "@/lib/http/same-origin";
 import { MAX_CLOUD_BACKUP_BYTES, parseBackup } from "@/lib/domain/backup";
+import { applyBackupDelta } from "@/lib/domain/delta-sync";
 
 type Services = {
   currentUser: () => Promise<{ id: string; emailVerified: boolean } | null>;
@@ -23,6 +24,7 @@ const payload = z
     expectedRevision: revision,
     expectedGeneration: z.uuid().nullable().default(null),
     snapshot: z.unknown().optional(),
+    delta: z.unknown().optional(),
   })
   .refine((value) =>
     value.expectedRevision === 0
@@ -104,6 +106,51 @@ export function createSnapshotHandlers(services: Services) {
           ? response({ snapshot: null })
           : response({ error: "Revision conflict" }, 409);
       }
+      if (request.method === "PATCH") {
+        if (
+          body.expectedRevision <= 0 ||
+          !body.expectedGeneration ||
+          body.delta === undefined
+        ) {
+          return response({ error: "Delta and snapshot identity required" }, 400);
+        }
+        const currentRaw = (await services.read(user.id)) as {
+          revision?: number;
+          generation?: string;
+          snapshot?: unknown;
+        } | null;
+        if (
+          !currentRaw ||
+          currentRaw.revision !== body.expectedRevision ||
+          currentRaw.generation !== body.expectedGeneration
+        ) {
+          return response({ error: "Revision conflict" }, 409);
+        }
+        let merged;
+        try {
+          const currentBackup = parseBackup(
+            JSON.stringify(currentRaw.snapshot),
+          );
+          merged = applyBackupDelta(currentBackup, body.delta);
+          if (
+            new TextEncoder().encode(JSON.stringify(merged)).byteLength >
+            MAX_CLOUD_BACKUP_BYTES
+          ) {
+            return response({ error: "Merged snapshot exceeds cloud limit" }, 400);
+          }
+        } catch {
+          return response({ error: "Invalid delta" }, 400);
+        }
+        const saved = await services.save(
+          user.id,
+          merged,
+          body.expectedRevision,
+          body.expectedGeneration,
+        );
+        return saved
+          ? response({ snapshot: saved })
+          : response({ error: "Revision conflict" }, 409);
+      }
       let snapshot;
       try {
         snapshot = parseBackup(JSON.stringify(body.snapshot));
@@ -123,5 +170,5 @@ export function createSnapshotHandlers(services: Services) {
       return response({ error: "Cloud temporarily unavailable" }, 503);
     }
   }
-  return { GET: handle, PUT: handle, DELETE: handle };
+  return { GET: handle, PUT: handle, PATCH: handle, DELETE: handle };
 }

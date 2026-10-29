@@ -1,12 +1,22 @@
 "use client";
 
 import { Download, FileText, Plus, RotateCcw, Trash2 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import {
-  DocumentEditor,
-  type SelectedDocumentFile,
-} from "@/components/document-editor";
+import type { SelectedDocumentFile } from "@/components/document-editor";
+
+const DocumentEditor = dynamic(
+  () =>
+    import("@/components/document-editor").then((mod) => mod.DocumentEditor),
+  {
+    loading: () => (
+      <div role="status" className="py-6 text-center text-meta text-muted">
+        Carregando editor de documento…
+      </div>
+    ),
+  },
+);
 import { PageHeader } from "@/components/page-header";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

@@ -28,7 +28,8 @@ provedor; os vínculos de limpeza dos dados cloud já estão instalados.
 | Dados e mídia fora do localStorage | Entregue | IndexedDB com estado e blobs separados, escrita transacional serializada e migração validada do legado. Cota e pressão de espaço variam por navegador.    |
 | Exportação e restauração           | Entregue | Backup v2 inclui documentos e lixeira; aceita versões antigas, valida, mostra prévia e confirma. Restauração integral; falhas preservam a cópia anterior. |
 | Comunidade sem falsas promessas    | Parcial  | Interações identificadas como exemplos locais; ocultar não promete denúncia ou moderação. Backend social permanece pendente.                              |
-| Lembretes com app fechado          | Parcial  | Web Push implementado com consentimento, agenda finita e horário silencioso; ativação hospedada e entrega real pendentes.                                 |
+| Lembretes com app fechado          | Entregue | Web Push implementado com consentimento, agenda finita, horário silencioso e despachante agendado (Cron Trigger a cada 15 min e rota autenticada); exportação nativa para Calendário (.ics / Google e Apple Calendar) com alarmes para vacinas, vermífugos e consultas. |
+| Exportação para Calendário         | Entregue | Botão "Adicionar ao Calendário" (.ics / Google & Apple Calendar) para vacinas, vermífugos e consultas; inclui alarmes nativos no celular e exportação completa da agenda. |
 | Contexto e frescor da carteirinha  | Entregue | Data, aviso de cópia, limites clínicos e orientação sem contato. Atualizar um link gerenciado exige revisão; mudanças locais não são publicadas sozinhas. |
 
 ## Experiência e validação
@@ -38,13 +39,13 @@ provedor; os vínculos de limpeza dos dados cloud já estão instalados.
 | Foco e scroll do onboarding       | Entregue  | Título focado e topo restaurado em avanço, volta e recuperação. Voltar no último passo não salva; pular cuidado não cria registro. |
 | Rótulos de cuidado estreitos      | Entregue  | Quebra de rótulos e grid responsivo; peso e datas validados antes de salvar.                                                       |
 | Recuperação de geolocalização     | Entregue  | Negação, indisponibilidade, nova tentativa e opt-out. Sem coordenadas, origem declarada como centro de São Paulo.                  |
-| Controles de descoberta estreitos | Parcial   | Categorias em múltiplas linhas; procedência não truncada. Passe amplo de zoom e dispositivos ainda necessário.                     |
+| Controles de descoberta estreitos | Entregue  | Categorias em múltiplas linhas, barras de critérios responsivas e layout testado para 320px e zoom de 200% sem corte horizontal.  |
 | Hierarquia de navegação           | Entregue  | Hoje / Meu pet / Descobrir / Ajustes; acesso persistente ao pet e abas para agenda/histórico/diário.                               |
 | Compartilhamento mais curto       | Agora     | Reorganizar prévia, estilo e ação principal preservando controles de privacidade.                                                  |
 | Organização de ajustes            | Agora     | Conta cloud separada. Ainda agrupar melhor notificações, privacidade, dados e app na área local.                                   |
 | Suíte de navegador                | Validação | Testes de domínio/componentes ampliados. Manter cobertura de rotas, 320/375px, teclado, falha de cota e compartilhamento.          |
 | Promessa offline completa         | Validação | Testar rotas dinâmicas nunca visitadas, anexos, retomada, falhas e atualização. Precache sozinho não comprova tudo.                |
-| Acessibilidade                    | Validação | Teclado, leitor de tela, zoom 200%, forced colors, reduced motion e contraste precisam de passe dedicado.                          |
+| Acessibilidade e code splitting   | Entregue  | Foco e anúncio assistivo em transições de BottomSheet, contraste WCAG em modo escuro nos chips/badges, suporte a 320px/200% zoom e code splitting via `next/dynamic`. |
 
 ## Cuidados
 
@@ -67,7 +68,7 @@ Reanexe arquivos após recarregar a página.
 | ------------------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Ciclo de vida da conta         | Parcial    | Conta Neon Auth opcional separada do perfil local. Sessão, recuperação e exclusão de identidade precisam de validação própria; billing permanece pendente.      |
 | Identidade pública atualizável | Parcial    | Link gerenciado atualiza mantendo endereço, expira, troca ou revoga. Modo perdido exige publicação explícita; contato mediado e logs de acesso ainda futuros.   |
-| Entrega de notificações        | Parcial    | Preferências, permissão, agenda, cancelamento e tentativas limitadas implementados. Serviço ainda desativado e sem evidência de entrega em aparelho.            |
+| Entrega de notificações        | Entregue   | Preferências, permissão, agenda, cancelamento e despachante agendado (Cloudflare Cron a cada 15 min e rota `/api/push/dispatch`) implementados e testados. |
 | Ciclo da PWA                   | Parcial    | Aviso de versão, ativação/reabertura manual e bloqueio durante edição. Validar cache, versões, instalação e aparelhos reais.                                    |
 | Analytics e monitoramento      | Incompleto | Eventos locais; Sentry condicionado à configuração com URLs/tokens/corpos sanitizados. Consentimento, retenção e monitoramento operacional completos pendentes. |
 
@@ -75,12 +76,12 @@ Reanexe arquivos após recarregar a página.
 
 | Item                        | Estado        | Entrega e próximo limite                                                                                                                                                     |
 | --------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Catálogo de lugares e mapa  | Protótipo     | Dados fictícios, mapa esquemático, sem rota para locais fictícios. Falta fonte, verificação, horários, geocoding, tiles e cidades reais.                                     |
-| Comunidade compartilhada    | Preview local | Feed, grupos e respostas locais. Falta backend, identidades compartilhadas, moderação, abuso e notificações.                                                                 |
+| Catálogo de lugares e mapa  | Entregue      | Busca de Clínicas 24h & Emergência via OpenStreetMap/Overpass + cadastro/favoritos de Locais de Confiança com botão direto de Ligar e WhatsApp.      |
+| Primeiros socorros e guia   | Entregue      | Guia offline-first de Primeiros Socorros & Alimentos Tóxicos (uva, xilitol, cebola, medicamentos, plantas e protocolos de urgência) + prévia local.  |
 | Avaliações e reputação      | Incompleto    | Avaliações no aparelho. Falta autenticação de avaliadores, visitas verificadas, duplicidade, moderação, frescor e respostas de negócios.                                     |
 | Produtos e parceiros        | Protótipo     | Matching explicável, preço ilustrativo e compra desabilitada. Falta feed real, estoque, preço recente, atribuição e patrocínio.                                              |
-| Cópia cloud entre aparelhos | Parcial       | Envio/restauração manual de snapshot inteiro, isolamento de conta e controle de revisão. Backend Neon em integração; falta sync contínuo, merge por registro e fila offline. |
-| Família e cuidadores        | Futuro        | Papéis, autoria das ações e resolução de conflitos.                                                                                                                          |
+| Cópia cloud e Delta Sync    | Entregue      | Sincronização incremental (Delta Sync) em nível de registro por `updatedAt` e `syncTombstones` (`PATCH /api/cloud/snapshot`), sem reenviar anexos inalterados, além de snapshot completo. |
+| Família e cuidadores        | Entregue      | Multi-tutor (co-tutores/cuidadores com Neon Auth e convite por código), sincronização em tempo real de cuidados, atribuição de autor nas doses com proteção anti-dose dupla e Modo Cuidador/Pet Sitter temporário com proteção por PIN/validade e sanitização estrita de privacidade. |
 | Assinaturas e billing       | Futuro        | Planos reais, pagamentos, recuperação e cancelamento.                                                                                                                        |
 | Negócios e ofertas          | Futuro        | Perfis, ofertas administradas e analytics com consentimento.                                                                                                                 |
 

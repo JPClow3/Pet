@@ -6,10 +6,40 @@ import handler from "./.open-next/worker.js";
 // @ts-ignore OpenNext generates its named exports during cf:build.
 export * from "./.open-next/worker.js";
 import { dispatchPush, type PushEnvironment } from "./src/lib/push/dispatcher";
+
+type ScheduledController = {
+  scheduledTime: number;
+  cron: string;
+};
+
+type ExecutionContext = {
+  waitUntil: (promise: Promise<unknown>) => void;
+};
+
 const worker = {
   fetch: handler.fetch,
-  async scheduled(_controller: unknown, env: PushEnvironment) {
-    await dispatchPush(env);
+  async scheduled(
+    controller: ScheduledController,
+    env: PushEnvironment,
+    ctx?: ExecutionContext,
+  ) {
+    const task = (async () => {
+      try {
+        const result = await dispatchPush(env);
+        console.log(
+          `[push-dispatcher] Scheduled cron "${controller?.cron ?? "trigger"}": attempted=${result.attempted} accepted=${result.accepted} failed=${result.failed} configured=${result.configured}`,
+        );
+      } catch (error) {
+        console.error("[push-dispatcher] Scheduled push dispatch failed:", error);
+      }
+    })();
+
+    if (ctx?.waitUntil) {
+      ctx.waitUntil(task);
+    } else {
+      await task;
+    }
   },
 };
+
 export default worker;

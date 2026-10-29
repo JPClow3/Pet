@@ -121,7 +121,19 @@ export const placeCategoryMeta: Record<
     label: "Veterinário",
     plural: "Veterinários",
     attributes: ["emergencia_24h", "equipe_paciente", "aceita_raca_grande"],
-    hint: "Cuidado profissional",
+    hint: "Clínicas, hospitais 24h e especialistas",
+  },
+  farmacia: {
+    label: "Farmácia e manipulação",
+    plural: "Farmácias e manipulação",
+    attributes: ["emergencia_24h", "equipe_paciente"],
+    hint: "Medicamentos veterinários e fórmulas manipuladas",
+  },
+  pet_shop: {
+    label: "Pet shop",
+    plural: "Pet shops",
+    attributes: ["aceita_caes", "aceita_raca_grande", "equipe_paciente"],
+    hint: "Insumos, rações e itens de emergência",
   },
   banho_tosa: {
     label: "Banho e tosa",

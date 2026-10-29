@@ -1,17 +1,35 @@
 "use client";
 
-import { ArrowUpRight, ChevronRight, MapPin, ShieldCheck } from "lucide-react";
+import {
+  ArrowUpRight,
+  ChevronRight,
+  Globe,
+  Heart,
+  MapPin,
+  MessageCircle,
+  Phone,
+  ShieldCheck,
+  Siren,
+} from "lucide-react";
 import Link from "next/link";
 
 import { Chip } from "@/components/ui/chip";
 import { placeAttributeLabels, placeCategoryMeta } from "@/lib/domain/labels";
-import type { CriterionScore, PlaceWithDistance } from "@/lib/domain/places";
+import {
+  isEmergency24hPlace,
+  phoneCallUrl,
+  whatsappUrl,
+  type CriterionScore,
+  type PlaceWithDistance,
+} from "@/lib/domain/places";
 import { placeCategoryIcons } from "@/lib/icons";
 
-const visualThemes = {
+export const placeVisualThemes = {
   parque: { surface: "bg-lime-soft", rail: "border-l-teal" },
   restaurante: { surface: "bg-sun-soft", rail: "border-l-sun" },
   veterinario: { surface: "bg-blue-soft", rail: "border-l-blue" },
+  farmacia: { surface: "bg-mint", rail: "border-l-teal" },
+  pet_shop: { surface: "bg-accent-soft", rail: "border-l-accent" },
   banho_tosa: { surface: "bg-violet-soft", rail: "border-l-violet" },
   hospedagem: { surface: "bg-surface", rail: "border-l-teal" },
   passeador_adestrador: { surface: "bg-accent-soft", rail: "border-l-accent" },
@@ -20,11 +38,20 @@ const visualThemes = {
 export function PlaceCard({
   place,
   topCriteria = [],
+  onToggleFavorite,
 }: {
   place: PlaceWithDistance;
   topCriteria?: CriterionScore[];
+  onToggleFavorite?: (placeId: string) => void;
 }) {
   const Icon = placeCategoryIcons[place.category];
+  const is24h = isEmergency24hPlace(place);
+  const callHref = phoneCallUrl(place.phone);
+  const waHref = whatsappUrl(
+    place.whatsapp ?? place.phone,
+    `Olá! Vi o contato de ${place.name} na Zelupi e gostaria de atendimento veterinário.`,
+  );
+
   const observedCriteria = topCriteria
     .filter((score) => score.positiveRatio >= 0.5)
     .slice(0, 2)
@@ -35,44 +62,98 @@ export function PlaceCard({
       : place.attributes
           .filter((attribute) => !placeAttributeLabels[attribute].negative)
           .slice(0, 2);
-  const sourceLabel = place.seeded
-    ? "Exemplo do catálogo"
-    : "Adicionado neste aparelho";
+
+  const sourceLabel =
+    place.source === "osm"
+      ? "OpenStreetMap · confirme por telefone"
+      : place.seeded
+        ? "Exemplo do catálogo"
+        : "Local de confiança neste aparelho";
+
+  const theme = placeVisualThemes[place.category];
 
   return (
-    <Link
-      href={`/explore/${place.id}`}
-      aria-label={`Ver detalhes de ${place.name}, ${placeCategoryMeta[place.category].label}`}
-      className="group flex min-h-[15.25rem] flex-col overflow-hidden rounded-[24px] border border-line/80 bg-paper shadow-none transition-[border-color,background-color] duration-150 hover:border-teal/50 hover:bg-surface/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
-    >
+    <article className="group flex min-h-[15.25rem] flex-col overflow-hidden rounded-[24px] border border-line/80 bg-paper shadow-none transition-[border-color,background-color] duration-150 hover:border-teal/50">
       <div
-        className={`relative flex h-28 items-end overflow-hidden border-l-[6px] ${visualThemes[place.category].surface} ${visualThemes[place.category].rail} p-4`}
-        aria-hidden="true"
+        className={`relative flex min-h-24 items-end justify-between gap-2 overflow-hidden border-l-[6px] ${theme.surface} ${theme.rail} p-4`}
       >
-        <span className="relative flex size-12 items-center justify-center rounded-2xl border border-white/80 bg-paper/90 text-teal-ink shadow-sm">
+        <span
+          aria-hidden="true"
+          className="relative flex size-12 shrink-0 items-center justify-center rounded-2xl border border-line/60 bg-paper/95 text-teal-ink shadow-sm"
+        >
           <Icon className="size-6" />
         </span>
-        <span className="absolute right-4 top-4 rounded-full bg-paper/75 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-ink-soft/80">
-          {placeCategoryMeta[place.category].label}
-        </span>
+
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          {is24h ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-danger-soft px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.06em] text-danger-ink">
+              <Siren aria-hidden="true" className="size-3.5" />
+              24h
+            </span>
+          ) : null}
+          <span className="rounded-full bg-paper/85 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-ink-soft">
+            {placeCategoryMeta[place.category].label}
+          </span>
+          {onToggleFavorite ? (
+            <button
+              type="button"
+              aria-label={
+                place.favorite
+                  ? `Remover ${place.name} dos favoritos de confiança`
+                  : `Salvar ${place.name} nos favoritos de confiança`
+              }
+              aria-pressed={Boolean(place.favorite)}
+              onClick={() => onToggleFavorite(place.id)}
+              className={`inline-flex size-9 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink ${
+                place.favorite
+                  ? "border-danger-ink/30 bg-danger-soft text-danger-ink"
+                  : "border-line/70 bg-paper/90 text-muted hover:text-ink"
+              }`}
+            >
+              <Heart
+                aria-hidden="true"
+                className={`size-4 ${place.favorite ? "fill-current" : ""}`}
+              />
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="flex flex-1 flex-col gap-2.5 p-4">
-        <div className="flex items-start gap-3">
+        <Link
+          href={`/explore/${place.id}`}
+          aria-label={`Ver detalhes de ${place.name}, ${placeCategoryMeta[place.category].label}`}
+          className="group/link flex items-start gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink"
+        >
           <div className="min-w-0 flex-1">
-            <h3 className="text-[1.08rem] font-semibold leading-tight text-ink transition-colors group-hover:text-teal-ink">
-              {place.name}
-            </h3>
-            <p className="mt-1 flex items-center gap-1.5 text-meta text-muted">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <h3 className="text-[1.08rem] font-semibold leading-tight text-ink transition-colors group-hover/link:text-teal-ink">
+                {place.name}
+              </h3>
+              {place.favorite ? (
+                <Chip tone="teal" className="px-2 py-0.5 text-[0.68rem]">
+                  Confiança
+                </Chip>
+              ) : null}
+            </div>
+            <p className="mt-1 flex flex-wrap items-center gap-1.5 text-meta text-muted">
               <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
-              {place.neighborhood} · {place.distanceKm} km de distância estimada
+              <span>
+                {place.neighborhood} · {place.distanceKm} km de distância
+                estimada
+              </span>
             </p>
+            {place.openingHours ? (
+              <p className="mt-0.5 text-meta font-medium text-ink-soft">
+                {place.openingHours}
+              </p>
+            ) : null}
           </div>
           <ChevronRight
             aria-hidden="true"
-            className="mt-1 size-5 shrink-0 text-muted transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-blue-deep"
+            className="mt-1 size-5 shrink-0 text-muted transition-transform duration-200 group-hover/link:translate-x-0.5 group-hover/link:text-blue-deep"
           />
-        </div>
+        </Link>
 
         <div className="flex flex-wrap gap-1.5">
           {attributes.map((attribute) => (
@@ -85,9 +166,41 @@ export function PlaceCard({
           ) : null}
         </div>
 
-        <div className="mt-auto flex items-center justify-between gap-3 border-t border-line/70 pt-2.5">
+        {(callHref || waHref) ? (
+          <div className="flex flex-wrap gap-2 pt-1">
+            {callHref ? (
+              <a
+                href={callHref}
+                aria-label={`Ligar para ${place.name}`}
+                className="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-[0.8rem] font-semibold text-ink transition-colors hover:border-teal/50 hover:bg-paper"
+              >
+                <Phone aria-hidden="true" className="size-3.5 text-teal-ink" />
+                <span>Ligar</span>
+              </a>
+            ) : null}
+            {waHref ? (
+              <a
+                href={waHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Conversar no WhatsApp com ${place.name}`}
+                className="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-full border border-success-ink/30 bg-success-soft px-3 py-1.5 text-[0.8rem] font-semibold text-success-ink transition-colors hover:border-success-ink/60"
+              >
+                <MessageCircle aria-hidden="true" className="size-3.5" />
+                <span>WhatsApp</span>
+              </a>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-line/70 pt-2.5">
           <span className="inline-flex min-w-0 items-center gap-1.5 text-[0.7rem] leading-4 text-muted">
-            {place.seeded ? (
+            {place.source === "osm" ? (
+              <Globe
+                aria-hidden="true"
+                className="size-3.5 shrink-0 text-info-ink"
+              />
+            ) : place.seeded ? (
               <ArrowUpRight
                 aria-hidden="true"
                 className="size-3.5 shrink-0 text-warning-ink"
@@ -98,13 +211,16 @@ export function PlaceCard({
                 className="size-3.5 shrink-0 text-teal-ink"
               />
             )}
-            <span>{sourceLabel} · atualização não informada</span>
+            <span className="truncate">{sourceLabel}</span>
           </span>
-          <span className="shrink-0 text-[0.72rem] font-semibold text-teal-ink">
+          <Link
+            href={`/explore/${place.id}`}
+            className="shrink-0 text-[0.72rem] font-semibold text-teal-ink hover:underline"
+          >
             Detalhes
-          </span>
+          </Link>
         </div>
       </div>
-    </Link>
+    </article>
   );
 }

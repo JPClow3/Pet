@@ -134,6 +134,39 @@ export function activeMedicationSchedule(course: MedicationCourse) {
   );
 }
 
+export function medication24HoursOccurrences(
+  course: MedicationCourse,
+  now = new Date(),
+): (MedicationOccurrence & { due: boolean; future: boolean })[] {
+  const schedule = activeMedicationSchedule(course);
+  if (!schedule) return [];
+  const clock = medicationClock(schedule.timeZone, now);
+  const today = clock.date;
+  const tomorrow = shiftDays(today, 1);
+  const nowKey = `${today}T${clock.time}`;
+  const endKey = `${tomorrow}T${clock.time}`;
+
+  const todayOccs = medicationDayOccurrences(course, today);
+  const tomorrowOccs = medicationDayOccurrences(course, tomorrow);
+
+  const all = [...todayOccs, ...tomorrowOccs].filter((occ) => {
+    const key = `${occ.date}T${occ.time}`;
+    return occ.date === today || key <= endKey;
+  });
+
+  return all.map((occ) => {
+    const key = `${occ.date}T${occ.time}`;
+    const future = key > nowKey;
+    const status = occ.event?.status ?? "unrecorded";
+    const due = !future && status === "unrecorded";
+    return {
+      ...occ,
+      due,
+      future,
+    };
+  });
+}
+
 export function nextMedicationOccurrence(
   course: MedicationCourse,
   now = new Date(),
@@ -246,6 +279,8 @@ export type RecordMedicationDoseInput = {
   status: MedicationDoseStatus;
   expectedEventId: string | null;
   note?: string | null;
+  recordedBy?: string | null;
+  actorRole?: "tutor" | "co_tutor" | "cuidador" | null;
 };
 
 export function recordMedicationDose(
@@ -298,6 +333,8 @@ export function recordMedicationDose(
         recordedAt: now.toISOString(),
         note: input.note?.trim() || null,
         correctsId: previous?.id ?? null,
+        recordedBy: input.recordedBy?.trim() || null,
+        actorRole: input.actorRole ?? null,
       },
     ],
   });

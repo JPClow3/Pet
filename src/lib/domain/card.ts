@@ -66,8 +66,21 @@ export function buildPublicCard(input: {
     species: pet.species,
     breed: pet.card.shareBreed ? pet.breed : null,
     city: pet.card.shareCity ? city : null,
+    microchip: pet.microchip ?? null,
     lost: pet.lostMode.active
-      ? { since: pet.lostMode.since, note: pet.lostMode.note }
+      ? {
+          since: pet.lostMode.since,
+          note: pet.lostMode.note,
+          ...(pet.lostMode.reward !== undefined
+            ? { reward: pet.lostMode.reward }
+            : {}),
+          ...(pet.lostMode.neighborhood !== undefined
+            ? { neighborhood: pet.lostMode.neighborhood }
+            : {}),
+          ...(pet.lostMode.contactPhone !== undefined
+            ? { contactPhone: pet.lostMode.contactPhone }
+            : {}),
+        }
       : null,
     health: null,
     contact: pet.card.contact,

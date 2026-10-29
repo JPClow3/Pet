@@ -2,20 +2,20 @@
 
 import Link from "next/link";
 
-export type DiscoveryTabId = "locais" | "comunidade" | "produtos";
+export type DiscoveryTabId = "locais" | "explorar" | "comunidade" | "produtos";
 
 const TABS = [
   {
     id: "locais" as const,
     label: "Locais",
     href: "/explore",
-    hint: "Encontrar lugares",
+    hint: "Clínicas 24h e confiança",
   },
   {
     id: "comunidade" as const,
-    label: "Comunidade",
+    label: "Socorros & Comunidade",
     href: "/community",
-    hint: "Trocar experiências",
+    hint: "Guia offline e relatos",
   },
   {
     id: "produtos" as const,
@@ -26,13 +26,14 @@ const TABS = [
 ];
 
 export function DiscoveryTabs({ active }: { active: DiscoveryTabId }) {
+  const normalizedActive = active === "explorar" ? "locais" : active;
   return (
     <nav
       aria-label="Seções de Descobrir"
       className="flex overflow-x-auto rounded-2xl border border-line bg-surface/70 p-1 no-scrollbar"
     >
       {TABS.map((tab) => {
-        const selected = active === tab.id;
+        const selected = normalizedActive === tab.id;
         return (
           <Link
             key={tab.id}

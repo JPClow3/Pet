@@ -11,6 +11,7 @@ import type { Metadata } from "next";
 
 import { Brand } from "@/components/brand";
 import { Chip } from "@/components/ui/chip";
+import { PublicMicrochipSection } from "@/components/public-microchip-section";
 import { decodePublicCard } from "@/lib/domain/card";
 import { MANAGED_CARD_TOKEN } from "@/lib/domain/managed-card";
 import { readManagedPublicCard } from "@/lib/cloud/server-cards";
@@ -122,7 +123,7 @@ export default async function PublicCardPage({ params }: { params: Params }) {
         </p>
 
         {card.lost ? (
-          <div className="flex w-full flex-col gap-1 rounded-2xl bg-danger/12 p-3 text-left">
+          <div className="flex w-full flex-col gap-2 rounded-2xl bg-danger/12 p-3 text-left">
             <p className="flex items-center gap-2 font-semibold text-danger-ink">
               <Siren aria-hidden="true" className="size-4" />
               {managed
@@ -132,6 +133,16 @@ export default async function PublicCardPage({ params }: { params: Params }) {
                 ? ` desde ${formatShortDate(card.lost.since)}`
                 : ""}
             </p>
+            {card.lost.neighborhood ? (
+              <p className="text-[0.9rem] font-semibold text-danger-ink">
+                Visto por último no bairro: {card.lost.neighborhood}
+              </p>
+            ) : null}
+            {card.lost.reward ? (
+              <div className="rounded-xl border border-amber-300 bg-amber-100 p-2 text-center text-sm font-bold text-amber-900">
+                RECOMPENSA OFERECIDA: {card.lost.reward}
+              </div>
+            ) : null}
             <p className="text-[0.9rem] text-danger-ink/90">
               {card.lost.note ??
                 (card.contact
@@ -140,6 +151,11 @@ export default async function PublicCardPage({ params }: { params: Params }) {
             </p>
           </div>
         ) : null}
+
+        <PublicMicrochipSection
+          microchip={card.microchip}
+          petName={card.name}
+        />
 
         <div className="flex flex-wrap justify-center gap-1.5">
           {healthLabel ? (

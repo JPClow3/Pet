@@ -7,13 +7,18 @@ import {
   LoaderCircle,
   PawPrint,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { BottomSheet } from "@/components/ui/sheet";
 import { ReminderForm } from "@/components/reminder-form";
+import { AddToCalendarButton } from "@/components/add-to-calendar";
+import {
+  createCalendarEventFromReminder,
+  type CalendarEvent,
+} from "@/lib/calendar";
 import {
   addMonthsToKey,
   formatShortDate,
@@ -22,6 +27,10 @@ import {
 } from "@/lib/domain/dates";
 import type { CareUndo } from "@/lib/domain/care";
 import { urgencyLabels } from "@/lib/domain/labels";
+import {
+  latestDoseEvent,
+  medication24HoursOccurrences,
+} from "@/lib/domain/medication";
 import {
   reminderAttentionText,
   SNOOZE_OPTIONS,
@@ -64,6 +73,101 @@ function MedicationReminderCard({
   const dose = item.medication!;
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const record = useAppStore((state) =>
+    state.records.find((entry) => entry.id === item.id),
+  );
+
+  const medEvent: CalendarEvent = useMemo(
+    () => ({
+      id: `zelupi-med-${item.id}-${dose.scheduleId}-${item.dueDate}-${dose.time}`,
+      title: `Medicamento: ${item.title} (${item.petName}) — Zelupi`,
+      description: `🐾 Pet: ${item.petName}\n💊 Dose de ${item.title}: ${dose.amount} ${dose.unit}\n🗓️ Horário: ${formatShortDate(item.dueDate)} às ${dose.time}\nFuso: ${dose.timeZone}\n${item.notes ? `Observações: ${item.notes}\n` : ""}\nOrganizado pelo Zelupi (https://zelupi.app)`,
+      startDate: item.dueDate,
+      startTime: dose.time,
+      petName: item.petName,
+      category: "medicamento",
+      alarms: [
+        { minutesBefore: 60, description: `Em 1h: Dar dose de ${item.title} para ${item.petName}` },
+        { minutesBefore: 15, description: `Em 15 min: Dar dose de ${item.title} para ${item.petName}` },
+      ],
+    }),
+    [item, dose],
+  );
+
+  const timelineDoses = useMemo(
+    () =>
+      record?.medication
+        ? medication24HoursOccurrences(record.medication, new Date())
+        : [],
+    [record],
+  );
+
+  const currentEvent = useMemo(
+    () =>
+      record?.medication
+        ? latestDoseEvent(record.medication, dose.scheduleId, item.dueDate, dose.time)
+        : null,
+    [record, dose.scheduleId, item.dueDate, dose.time],
+  );
+
+  async function giveDose(
+    scheduleId: string,
+    date: string,
+    time: string,
+    expectedEventId: string | null,
+  ) {
+    setPending(true);
+    setError(null);
+    try {
+      const newEventId = await useAppStore
+        .getState()
+        .recordMedicationDose(item.id, {
+          scheduleId,
+          date,
+          time,
+          status: "given",
+          expectedEventId,
+        });
+
+      toast.success(`Dose de ${item.title} dada`, {
+        description: `${dose.amount} ${dose.unit} · ${formatShortDate(date)} às ${time}`,
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            try {
+              await useAppStore
+                .getState()
+                .recordMedicationDose(item.id, {
+                  scheduleId,
+                  date,
+                  time,
+                  status: "unrecorded",
+                  expectedEventId: newEventId,
+                });
+              toast.success("Dose desfeita");
+            } catch (cause) {
+              toast.error(
+                cause instanceof Error
+                  ? cause.message
+                  : "Não foi possível desfazer a dose.",
+              );
+            }
+          },
+        },
+        duration: 7000,
+      });
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Não foi possível salvar a dose.",
+      );
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
     <article
       className="flex flex-col gap-3 rounded-[18px] border border-line bg-paper p-4"
@@ -86,6 +190,108 @@ function MedicationReminderCard({
       {item.notes ? (
         <p className="text-sm text-ink-soft">{item.notes}</p>
       ) : null}
+
+      {/* Alerta anti-dupla dosagem e confirmação compartilhada */}
+      {currentEvent?.status === "given" ? (
+        <div className="flex items-center gap-2 rounded-xl border border-success-ink/30 bg-success-soft px-3 py-2 text-sm text-success-ink">
+          <Check aria-hidden="true" className="size-4 shrink-0 text-success-ink" />
+          <span className="leading-snug">
+            Dose das <strong>{dose.time}</strong> já administrada
+            {currentEvent.recordedBy ? (
+              <> por <strong>{currentEvent.recordedBy}</strong></>
+            ) : null}
+            . Proteção ativa contra dose dupla!
+          </span>
+        </div>
+      ) : null}
+
+      {/* Mini-cronograma visual das Próximas 24 horas */}
+      {timelineDoses.length > 0 ? (
+        <section
+          className="flex flex-col gap-2 rounded-[16px] border border-line/70 bg-surface/40 p-3"
+          aria-label="Mini-cronograma das próximas 24 horas"
+        >
+          <div className="flex items-center justify-between text-meta font-bold uppercase tracking-wider text-muted">
+            <span className="flex items-center gap-1.5">
+              <Clock aria-hidden="true" className="size-3.5 text-teal-ink" />
+              Próximas 24 horas
+            </span>
+            <span className="font-normal lowercase">
+              {timelineDoses.filter((d) => d.event?.status === "given").length} de {timelineDoses.length} dadas
+            </span>
+          </div>
+
+          <div
+            className="flex flex-wrap gap-2 pt-0.5"
+            role="list"
+          >
+            {timelineDoses.map((d) => {
+              const isGiven = d.event?.status === "given";
+              const isMissed = d.event?.status === "missed";
+              const isSkipped = d.event?.status === "skipped";
+              const isCurrentDue = d.due;
+              const isTomorrow = d.date > todayKey();
+              return (
+                <div
+                  key={`${d.schedule.id}-${d.date}-${d.time}`}
+                  role="listitem"
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-meta font-medium transition-colors",
+                    isGiven
+                      ? "border-success-ink/30 bg-success-soft text-success-ink"
+                      : isMissed
+                        ? "border-danger-ink/30 bg-danger-soft text-danger-ink"
+                        : isSkipped
+                          ? "border-line bg-surface text-muted"
+                          : isCurrentDue
+                            ? "border-warning-ink/40 bg-warning-soft text-ink font-semibold"
+                            : "border-line bg-paper text-muted",
+                  )}
+                >
+                  <span className="tabular-nums">
+                    {isTomorrow ? `Amanhã ${d.time}` : d.time}
+                  </span>
+                  {isGiven ? (
+                    <span className="inline-flex items-center gap-0.5 text-xs text-success-ink">
+                      <Check aria-hidden="true" className="size-3.5" />
+                      Dada{d.event?.recordedBy ? ` (${d.event.recordedBy})` : ""}
+                    </span>
+                  ) : isMissed ? (
+                    <span className="inline-flex items-center gap-0.5 text-xs text-danger-ink">
+                      Não dada
+                    </span>
+                  ) : isSkipped ? (
+                    <span className="inline-flex items-center gap-0.5 text-xs text-muted">
+                      Pulada
+                    </span>
+                  ) : isCurrentDue ? (
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() =>
+                        void giveDose(
+                          d.schedule.id,
+                          d.date,
+                          d.time,
+                          d.event?.id ?? null,
+                        )
+                      }
+                      className="inline-flex items-center gap-1 rounded-full bg-warning-ink/15 px-2 py-0.5 text-xs font-bold text-warning-ink transition-colors hover:bg-warning-ink/25 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-warning-ink disabled:opacity-50"
+                      aria-label={`Registrar dose das ${d.time} em 1 toque`}
+                    >
+                      <Check aria-hidden="true" className="size-3" />
+                      Dar dose
+                    </button>
+                  ) : (
+                    <span className="text-[11px] text-muted">Planejada</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
       {error ? (
         <p role="alert" className="text-sm text-danger-ink">
           {error}
@@ -96,32 +302,21 @@ function MedicationReminderCard({
           <Button
             size="sm"
             disabled={pending}
-            onClick={async () => {
-              setPending(true);
-              setError(null);
-              try {
-                await useAppStore
-                  .getState()
-                  .recordMedicationDose(item.id, {
-                    scheduleId: dose.scheduleId,
-                    date: item.dueDate,
-                    time: dose.time,
-                    status: "given",
-                    expectedEventId: dose.eventId,
-                  });
-                toast.success("Dose registrada como dada");
-              } catch (cause) {
-                setError(
-                  cause instanceof Error
-                    ? cause.message
-                    : "Não foi possível salvar.",
-                );
-              } finally {
-                setPending(false);
-              }
-            }}
+            onClick={() =>
+              void giveDose(
+                dose.scheduleId,
+                item.dueDate,
+                dose.time,
+                dose.eventId,
+              )
+            }
           >
-            {pending ? "Salvando…" : "Dose dada"}
+            {pending ? (
+              <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+            ) : (
+              <Check aria-hidden="true" className="size-4" />
+            )}
+            {pending ? "Salvando…" : "Dose dada (1 toque)"}
           </Button>
         ) : null}
         <ButtonLink
@@ -131,6 +326,12 @@ function MedicationReminderCard({
         >
           Plano e histórico de doses
         </ButtonLink>
+        <AddToCalendarButton
+          event={medEvent}
+          size="sm"
+          variant="secondary"
+          label="Calendário"
+        />
       </div>
     </article>
   );
@@ -158,6 +359,14 @@ function CareReminderCard({
     state.reminders.find(
       (entry) => item.source === "manual" && entry.id === item.id,
     ),
+  );
+  const pet = useMemo(
+    () => pets.find((p) => p.id === item.petId),
+    [pets, item.petId],
+  );
+  const calendarEvent = useMemo(
+    () => createCalendarEventFromReminder(item, pet, record),
+    [item, pet, record],
   );
 
   async function runAction(
@@ -305,6 +514,11 @@ function CareReminderCard({
           <CalendarClock aria-hidden="true" className="size-4" />
           Adiar ou reagendar
         </Button>
+        <AddToCalendarButton
+          event={calendarEvent}
+          size="sm"
+          variant="secondary"
+        />
         {manualReminder ? (
           <Button
             size="sm"
@@ -449,6 +663,22 @@ function CareReminderCard({
               </Button>
             </div>
           ) : null}
+          <div className="border-t border-line/80 pt-3">
+            <p className="text-[0.85rem] font-semibold text-ink">
+              Adicionar ao calendário nativo do celular
+            </p>
+            <p className="mt-0.5 text-meta text-muted">
+              Receba alarmes com som mesmo se o navegador ou aplicativo estiver fechado.
+            </p>
+            <div className="mt-2.5">
+              <AddToCalendarButton
+                event={calendarEvent}
+                variant="secondary"
+                size="md"
+                className="w-full justify-center"
+              />
+            </div>
+          </div>
         </div>
       </BottomSheet>
       {manualReminder ? (

@@ -32,6 +32,8 @@
     font-family: var(--font-sans);
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: none;
+    overflow-x: clip;
+    overflow-wrap: break-word;
   }
 
   :focus-visible {

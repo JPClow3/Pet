@@ -49,6 +49,8 @@ const recordDraftSchema = z.object({
   leadDays: z.number().int().min(0).max(365),
   recurrenceMonths: z.number().int().min(0).max(60),
   professional: z.string().max(80),
+  manufacturer: z.string().max(80).optional().default(""),
+  batchNumber: z.string().max(80).optional().default(""),
   notes: z.string().max(600),
   weight: z.string().max(30),
   medicationEnabled: z.boolean().default(false),
@@ -86,6 +88,8 @@ export function RecordForm({
         healthTypeMeta[initialType ?? "vacina"].defaultLeadDays,
       recurrenceMonths: initial?.recurrenceMonths ?? 0,
       professional: initial?.professional ?? "",
+      manufacturer: initial?.manufacturer ?? "",
+      batchNumber: initial?.batchNumber ?? "",
       notes: initial?.notes ?? "",
       weight: initial?.weightKg ? String(initial.weightKg) : "",
       medicationEnabled: !initial && initialType === "medicamento",
@@ -108,6 +112,8 @@ export function RecordForm({
     leadDays,
     recurrenceMonths,
     professional,
+    manufacturer,
+    batchNumber,
     notes,
     weight,
   } = value;
@@ -205,6 +211,8 @@ export function RecordForm({
             ? recurrenceMonths
             : null,
         professional: professional.trim() || null,
+        manufacturer: type === "vacina" ? (manufacturer.trim() || null) : null,
+        batchNumber: type === "vacina" ? (batchNumber.trim() || null) : null,
         notes: notes.trim() || null,
         attachmentName: attachment ? `anexo-${type}.jpg` : null,
         attachmentData: attachment,
@@ -521,6 +529,41 @@ export function RecordForm({
                 maxLength={80}
               />
             </Field>
+          ) : null}
+
+          {type === "vacina" ? (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field
+                label="Fabricante da vacina"
+                htmlFor="record-manufacturer"
+                hint="Ex.: Zoetis, MSD, Boehringer"
+              >
+                <Input
+                  id="record-manufacturer"
+                  value={manufacturer}
+                  onChange={(event) =>
+                    setField("manufacturer", event.target.value)
+                  }
+                  placeholder="Zoetis"
+                  maxLength={80}
+                />
+              </Field>
+              <Field
+                label="Lote / Partida"
+                htmlFor="record-batch"
+                hint="Identificação do frasco"
+              >
+                <Input
+                  id="record-batch"
+                  value={batchNumber}
+                  onChange={(event) =>
+                    setField("batchNumber", event.target.value)
+                  }
+                  placeholder="Ex.: 042/26"
+                  maxLength={80}
+                />
+              </Field>
+            </div>
           ) : null}
 
           <Field

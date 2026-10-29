@@ -44,8 +44,8 @@ import {
   reviseMedicationCourse,
   type RecordMedicationDoseInput,
 } from "@/lib/domain/medication";
-import type { MedicationPlanInput } from "@/lib/domain/schema";
-import { diaryEntrySchema, petSchema } from "@/lib/domain/schema";
+import type { MedicationPlanInput, SyncTombstone } from "@/lib/domain/schema";
+import { diaryEntrySchema, petSchema, placeSchema } from "@/lib/domain/schema";
 import {
   deriveNotifications,
   mergeNotifications,
@@ -103,6 +103,7 @@ export type AppState = {
   memberGroupIds: string[];
   seededAt: string | null;
   lastSweepAt: string | null;
+  syncTombstones?: SyncTombstone[];
   ready: boolean;
 };
 
@@ -136,7 +137,7 @@ export type SyncActions = {
   recordMedicationDose: (
     recordId: string,
     input: RecordMedicationDoseInput,
-  ) => void;
+  ) => string;
 
   addReminder: (input: NewReminderInput) => string;
   updateReminder: (reminderId: string, patch: Partial<Reminder>) => void;
@@ -147,6 +148,8 @@ export type SyncActions = {
   skipReminderOccurrence: (item: ReminderItem) => CareUndo;
   stopReminderRecurrence: (item: ReminderItem) => CareUndo;
   undoCareAction: (undo: CareUndo) => void;
+  batchRecordCare: (input: BatchCareInput) => BatchCareUndo;
+  undoBatchCare: (undo: BatchCareUndo) => void;
 
   addDiaryEntry: (input: NewDiaryInput) => string;
   updateDiaryEntry: (entryId: string, patch: Partial<DiaryEntry>) => void;
@@ -156,6 +159,10 @@ export type SyncActions = {
   restoreDocument: (id: string) => void;
 
   addPlace: (input: NewPlaceInput) => string;
+  updatePlace: (placeId: string, patch: Partial<Omit<Place, "id">>) => void;
+  removePlace: (placeId: string) => void;
+  toggleFavoritePlace: (placeId: string) => boolean;
+  importOsmPlaces: (places: Place[]) => number;
   addReview: (input: NewReviewInput) => void;
 
   addPost: (input: NewPostInput) => string;
@@ -206,11 +213,14 @@ export type NewPetInput = {
   sex: Pet["sex"];
   birthDate?: string | null;
   weightKg?: number | null;
+  targetWeightKg?: number | null;
   photo?: string | null;
   color?: string | null;
   microchip?: string | null;
   notes?: string | null;
   routine?: string[];
+  allergies?: string[];
+  chronicConditions?: string[];
 };
 
 export type NewRecordInput = Omit<
@@ -221,6 +231,18 @@ export type NewRecordInput = Omit<
 
 export type NewReminderInput = Omit<Reminder, "id" | "createdAt" | "done"> &
   Partial<Pick<Reminder, "done">>;
+
+export type BatchCareInput = {
+  petIds: string[];
+  title: string;
+  notes?: string | null;
+  date?: string;
+};
+
+export type BatchCareUndo = {
+  recordIds: string[];
+  completedReminderIds: string[];
+};
 
 export type NewDiaryInput = Omit<DiaryEntry, "id" | "createdAt">;
 
@@ -294,6 +316,7 @@ function buildPet(input: NewPetInput): Pet {
     sex: input.sex,
     birthDate: input.birthDate ?? null,
     weightKg: input.weightKg ?? null,
+    targetWeightKg: input.targetWeightKg ?? null,
     weightBaseline:
       input.weightKg != null
         ? { weightKg: input.weightKg, date: todayKey(), updatedAt: timestamp }
@@ -303,6 +326,8 @@ function buildPet(input: NewPetInput): Pet {
     microchip: input.microchip ?? null,
     notes: input.notes ?? null,
     routine: input.routine ?? [],
+    allergies: input.allergies ?? [],
+    chronicConditions: input.chronicConditions ?? [],
     card: {
       shareBreed: true,
       shareCity: true,
@@ -324,6 +349,23 @@ function recordEvent(
     0,
     200,
   );
+}
+
+function appendTombstones(
+  existing: SyncTombstone[] | undefined,
+  entries: SyncTombstone[],
+): SyncTombstone[] {
+  if (entries.length === 0) return existing ?? [];
+  const byKey = new Map<string, SyncTombstone>();
+  for (const item of existing ?? []) {
+    byKey.set(`${item.collection}:${item.id}`, item);
+  }
+  for (const item of entries) {
+    byKey.set(`${item.collection}:${item.id}`, item);
+  }
+  return [...byKey.values()]
+    .sort((a, b) => b.deletedAt.localeCompare(a.deletedAt))
+    .slice(0, 500);
 }
 
 function currentCareSource(state: AppState, item: ReminderItem) {
@@ -540,13 +582,22 @@ const boundStore = create<AppState & AppActions>()(
 
         removePet: (petId) =>
           set((state) => {
+            const deletedAt = nowIso();
+            const petRecords = state.records.filter(
+              (record) => record.petId === petId,
+            );
+            const petReminders = state.reminders.filter(
+              (reminder) => reminder.petId === petId,
+            );
+            const petDiary = state.diary.filter(
+              (entry) => entry.petId === petId,
+            );
+            const petDocs = state.documents.filter(
+              (entry) => entry.petId === petId,
+            );
             const removedIds = new Set([
-              ...state.records
-                .filter((record) => record.petId === petId)
-                .map((record) => record.id),
-              ...state.reminders
-                .filter((reminder) => reminder.petId === petId)
-                .map((reminder) => reminder.id),
+              ...petRecords.map((record) => record.id),
+              ...petReminders.map((reminder) => reminder.id),
             ]);
             const pets = state.pets.filter((pet) => pet.id !== petId);
             return carePatch(state, {
@@ -569,6 +620,29 @@ const boundStore = create<AppState & AppActions>()(
                 state.activePetId === petId
                   ? (pets[0]?.id ?? null)
                   : state.activePetId,
+              syncTombstones: appendTombstones(state.syncTombstones, [
+                { collection: "pets", id: petId, deletedAt },
+                ...petRecords.map((r) => ({
+                  collection: "records" as const,
+                  id: r.id,
+                  deletedAt,
+                })),
+                ...petReminders.map((r) => ({
+                  collection: "reminders" as const,
+                  id: r.id,
+                  deletedAt,
+                })),
+                ...petDiary.map((d) => ({
+                  collection: "diary" as const,
+                  id: d.id,
+                  deletedAt,
+                })),
+                ...petDocs.map((d) => ({
+                  collection: "documents" as const,
+                  id: d.id,
+                  deletedAt,
+                })),
+              ]),
             });
           }),
 
@@ -577,11 +651,13 @@ const boundStore = create<AppState & AppActions>()(
         addRecord: (input) => {
           if (!get().pets.some((pet) => pet.id === input.petId))
             throw new Error("Pet não encontrado.");
+          const timestamp = nowIso();
           const record = validateCareRecord({
             ...input,
             id: newId("record"),
             completedAt: input.completedAt ?? null,
-            createdAt: nowIso(),
+            createdAt: timestamp,
+            updatedAt: timestamp,
             weightUpdatedAt:
               input.weightKg !== null
                 ? weightTimestamp(get(), input.petId)
@@ -622,6 +698,7 @@ const boundStore = create<AppState & AppActions>()(
             id: existing.id,
             petId: existing.petId,
             createdAt: existing.createdAt,
+            updatedAt: nowIso(),
             weightUpdatedAt:
               (patch.weightKg !== undefined &&
                 patch.weightKg !== existing.weightKg) ||
@@ -666,10 +743,13 @@ const boundStore = create<AppState & AppActions>()(
             plan,
             newId("med-plan"),
           );
+          const timestamp = nowIso();
           set((state) =>
             carePatch(state, {
               records: state.records.map((entry) =>
-                entry.id === recordId ? { ...entry, medication } : entry,
+                entry.id === recordId
+                  ? { ...entry, medication, updatedAt: timestamp }
+                  : entry,
               ),
             }),
           );
@@ -683,10 +763,13 @@ const boundStore = create<AppState & AppActions>()(
             record.medication,
             expectedScheduleId,
           );
+          const timestamp = nowIso();
           set((state) =>
             carePatch(state, {
               records: state.records.map((entry) =>
-                entry.id === recordId ? { ...entry, medication } : entry,
+                entry.id === recordId
+                  ? { ...entry, medication, updatedAt: timestamp }
+                  : entry,
               ),
             }),
           );
@@ -696,18 +779,28 @@ const boundStore = create<AppState & AppActions>()(
           const record = get().records.find((entry) => entry.id === recordId);
           if (!record?.medication)
             throw new Error("Plano de medicação não encontrado.");
+          const eventId = newId("dose");
+          const tutorName = get().tutor?.name?.trim() || null;
           const medication = recordMedicationDose(
             record.medication,
-            input,
-            newId("dose"),
+            {
+              ...input,
+              recordedBy: input.recordedBy ?? tutorName,
+              actorRole: input.actorRole ?? "tutor",
+            },
+            eventId,
           );
+          const timestamp = nowIso();
           set((state) =>
             carePatch(state, {
               records: state.records.map((entry) =>
-                entry.id === recordId ? { ...entry, medication } : entry,
+                entry.id === recordId
+                  ? { ...entry, medication, updatedAt: timestamp }
+                  : entry,
               ),
             }),
           );
+          return eventId;
         },
 
         removeRecord: (recordId) =>
@@ -725,6 +818,9 @@ const boundStore = create<AppState & AppActions>()(
                       ([key]) => key !== `registro:${recordId}`,
                     ),
                   ),
+                  syncTombstones: appendTombstones(state.syncTombstones, [
+                    { collection: "records", id: recordId, deletedAt: nowIso() },
+                  ]),
                 },
                 state.records
                   .filter((record) => record.id === recordId)
@@ -736,11 +832,13 @@ const boundStore = create<AppState & AppActions>()(
         addReminder: (input) => {
           if (!get().pets.some((pet) => pet.id === input.petId))
             throw new Error("Pet não encontrado.");
+          const timestamp = nowIso();
           const reminder = validateRoutineReminder({
             ...input,
             id: newId("reminder"),
             done: input.done ?? false,
-            createdAt: nowIso(),
+            createdAt: timestamp,
+            updatedAt: timestamp,
           });
           set((state) =>
             carePatch(state, {
@@ -764,6 +862,7 @@ const boundStore = create<AppState & AppActions>()(
             id: existing.id,
             petId: existing.petId,
             createdAt: existing.createdAt,
+            updatedAt: nowIso(),
           });
           set((state) =>
             carePatch(state, {
@@ -793,6 +892,13 @@ const boundStore = create<AppState & AppActions>()(
                   ([key]) => key !== `manual:${reminderId}`,
                 ),
               ),
+              syncTombstones: appendTombstones(state.syncTombstones, [
+                {
+                  collection: "reminders",
+                  id: reminderId,
+                  deletedAt: nowIso(),
+                },
+              ]),
             }),
           ),
 
@@ -1043,13 +1149,98 @@ const boundStore = create<AppState & AppActions>()(
           );
         },
 
+        batchRecordCare: (input) => {
+          const timestamp = nowIso();
+          const date = input.date ?? todayKey();
+          const trimmedTitle = input.title?.trim();
+          if (!trimmedTitle)
+            throw new Error("Informe o nome do cuidado compartilhado.");
+          const validPetIds = new Set(get().pets.map((p) => p.id));
+          const petIds = [...new Set(input.petIds)].filter((id) =>
+            validPetIds.has(id),
+          );
+          if (petIds.length === 0)
+            throw new Error("Selecione ao menos um pet válido.");
+
+          const newRecords: HealthRecord[] = petIds.map((petId) =>
+            validateCareRecord({
+              id: newId("record"),
+              petId,
+              type: "observacao",
+              title: trimmedTitle,
+              date,
+              nextDueDate: null,
+              leadDays: 0,
+              recurrenceMonths: null,
+              professional: null,
+              notes: input.notes?.trim() || "Cuidado compartilhado",
+              attachmentName: null,
+              attachmentData: null,
+              weightKg: null,
+              completedAt: timestamp,
+              createdAt: timestamp,
+            }),
+          );
+
+          const reminderIdsToComplete: string[] = [];
+          const updatedReminders = get().reminders.map((reminder) => {
+            if (
+              petIds.includes(reminder.petId) &&
+              !reminder.done &&
+              reminder.title.trim().toLowerCase() === trimmedTitle.toLowerCase()
+            ) {
+              reminderIdsToComplete.push(reminder.id);
+              return { ...reminder, done: true, completedAt: timestamp };
+            }
+            return reminder;
+          });
+
+          const snoozes = { ...get().snoozes };
+          for (const remId of reminderIdsToComplete) {
+            delete snoozes[`manual:${remId}`];
+          }
+
+          set((state) =>
+            carePatch(state, {
+              records: [...newRecords, ...state.records],
+              reminders: updatedReminders,
+              snoozes,
+              events: recordEvent(state.events, "health_record_created", {
+                type: "observacao",
+              }),
+            }),
+          );
+
+          return {
+            recordIds: newRecords.map((r) => r.id),
+            completedReminderIds: reminderIdsToComplete,
+          };
+        },
+
+        undoBatchCare: (undo) => {
+          const recordSet = new Set(undo.recordIds);
+          const reminderSet = new Set(undo.completedReminderIds);
+          set((state) =>
+            carePatch(state, {
+              records: state.records.filter((r) => !recordSet.has(r.id)),
+              reminders: state.reminders.map((reminder) =>
+                reminderSet.has(reminder.id)
+                  ? { ...reminder, done: false, completedAt: null }
+                  : reminder,
+              ),
+            }),
+          );
+        },
+
         addDiaryEntry: (input) => {
           if (!get().pets.some((pet) => pet.id === input.petId))
             throw new Error("Pet não encontrado.");
+          const timestamp = nowIso();
           const entry = diaryEntrySchema.parse({
             ...input,
             id: newId("diary"),
-            createdAt: nowIso(),
+            createdAt: timestamp,
+            updatedAt: timestamp,
             weightUpdatedAt:
               input.weightKg !== null
                 ? weightTimestamp(get(), input.petId)
@@ -1079,6 +1270,7 @@ const boundStore = create<AppState & AppActions>()(
             id: existing.id,
             petId: existing.petId,
             createdAt: existing.createdAt,
+            updatedAt: nowIso(),
             weightUpdatedAt:
               (patch.weightKg !== undefined &&
                 patch.weightKg !== existing.weightKg) ||
@@ -1105,6 +1297,9 @@ const boundStore = create<AppState & AppActions>()(
               state,
               {
                 diary: state.diary.filter((entry) => entry.id !== entryId),
+                syncTombstones: appendTombstones(state.syncTombstones, [
+                  { collection: "diary", id: entryId, deletedAt: nowIso() },
+                ]),
               },
               state.diary
                 .filter((entry) => entry.id === entryId)
@@ -1151,28 +1346,137 @@ const boundStore = create<AppState & AppActions>()(
           })),
 
         addPlace: (input) => {
-          const place: Place = { ...input, id: newId("place"), seeded: false };
+          const timestamp = nowIso();
+          const place: Place = placeSchema.parse({
+            ...input,
+            id: newId("place"),
+            seeded: false,
+            source: input.source ?? "local",
+            favorite: input.favorite ?? false,
+            createdAt: input.createdAt ?? timestamp,
+            updatedAt: input.updatedAt ?? timestamp,
+          });
           set((state) => ({ places: [place, ...state.places] }));
           return place.id;
         },
 
+        updatePlace: (placeId, patch) => {
+          const existing = get().places.find((item) => item.id === placeId);
+          if (!existing) throw new Error("Local não encontrado.");
+          const updated = placeSchema.parse({
+            ...existing,
+            ...patch,
+            id: existing.id,
+            updatedAt: nowIso(),
+          });
+          set((state) => ({
+            places: state.places.map((item) =>
+              item.id === placeId ? updated : item,
+            ),
+          }));
+        },
+
+        removePlace: (placeId) =>
+          set((state) => ({
+            places: state.places.filter((item) => item.id !== placeId),
+            reviews: state.reviews.filter(
+              (review) => review.placeId !== placeId,
+            ),
+            syncTombstones: appendTombstones(state.syncTombstones, [
+              { collection: "places", id: placeId, deletedAt: nowIso() },
+            ]),
+          })),
+
+        toggleFavoritePlace: (placeId) => {
+          const existing = get().places.find((item) => item.id === placeId);
+          if (!existing) throw new Error("Local não encontrado.");
+          const nextFavorite = !existing.favorite;
+          const updated: Place = {
+            ...existing,
+            favorite: nextFavorite,
+            updatedAt: nowIso(),
+          };
+          set((state) => ({
+            places: state.places.map((item) =>
+              item.id === placeId ? updated : item,
+            ),
+          }));
+          return nextFavorite;
+        },
+
+        importOsmPlaces: (incoming) => {
+          const state = get();
+          const timestamp = nowIso();
+          const existingByOsmKey = new Map<string, Place>();
+          for (const p of state.places) {
+            const key = p.osmId ? `osm:${p.osmId}` : `id:${p.id}`;
+            existingByOsmKey.set(key, p);
+          }
+          let addedOrUpdated = 0;
+          const mergedMap = new Map<string, Place>(
+            state.places.map((p) => [p.id, p]),
+          );
+          for (const raw of incoming) {
+            const parsed = placeSchema.safeParse({
+              ...raw,
+              source: raw.source ?? "osm",
+              seeded: false,
+              updatedAt: timestamp,
+            });
+            if (!parsed.success) continue;
+            const candidate = parsed.data;
+            const key = candidate.osmId
+              ? `osm:${candidate.osmId}`
+              : `id:${candidate.id}`;
+            const prev = existingByOsmKey.get(key) ?? mergedMap.get(candidate.id);
+            if (prev) {
+              mergedMap.set(prev.id, {
+                ...prev,
+                ...candidate,
+                id: prev.id,
+                favorite: prev.favorite ?? candidate.favorite,
+                notes: prev.notes ?? candidate.notes,
+                phone: prev.phone ?? candidate.phone,
+                whatsapp: prev.whatsapp ?? candidate.whatsapp,
+                updatedAt: timestamp,
+              });
+              addedOrUpdated += 1;
+            } else {
+              mergedMap.set(candidate.id, {
+                ...candidate,
+                createdAt: candidate.createdAt ?? timestamp,
+                updatedAt: timestamp,
+              });
+              addedOrUpdated += 1;
+            }
+          }
+          if (addedOrUpdated > 0) {
+            set({ places: [...mergedMap.values()] });
+          }
+          return addedOrUpdated;
+        },
+
         addReview: (input) => {
+          const timestamp = nowIso();
           const review: Review = {
             ...input,
             id: newId("review"),
             authorName: input.authorName ?? get().tutor?.name ?? "Você",
-            createdAt: nowIso(),
+            createdAt: timestamp,
+            updatedAt: timestamp,
           };
           set((state) => ({ reviews: [review, ...state.reviews] }));
         },
 
         addPost: (input) => {
+          const timestamp = nowIso();
           const post: Post = {
             ...input,
             id: newId("post"),
             authorId: MY_AUTHOR_ID,
             authorName: get().tutor?.name ?? "Você",
-            createdAt: nowIso(),
+            createdAt: timestamp,
+            updatedAt: timestamp,
             helpfulCount: 0,
             reported: false,
             hidden: false,
@@ -1192,6 +1496,9 @@ const boundStore = create<AppState & AppActions>()(
             comments: state.comments.filter(
               (comment) => comment.postId !== postId,
             ),
+            syncTombstones: appendTombstones(state.syncTombstones, [
+              { collection: "posts", id: postId, deletedAt: nowIso() },
+            ]),
           })),
 
         reportPost: (postId) =>
@@ -1420,6 +1727,9 @@ const boundStore = create<AppState & AppActions>()(
         memberGroupIds: state.memberGroupIds,
         seededAt: state.seededAt,
         lastSweepAt: state.lastSweepAt,
+        ...(state.syncTombstones
+          ? { syncTombstones: state.syncTombstones }
+          : {}),
       }),
     },
   ),
