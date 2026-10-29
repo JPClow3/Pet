@@ -1,12 +1,8 @@
 "use client";
 
 import {
-  AlertTriangle,
-  Calendar,
   Check,
   CheckCircle2,
-  Clock,
-  ExternalLink,
   HeartPulse,
   Lock,
   MapPin,
@@ -26,7 +22,7 @@ import { toast } from "sonner";
 
 import { Brand } from "@/components/brand";
 import { Button } from "@/components/ui/button";
-import { Card, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
 import { Field, Input } from "@/components/ui/field";
 import {
@@ -35,9 +31,10 @@ import {
   verifySitterPassPin,
 } from "@/lib/cloud/sitter-client";
 import type { SitterViewData } from "@/lib/domain/collaboration";
-import { formatShortDate, todayKey } from "@/lib/domain/dates";
+import { todayKey } from "@/lib/domain/dates";
 import { speciesLabels } from "@/lib/domain/labels";
 import { petAge } from "@/lib/domain/pet";
+import { medicationDoseKey } from "@/lib/domain/medication";
 
 export default function SitterAccessPage() {
   const params = useParams<{ token: string }>();
@@ -47,6 +44,7 @@ export default function SitterAccessPage() {
   const [error, setError] = useState<string | null>(null);
   const [hasPin, setHasPin] = useState(false);
   const [pinInput, setPinInput] = useState("");
+  const [verifiedPin, setVerifiedPin] = useState<string | undefined>();
   const [pinVerifying, setPinVerifying] = useState(false);
   const [pinError, setPinError] = useState<string | null>(null);
 
@@ -93,6 +91,8 @@ export default function SitterAccessPage() {
     setPinError(null);
     try {
       const unlocked = await verifySitterPassPin(token, pinInput.trim());
+      setVerifiedPin(pinInput.trim());
+      setPinInput("");
       setData(unlocked);
       toast.success("Cuidados desbloqueados!");
     } catch (err) {
@@ -107,17 +107,24 @@ export default function SitterAccessPage() {
       hour: "2-digit",
       minute: "2-digit",
     });
-    setServedMeals((prev) => ({ ...prev, [feedId]: nowTime }));
-    toast.success(`Refeição das ${time} marcada como servida!`);
-
-    if (token) {
-      void recordSitterCareAction(token, {
+    if (!token) return;
+    try {
+      await recordSitterCareAction(token, {
+        pin: verifiedPin,
         eventType: "meal",
         eventKey: `meal:${feedId}:${todayKey()}`,
         status: "served",
         actorName: sitterName || "Cuidador",
         payload: { description: desc, time },
-      }).catch(() => {});
+      });
+      setServedMeals((prev) => ({ ...prev, [feedId]: nowTime }));
+      toast.success(`Refeição das ${time} marcada como servida!`);
+    } catch (cause) {
+      toast.error(
+        cause instanceof Error
+          ? cause.message
+          : "Não foi possível registrar a refeição.",
+      );
     }
   }
 
@@ -129,24 +136,31 @@ export default function SitterAccessPage() {
     amount: string,
     unit: string,
   ) {
-    const key = `${scheduleId}:${todayKey()}:${time}`;
+    const key = medicationDoseKey(scheduleId, todayKey(), time);
     const nowTime = new Date().toLocaleTimeString("pt-BR", {
       hour: "2-digit",
       minute: "2-digit",
     });
-    setGivenDoses((prev) => ({ ...prev, [key]: nowTime }));
-    toast.success(`Dose de ${name} (${amount} ${unit}) registrada!`, {
-      description: "O tutor foi notificado e pode ver que a dose foi dada.",
-    });
-
-    if (token) {
-      void recordSitterCareAction(token, {
+    if (!token) return;
+    try {
+      await recordSitterCareAction(token, {
+        pin: verifiedPin,
         eventType: "medication_dose",
         eventKey: key,
         status: "given",
         actorName: sitterName || "Cuidador",
         payload: { recordId, scheduleId, name, amount, unit, time },
-      }).catch(() => {});
+      });
+      setGivenDoses((prev) => ({ ...prev, [key]: nowTime }));
+      toast.success(`Dose de ${name} (${amount} ${unit}) registrada!`, {
+        description: "O registro foi salvo nos cuidados compartilhados.",
+      });
+    } catch (cause) {
+      toast.error(
+        cause instanceof Error
+          ? cause.message
+          : "Não foi possível registrar a dose.",
+      );
     }
   }
 
@@ -197,12 +211,17 @@ export default function SitterAccessPage() {
             <Lock aria-hidden="true" className="size-7" />
           </span>
 
-          <h1 className="mt-4 text-xl font-bold text-ink">Modo Cuidador Protegido</h1>
+          <h1 className="mt-4 text-xl font-bold text-ink">
+            Modo Cuidador Protegido
+          </h1>
           <p className="mt-1 text-sm text-muted">
             Este acesso requer o PIN numérico configurado pelo tutor.
           </p>
 
-          <form onSubmit={(e) => void handleUnlockPin(e)} className="mt-6 flex flex-col gap-4">
+          <form
+            onSubmit={(e) => void handleUnlockPin(e)}
+            className="mt-6 flex flex-col gap-4"
+          >
             <Field htmlFor="pin" label="Digite o PIN (4 a 6 dígitos)">
               <Input
                 id="pin"
@@ -278,7 +297,9 @@ export default function SitterAccessPage() {
         </div>
 
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink">{pet.name}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-ink">
+            {pet.name}
+          </h1>
           <p className="text-sm text-muted">
             {speciesLabels[pet.species]}
             {pet.breed ? ` · ${pet.breed}` : ""}
@@ -339,7 +360,9 @@ export default function SitterAccessPage() {
           <div className="flex flex-col justify-between rounded-2xl border border-line bg-paper p-3.5 shadow-sm">
             <div>
               <span className="text-xs font-semibold text-muted">Tutor(a)</span>
-              <p className="text-sm font-bold text-ink">{emergency.tutorName}</p>
+              <p className="text-sm font-bold text-ink">
+                {emergency.tutorName}
+              </p>
             </div>
             <div className="mt-3 flex gap-2">
               <a
@@ -374,9 +397,13 @@ export default function SitterAccessPage() {
                   EMERGÊNCIA
                 </span>
               </div>
-              <p className="text-sm font-bold text-ink">{emergency.emergencyVetName}</p>
+              <p className="text-sm font-bold text-ink">
+                {emergency.emergencyVetName}
+              </p>
               {emergency.emergencyClinicName ? (
-                <p className="text-xs text-muted">{emergency.emergencyClinicName}</p>
+                <p className="text-xs text-muted">
+                  {emergency.emergencyClinicName}
+                </p>
               ) : null}
             </div>
             <div className="mt-3 flex gap-2">
@@ -431,7 +458,9 @@ export default function SitterAccessPage() {
                       <p className="text-sm font-semibold text-ink">
                         {feed.description}
                       </p>
-                      <p className="text-xs text-muted">Porção: {feed.amount}</p>
+                      <p className="text-xs text-muted">
+                        Porção: {feed.amount}
+                      </p>
                     </div>
                   </div>
 
@@ -445,7 +474,11 @@ export default function SitterAccessPage() {
                       <button
                         type="button"
                         onClick={() =>
-                          void markMealServed(feed.id, feed.time, feed.description)
+                          void markMealServed(
+                            feed.id,
+                            feed.time,
+                            feed.description,
+                          )
                         }
                         className="rounded-xl border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-teal-ink hover:text-white"
                       >
@@ -496,7 +529,11 @@ export default function SitterAccessPage() {
                 {/* Horários e status */}
                 <div className="flex flex-wrap gap-2 pt-1">
                   {med.times.map((t) => {
-                    const doseKey = `${med.scheduleId}:${todayKey()}:${t}`;
+                    const doseKey = medicationDoseKey(
+                      med.scheduleId,
+                      todayKey(),
+                      t,
+                    );
                     const isGiven = Boolean(givenDoses[doseKey]);
 
                     return (
@@ -504,7 +541,9 @@ export default function SitterAccessPage() {
                         key={t}
                         className="flex items-center gap-2 rounded-xl border border-line bg-surface p-2 text-xs"
                       >
-                        <span className="font-mono font-bold text-ink">{t}</span>
+                        <span className="font-mono font-bold text-ink">
+                          {t}
+                        </span>
                         {isGiven ? (
                           <span className="inline-flex items-center gap-1 font-bold text-success-ink">
                             <Check aria-hidden="true" className="size-3.5" />

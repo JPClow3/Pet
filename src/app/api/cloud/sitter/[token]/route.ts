@@ -1,5 +1,6 @@
 import {
   readSitterPassByToken,
+  SitterAccessError,
   recordSitterCareAction,
   verifySitterPassPinAndRead,
 } from "@/lib/cloud/server-collaboration";
@@ -19,10 +20,7 @@ const reply = (body: unknown, status = 200) =>
 
 type Params = Promise<{ token: string }>;
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Params },
-) {
+export async function GET(_request: Request, { params }: { params: Params }) {
   try {
     const { token } = await params;
     if (!SITTER_PASS_TOKEN.test(token)) {
@@ -40,7 +38,12 @@ export async function GET(
     return reply(pass);
   } catch (error) {
     return reply(
-      { error: error instanceof Error ? error.message : "Erro ao carregar dados do cuidador" },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erro ao carregar dados do cuidador",
+      },
       500,
     );
   }
@@ -53,6 +56,10 @@ const postSchema = z.discriminatedUnion("action", [
   }),
   z.object({
     action: z.literal("record_care"),
+    pin: z
+      .string()
+      .regex(/^\d{4,6}$/)
+      .optional(),
     eventType: z.enum(["medication_dose", "meal"]),
     eventKey: z.string().min(1).max(200),
     status: z.enum(["given", "served"]),
@@ -61,10 +68,7 @@ const postSchema = z.discriminatedUnion("action", [
   }),
 ]);
 
-export async function POST(
-  request: Request,
-  { params }: { params: Params },
-) {
+export async function POST(request: Request, { params }: { params: Params }) {
   try {
     const { token } = await params;
     if (!SITTER_PASS_TOKEN.test(token)) {
@@ -89,6 +93,7 @@ export async function POST(
         status: parsed.status,
         actorName: parsed.actorName,
         payload: parsed.payload,
+        pin: parsed.pin,
       });
 
       if (!success) {
@@ -99,8 +104,19 @@ export async function POST(
 
     return reply({ error: "Ação não reconhecida" }, 400);
   } catch (error) {
+    if (error instanceof SitterAccessError) {
+      const response = reply({ error: error.message }, error.status);
+      if (error.retryAfter)
+        response.headers.set("Retry-After", String(error.retryAfter));
+      return response;
+    }
     return reply(
-      { error: error instanceof Error ? error.message : "Erro na operação do cuidador" },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erro na operação do cuidador",
+      },
       400,
     );
   }

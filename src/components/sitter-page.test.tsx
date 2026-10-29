@@ -8,6 +8,12 @@ const mockClient = vi.hoisted(() => ({
   fetchPass: vi.fn(),
   verifyPin: vi.fn(),
   recordCare: vi.fn(),
+  success: vi.fn(),
+  error: vi.fn(),
+}));
+
+vi.mock("sonner", () => ({
+  toast: { success: mockClient.success, error: mockClient.error },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -104,6 +110,7 @@ describe("Página do Modo Cuidador / Pet Sitter", () => {
       data: null,
     });
     mockClient.verifyPin.mockResolvedValue(sampleUnlockedData);
+    mockClient.recordCare.mockResolvedValue(true);
 
     render(<SitterAccessPage />);
 
@@ -113,11 +120,15 @@ describe("Página do Modo Cuidador / Pet Sitter", () => {
 
     const pinInput = screen.getByLabelText(/Digite o PIN/i);
     await user.type(pinInput, "1234");
-    await user.click(screen.getByRole("button", { name: "Desbloquear Cuidados" }));
+    await user.click(
+      screen.getByRole("button", { name: "Desbloquear Cuidados" }),
+    );
 
     await waitFor(() => {
       // Identificação
-      expect(screen.getByRole("heading", { name: "Pipoca" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Pipoca" }),
+      ).toBeInTheDocument();
       expect(screen.getByText("Modo Cuidador Ativo")).toBeInTheDocument();
 
       // Alergias críticas
@@ -132,11 +143,44 @@ describe("Página do Modo Cuidador / Pet Sitter", () => {
 
       // Rotina alimentar
       expect(screen.getByText("Ração Seca")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Servir" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Servir" }),
+      ).toBeInTheDocument();
 
       // Medicamento
       expect(screen.getByText("Antibiótico Cefalexina")).toBeInTheDocument();
-      expect(screen.getAllByRole("button", { name: "Dar remédio" })).toHaveLength(2);
+      expect(
+        screen.getAllByRole("button", { name: "Dar remédio" }),
+      ).toHaveLength(2);
     });
+    await user.click(screen.getAllByRole("button", { name: "Dar remédio" })[0]);
+    await waitFor(() =>
+      expect(mockClient.recordCare).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          pin: "1234",
+          eventKey: expect.stringMatching(/^sched-1:\d{4}-\d{2}-\d{2}T08:00$/),
+        }),
+      ),
+    );
+    expect(screen.getAllByRole("button", { name: "Dar remédio" })).toHaveLength(
+      1,
+    );
+  });
+
+  it("mantém a ação disponível quando o servidor rejeita o cuidado", async () => {
+    mockClient.fetchPass.mockResolvedValue({
+      hasPin: false,
+      data: sampleUnlockedData,
+    });
+    mockClient.recordCare.mockRejectedValueOnce(new Error("PIN expirado"));
+    const user = userEvent.setup();
+    render(<SitterAccessPage />);
+    await user.click(await screen.findByRole("button", { name: "Servir" }));
+    await waitFor(() =>
+      expect(mockClient.error).toHaveBeenCalledWith("PIN expirado"),
+    );
+    expect(screen.getByRole("button", { name: "Servir" })).toBeInTheDocument();
+    expect(mockClient.success).not.toHaveBeenCalled();
   });
 });

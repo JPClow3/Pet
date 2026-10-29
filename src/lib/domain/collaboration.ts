@@ -7,7 +7,6 @@ import {
   speciesSchema,
   type HealthRecord,
   type Pet,
-  type Species,
 } from "./schema";
 
 export const SITTER_PASS_TOKEN = /^s_[A-Za-z0-9_-]{43}$/;
@@ -60,7 +59,14 @@ export const careSyncEventSchema = z.object({
   recordId: z.string().max(100).nullable().default(null),
   scheduleId: z.string().max(100).nullable().default(null),
   eventKey: z.string().min(1).max(200),
-  status: z.enum(["given", "skipped", "missed", "served", "completed"]),
+  status: z.enum([
+    "given",
+    "skipped",
+    "missed",
+    "unrecorded",
+    "served",
+    "completed",
+  ]),
   payload: z.record(z.string(), z.unknown()).default({}),
   occurredAt: isoDateTime,
   createdAt: isoDateTime,
@@ -148,7 +154,8 @@ export function createSitterPassToken(): string {
 
 /** SHA-256 hash of the sitter pass token */
 export async function hashSitterPassToken(token: string): Promise<string> {
-  if (!SITTER_PASS_TOKEN.test(token)) throw new Error("Token de cuidador inválido");
+  if (!SITTER_PASS_TOKEN.test(token))
+    throw new Error("Token de cuidador inválido");
   const digest = await crypto.subtle.digest(
     "SHA-256",
     new TextEncoder().encode(token),
@@ -158,18 +165,41 @@ export async function hashSitterPassToken(token: string): Promise<string> {
   ).join("");
 }
 
-/** SHA-256 hash of a 4-6 digit numeric PIN */
+const PIN_ITERATIONS = 100_000;
+const hex = (bytes: Uint8Array) =>
+  Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+
+async function derivePin(pin: string, salt: Uint8Array): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(pin),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  return hex(
+    new Uint8Array(
+      await crypto.subtle.deriveBits(
+        {
+          name: "PBKDF2",
+          hash: "SHA-256",
+          salt: new Uint8Array(salt),
+          iterations: PIN_ITERATIONS,
+        },
+        key,
+        256,
+      ),
+    ),
+  );
+}
+
+/** Salted, slow hash; the online attempt budget is enforced in Postgres. */
 export async function hashSitterPin(pin: string): Promise<string> {
   if (!PIN_REGEX.test(pin)) {
     throw new Error("O PIN deve conter de 4 a 6 dígitos numéricos.");
   }
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(`zelupi_sitter_pin:${pin}`),
-  );
-  return Array.from(new Uint8Array(digest), (byte) =>
-    byte.toString(16).padStart(2, "0"),
-  ).join("");
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  return `pbkdf2-sha256:${PIN_ITERATIONS}:${hex(salt)}:${await derivePin(pin, salt)}`;
 }
 
 /** Verify user provided PIN against stored hash */
@@ -178,8 +208,34 @@ export async function verifySitterPin(
   expectedHash: string,
 ): Promise<boolean> {
   if (!PIN_REGEX.test(pin)) return false;
-  const computed = await hashSitterPin(pin);
-  return computed === expectedHash;
+  let computed: string;
+  let expected: string;
+  if (/^[a-f0-9]{64}$/.test(expectedHash)) {
+    // Existing passes remain usable until the tutor replaces their link.
+    computed = hex(
+      new Uint8Array(
+        await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(`zelupi_sitter_pin:${pin}`),
+        ),
+      ),
+    );
+    expected = expectedHash;
+  } else {
+    const match = /^pbkdf2-sha256:100000:([a-f0-9]{32}):([a-f0-9]{64})$/.exec(
+      expectedHash,
+    );
+    if (!match) return false;
+    const salt = Uint8Array.from(match[1].match(/../g)!, (byte) =>
+      parseInt(byte, 16),
+    );
+    computed = await derivePin(pin, salt);
+    expected = match[2];
+  }
+  let difference = 0;
+  for (let i = 0; i < expected.length; i++)
+    difference |= computed.charCodeAt(i) ^ expected.charCodeAt(i);
+  return difference === 0;
 }
 
 /**
@@ -245,7 +301,7 @@ export function sanitizeForSitterView(options: {
       color: pet.color,
     },
     allergies: allergies.filter(Boolean).slice(0, 20),
-    specialCareNotes: specialCareNotes?.trim() || pet.notes?.trim() || null,
+    specialCareNotes: specialCareNotes?.trim() || null,
     emergencyContact,
     feedingSchedule: feedingSchedule.slice(0, 10),
     medicationSchedule: activeMedications.slice(0, 20),

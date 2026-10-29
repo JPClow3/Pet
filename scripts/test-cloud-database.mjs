@@ -5,6 +5,10 @@ import { neon } from "@neondatabase/serverless";
 
 env.loadEnvConfig(process.cwd());
 const suites = {
+  "--collaboration": {
+    name: "collaboration and sitter",
+    file: "collaboration_and_sitter.sql",
+  },
   "--public-cards": {
     name: "managed public cards",
     file: "managed_public_cards.sql",
@@ -28,6 +32,7 @@ const pushDispatcher = selected === "--push-dispatcher";
 const pushApplication = selected === "--push";
 const publicCards = selected === "--public-cards";
 const accountOwnership = selected === "--account-ownership";
+const collaboration = selected === "--collaboration";
 const variable = pushDispatcher ? "PUSH_DATABASE_URL" : "DATABASE_URL";
 if (!process.env[variable]) throw new Error(`${variable} is required`);
 const sql = neon(process.env[variable]);
@@ -74,18 +79,26 @@ console.log(
     restricted: true,
     rlsAndCompareAndSwap:
       accountOwnership || pushDispatcher ? undefined : "passed",
-    accountOwnership: pushDispatcher
-      ? undefined
-      : accountOwnership
-        ? "deferred foreign keys and isolated cascade passed"
-        : "missing managed identity rejected",
+    accountOwnership:
+      pushDispatcher || collaboration
+        ? undefined
+        : accountOwnership
+          ? "deferred foreign keys and isolated cascade passed"
+          : "missing managed identity rejected",
     managedIdentityDeletion: "not exercised; no managed auth rows changed",
     backupFormats:
-      publicCards || accountOwnership || pushApplication || pushDispatcher
+      publicCards ||
+      accountOwnership ||
+      pushApplication ||
+      pushDispatcher ||
+      collaboration
         ? undefined
         : "v1 and v2 accepted; v3 and over 20 MiB rejected",
     dispatcherBoundary: pushDispatcher
       ? "least privilege and nonexistent lease guards passed; no existing jobs claimed"
+      : undefined,
+    collaborationAndSitter: collaboration
+      ? "owner and recipient boundaries, idempotency, stale corrections, PIN gate and revocation passed"
       : undefined,
     notificationsSent: pushApplication || pushDispatcher ? 0 : undefined,
     fixtureChanges: "rolled back",

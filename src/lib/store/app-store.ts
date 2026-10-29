@@ -78,6 +78,10 @@ import type {
   Tutor,
 } from "@/lib/domain/schema";
 import { newId } from "@/lib/id";
+import {
+  mergeSharedMedicationEvents,
+  publishMedicationDose,
+} from "@/lib/cloud/care-sync";
 
 const MY_AUTHOR_ID = "me";
 
@@ -819,7 +823,11 @@ const boundStore = create<AppState & AppActions>()(
                     ),
                   ),
                   syncTombstones: appendTombstones(state.syncTombstones, [
-                    { collection: "records", id: recordId, deletedAt: nowIso() },
+                    {
+                      collection: "records",
+                      id: recordId,
+                      deletedAt: nowIso(),
+                    },
                   ]),
                 },
                 state.records
@@ -1428,7 +1436,8 @@ const boundStore = create<AppState & AppActions>()(
             const key = candidate.osmId
               ? `osm:${candidate.osmId}`
               : `id:${candidate.id}`;
-            const prev = existingByOsmKey.get(key) ?? mergedMap.get(candidate.id);
+            const prev =
+              existingByOsmKey.get(key) ?? mergedMap.get(candidate.id);
             if (prev) {
               mergedMap.set(prev.id, {
                 ...prev,
@@ -1629,6 +1638,7 @@ const boundStore = create<AppState & AppActions>()(
                 staged = previous;
                 let result: unknown;
                 let next: AppState & AppActions;
+                let careConflict: string | null = null;
                 try {
                   result = (reducer as (...args: unknown[]) => unknown)(
                     ...args,
@@ -1636,6 +1646,31 @@ const boundStore = create<AppState & AppActions>()(
                   next = staged;
                 } finally {
                   staged = null;
+                }
+                if (name === "recordMedicationDose") {
+                  const record = next.records.find(
+                    (entry) => entry.id === args[0],
+                  );
+                  const event = record?.medication?.events.find(
+                    (entry) => entry.id === result,
+                  );
+                  if (record && event) {
+                    const shared = await publishMedicationDose(record, event);
+                    if (shared) {
+                      next = {
+                        ...next,
+                        records: mergeSharedMedicationEvents(next.records, [
+                          shared,
+                        ]),
+                      };
+                      result =
+                        typeof shared.payload.eventId === "string"
+                          ? shared.payload.eventId
+                          : `shared-${shared.id}`;
+                      if (shared.status !== event.status)
+                        careConflict = `Esta dose já foi atualizada por ${shared.actorName}. Confira o registro compartilhado antes de corrigir.`;
+                    }
+                  }
                 }
                 if (next !== previous) {
                   await writePersistedState(
@@ -1656,6 +1691,7 @@ const boundStore = create<AppState & AppActions>()(
                   commit(next);
                 }
                 if (name === "resetAll") clearFormDrafts();
+                if (careConflict) throw new Error(careConflict);
                 return result;
               });
               return name === "track"

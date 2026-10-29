@@ -65,6 +65,22 @@ describe("origem geográfica", () => {
     expect(result.current.origin).toEqual(PILOT_CITY_CENTER);
   });
 
+  it("obtém novamente as coordenadas ao abrir com a preferência precisa já salva", async () => {
+    await useAppStore.getState().updateSettings({ usePreciseLocation: true });
+    const first = renderHook(() => useOrigin());
+    await waitFor(() => expect(requests).toHaveLength(1));
+    first.unmount();
+    const reloaded = renderHook(() => useOrigin());
+    await waitFor(() => expect(requests).toHaveLength(2));
+    act(() =>
+      requests[1].success({
+        coords: { latitude: -22, longitude: -47 },
+      } as GeolocationPosition),
+    );
+    expect(reloaded.result.current.origin).toEqual({ lat: -22, lng: -47 });
+    expect(reloaded.result.current.status).toBe("precisa");
+  });
+
   it("distingue falha de localização de permissão negada e ignora resposta após opt-out", async () => {
     const { result } = renderHook(() => useOrigin());
     act(() => result.current.request());

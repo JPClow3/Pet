@@ -22,7 +22,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const ready = useAppStore((state) => state.ready);
-  const publicPage = pathname.startsWith("/p/") || pathname === "/roadmap";
+  const publicPage =
+    pathname.startsWith("/p/") ||
+    pathname.startsWith("/sitter/") ||
+    pathname === "/roadmap";
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [conflict, setConflict] = useState(false);

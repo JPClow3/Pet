@@ -1,32 +1,26 @@
 "use client";
 
 import {
-  AlertTriangle,
-  Clock,
   Copy,
   ExternalLink,
-  KeyRound,
   Lock,
   Phone,
   Plus,
-  QrCode as QrIcon,
   ShieldAlert,
   ShieldCheck,
   Trash2,
   Utensils,
 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { QrCode } from "@/components/qr-code";
 import { Button } from "@/components/ui/button";
-import { Chip } from "@/components/ui/chip";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { BottomSheet } from "@/components/ui/sheet";
 import { getCloudClient } from "@/lib/cloud/client";
 import { createSitterPassCloud } from "@/lib/cloud/collaboration-client";
 import {
-  createSitterPassToken,
   sanitizeForSitterView,
   type EmergencyContact,
   type FeedingScheduleItem,
@@ -64,9 +58,7 @@ export function PetSitterConfigModal({
   const [emergencyVetPhone, setEmergencyVetPhone] = useState(
     pet.emergencyVet?.phone ?? "",
   );
-  const [emergencyClinic, setEmergencyClinic] = useState(
-    pet.emergencyVet?.clinicName ?? "",
-  );
+  const emergencyClinic = pet.emergencyVet?.clinicName ?? "";
   const [emergencyAddress, setEmergencyAddress] = useState(
     pet.emergencyVet?.address ?? "",
   );
@@ -75,7 +67,7 @@ export function PetSitterConfigModal({
   const [allergiesText, setAllergiesText] = useState(
     (pet.allergies ?? []).join(", "),
   );
-  const [specialNotes, setSpecialNotes] = useState(pet.notes ?? "");
+  const [specialNotes, setSpecialNotes] = useState("");
 
   // Feeding routine
   const [feedingItems, setFeedingItems] = useState<FeedingScheduleItem[]>(
@@ -123,6 +115,10 @@ export function PetSitterConfigModal({
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
+    if (!user?.id) {
+      toast.error("Entre na sua conta para criar um link de cuidador.");
+      return;
+    }
     if (!tutorPhone || tutorPhone.trim().length < 8) {
       toast.error("Informe um telefone de contato do tutor.");
       return;
@@ -175,28 +171,13 @@ export function PetSitterConfigModal({
         feedingSchedule: feedingItems,
       });
 
-      let token = "";
-      let url = "";
-      let expiresAt = "";
-
-      if (user?.id) {
-        // Online Neon cloud generation
-        const cloudRes = await createSitterPassCloud(user.id, {
-          petId: pet.id,
-          passData,
-          pin: pin.trim() || null,
-          expiresInDays,
-          sitterName: sitterName.trim() || null,
-        });
-        token = cloudRes.token;
-        url = cloudRes.url;
-        expiresAt = cloudRes.expiresAt;
-      } else {
-        // Offline / local link fallback with encrypted/encoded payload
-        token = createSitterPassToken();
-        url = `/sitter/${token}`;
-        expiresAt = new Date(Date.now() + expiresInDays * 86400000).toISOString();
-      }
+      const { token, url, expiresAt } = await createSitterPassCloud(user.id, {
+        petId: pet.id,
+        passData,
+        pin: pin.trim() || null,
+        expiresInDays,
+        sitterName: sitterName.trim() || null,
+      });
 
       setGeneratedResult({
         url: `${window.location.origin}${url}`,
@@ -226,9 +207,12 @@ export function PetSitterConfigModal({
           </span>
 
           <div>
-            <h3 className="text-lg font-bold text-ink">Link do Cuidador Criado!</h3>
+            <h3 className="text-lg font-bold text-ink">
+              Link do Cuidador Criado!
+            </h3>
             <p className="text-sm text-muted">
-              Mostre este QR Code ou envie o link por WhatsApp para quem for cuidar de {pet.name}.
+              Mostre este QR Code ou envie o link por WhatsApp para quem for
+              cuidar de {pet.name}.
             </p>
           </div>
 
@@ -242,7 +226,9 @@ export function PetSitterConfigModal({
               PIN de Desbloqueio: <strong>{pin}</strong>
             </div>
           ) : (
-            <span className="text-xs text-muted">Link sem PIN (acesso direto).</span>
+            <span className="text-xs text-muted">
+              Link sem PIN (acesso direto).
+            </span>
           )}
 
           <div className="flex w-full flex-col gap-2 pt-2">
@@ -283,10 +269,10 @@ export function PetSitterConfigModal({
           </div>
 
           <div className="mt-2 rounded-xl bg-surface p-3 text-left text-xs leading-relaxed text-muted">
-            <strong>Garantia de Privacidade Zelupi:</strong> O cuidador verá apenas a
-            rotina de alimentação, horários dos remédios, alergias e botões de
-            emergência. Seu histórico completo, diários e documentos particulares
-            NÃO são compartilhados.
+            <strong>Garantia de Privacidade Zelupi:</strong> O cuidador verá
+            apenas a rotina de alimentação, horários dos remédios, alergias e
+            botões de emergência. Seu histórico completo, diários e documentos
+            particulares NÃO são compartilhados.
           </div>
 
           <Button
@@ -299,11 +285,14 @@ export function PetSitterConfigModal({
           </Button>
         </div>
       ) : (
-        <form onSubmit={(e) => void handleGenerate(e)} className="flex flex-col gap-4">
+        <form
+          onSubmit={(e) => void handleGenerate(e)}
+          className="flex flex-col gap-4"
+        >
           <div className="rounded-xl border border-teal-ink/20 bg-teal-ink/5 p-3 text-xs leading-relaxed text-teal-ink">
-            <strong>Modo Seguro para Hotelzinho e Passeador:</strong> Cria um link
-            temporário que mostra somente o essencial para quem for cuidar do seu
-            pet, sem expor dados particulares.
+            <strong>Modo Seguro para Hotelzinho e Passeador:</strong> Cria um
+            link temporário que mostra somente o essencial para quem for cuidar
+            do seu pet, sem expor dados particulares.
           </div>
 
           {/* Sitter name & PIN */}
@@ -355,7 +344,10 @@ export function PetSitterConfigModal({
           {/* Alergias & Cuidados Especiais */}
           <div className="flex flex-col gap-3 rounded-2xl border border-line bg-paper p-3.5">
             <div className="flex items-center gap-2 text-sm font-bold text-ink">
-              <ShieldAlert aria-hidden="true" className="size-4 text-danger-ink" />
+              <ShieldAlert
+                aria-hidden="true"
+                className="size-4 text-danger-ink"
+              />
               Alergias e Restrições Críticas
             </div>
             <p className="text-xs text-muted">
@@ -373,7 +365,10 @@ export function PetSitterConfigModal({
               />
             </Field>
 
-            <Field htmlFor="sitter-special" label="Recomendações e comportamento">
+            <Field
+              htmlFor="sitter-special"
+              label="Recomendações e comportamento"
+            >
               <Textarea
                 id="sitter-special"
                 rows={2}
@@ -426,7 +421,9 @@ export function PetSitterConfigModal({
                   onChange={(e) => {
                     const desc = e.target.value;
                     setFeedingItems((prev) =>
-                      prev.map((f, i) => (i === idx ? { ...f, description: desc } : f)),
+                      prev.map((f, i) =>
+                        i === idx ? { ...f, description: desc } : f,
+                      ),
                     );
                   }}
                 />
@@ -461,7 +458,10 @@ export function PetSitterConfigModal({
               Contatos de Emergência 1-Toque
             </div>
 
-            <Field htmlFor="sitter-tutor-phone" label="Telefone do Tutor (WhatsApp)">
+            <Field
+              htmlFor="sitter-tutor-phone"
+              label="Telefone do Tutor (WhatsApp)"
+            >
               <Input
                 id="sitter-tutor-phone"
                 required
@@ -472,7 +472,10 @@ export function PetSitterConfigModal({
             </Field>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Field htmlFor="sitter-vet-name" label="Veterinário / Clínica 24h">
+              <Field
+                htmlFor="sitter-vet-name"
+                label="Veterinário / Clínica 24h"
+              >
                 <Input
                   id="sitter-vet-name"
                   required
@@ -482,7 +485,10 @@ export function PetSitterConfigModal({
                 />
               </Field>
 
-              <Field htmlFor="sitter-vet-phone" label="Telefone de Emergência Vet">
+              <Field
+                htmlFor="sitter-vet-phone"
+                label="Telefone de Emergência Vet"
+              >
                 <Input
                   id="sitter-vet-phone"
                   required
@@ -507,6 +513,18 @@ export function PetSitterConfigModal({
             </Field>
           </div>
 
+          {!user?.id && (
+            <p className="text-sm text-muted">
+              Para compartilhar os cuidados em outro aparelho,{" "}
+              <Link
+                href="/account"
+                className="font-semibold text-teal-ink underline"
+              >
+                entre na sua conta
+              </Link>
+              .
+            </p>
+          )}
           <div className="flex gap-2 pt-2">
             <Button
               type="button"
@@ -516,7 +534,11 @@ export function PetSitterConfigModal({
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={submitting} className="flex-1">
+            <Button
+              type="submit"
+              disabled={submitting || !user?.id}
+              className="flex-1"
+            >
               {submitting ? "Gerando..." : "Gerar Acesso Seguro"}
             </Button>
           </div>

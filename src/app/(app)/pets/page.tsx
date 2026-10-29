@@ -4,16 +4,13 @@ import {
   Camera,
   ChevronRight,
   FileText,
-  HeartHandshake,
   Pencil,
   Printer,
   QrCode,
-  Scale,
   ShieldCheck,
   Siren,
   Sparkles,
   Stethoscope,
-  Users,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -37,7 +34,6 @@ import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 import { formatShortDate, todayKey } from "@/lib/domain/dates";
-import { weightTrend } from "@/lib/domain/health";
 import { petWeightMeasurements } from "@/lib/domain/weight";
 
 const PetCollaboratorsPanel = dynamic(() =>
@@ -86,16 +82,6 @@ export default function MyPetPage() {
   const weightMeasurements = useMemo(
     () => (pet ? petWeightMeasurements(pet, records, petDiary) : []),
     [pet, records, petDiary],
-  );
-  const trend = useMemo(
-    () =>
-      pet?.weightKg != null
-        ? weightTrend(
-            weightMeasurements,
-            pet.weightKg,
-          )
-        : null,
-    [pet, weightMeasurements],
   );
   const documentCount = useMemo(
     () =>
@@ -219,6 +205,7 @@ export default function MyPetPage() {
               void action.run(async () => {
                 await updatePet(pet.id, {
                   lostMode: {
+                    ...pet.lostMode,
                     active,
                     since: active ? todayKey() : null,
                     note: active
@@ -421,7 +408,9 @@ export default function MyPetPage() {
           </div>
         </div>
         <p className="text-sm leading-relaxed text-ink-soft">
-          Gere um link temporário protegido por PIN que mostra apenas a rotina alimentar, horários de remédios, alergias e botão de emergência 24h, sem expor dados particulares.
+          Gere um link temporário protegido por PIN que mostra apenas a rotina
+          alimentar, horários de remédios, alergias e botão de emergência 24h,
+          sem expor dados particulares.
         </p>
         <div className="flex flex-wrap gap-2 pt-1">
           <Button size="sm" onClick={() => setShowSitterModal(true)}>

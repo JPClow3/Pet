@@ -18,6 +18,7 @@ import { useAppStore } from "@/lib/store/app-store";
 import { cn } from "@/lib/utils";
 import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-provider";
+import { CareSyncProvider } from "@/components/care-sync-provider";
 
 const NAV_ITEMS = [
   {
@@ -88,6 +89,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[5.5rem_1fr] lg:grid-cols-[14.5rem_1fr]">
+      <CareSyncProvider />
       <a
         href="#main-content"
         className="sr-only z-50 rounded-lg bg-teal-ink p-3 text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4"

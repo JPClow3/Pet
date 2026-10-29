@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:cloud": "node scripts/test-cloud-database.mjs",
+    "test:collaboration:local": "node scripts/test-collaboration-local.mjs",
     "test:packaging": "node --test scripts/prepare-cloudflare-instrumentation.test.mjs",
     "test:watch": "vitest",
     "icons": "node scripts/generate-icons.mjs",
