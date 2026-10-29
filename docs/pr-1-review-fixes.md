@@ -69,6 +69,6 @@ Resultado final em Linux isolado, com Node 22.23.4 e sem copiar `.env.local`:
 O build sem `SITE_URL` mostrou o aviso esperado de `metadataBase` com localhost.
 Essa validação não aplica migrações nem publica o Worker em produção.
 
-A correção foi integrada à `main` com o PR #2, preservando o acesso por
+A branch de correção foi atualizada sobre a `main` que contém o PR #2, preservando o acesso por
 Hyperdrive/Postgres.js, a execução de `SET LOCAL ROLE` pelo protocolo simples
 e a normalização de timestamps. Os testes do transporte também passaram.
