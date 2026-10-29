@@ -1,12 +1,9 @@
 "use client";
 
 import {
-  AlertTriangle,
   Check,
   CheckCircle2,
-  Clock,
   HeartPulse,
-  Lock,
   LogOut,
   MapPin,
   MessageCircle,
@@ -14,7 +11,6 @@ import {
   Phone,
   Pill,
   ShieldAlert,
-  ShieldCheck,
   Utensils,
 } from "lucide-react";
 import Image from "next/image";
@@ -24,9 +20,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
-import { Field, Input } from "@/components/ui/field";
 import { BottomSheet } from "@/components/ui/sheet";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 import { todayKey } from "@/lib/domain/dates";
@@ -47,10 +41,11 @@ export default function LocalPetSitterPage() {
     state.records.filter((r) => r.petId === params.petId),
   );
   const tutor = useAppStore((state) => state.tutor);
-  const recordMedicationDose = useAppStore((state) => state.recordMedicationDose);
+  const recordMedicationDose = useAppStore(
+    (state) => state.recordMedicationDose,
+  );
 
   const [exitModalOpen, setExitModalOpen] = useState(false);
-  const [exitPin, setExitPin] = useState("");
   const [servedMeals, setServedMeals] = useState<Record<string, string>>({});
   const [givenDoses, setGivenDoses] = useState<Record<string, string>>({});
 
@@ -91,7 +86,10 @@ export default function LocalPetSitterPage() {
     return (
       <main className="p-6 text-center">
         <p className="text-muted">Pet não encontrado.</p>
-        <Link href="/pets" className="mt-4 inline-block font-semibold text-teal-ink">
+        <Link
+          href="/pets"
+          className="mt-4 inline-block font-semibold text-teal-ink"
+        >
           Voltar
         </Link>
       </main>
@@ -139,7 +137,10 @@ export default function LocalPetSitterPage() {
         recordedBy: "Cuidador",
         actorRole: "cuidador",
       });
-      setGivenDoses((prev) => ({ ...prev, [`${scheduleId}:${time}`]: nowTime }));
+      setGivenDoses((prev) => ({
+        ...prev,
+        [`${scheduleId}:${time}`]: nowTime,
+      }));
       toast.success(`Dose de ${name} das ${time} registrada!`);
     } catch (cause) {
       toast.error(
@@ -150,11 +151,11 @@ export default function LocalPetSitterPage() {
 
   return (
     <div className="flex flex-col gap-4 pb-16">
-      {/* Banner de bloqueio no aparelho */}
+      {/* Visão simplificada de cuidados no aparelho */}
       <div className="flex items-center justify-between rounded-2xl bg-teal-ink px-4 py-3 text-white shadow-sm">
         <div className="flex items-center gap-2 text-xs font-semibold">
-          <Lock aria-hidden="true" className="size-4" />
-          <span>Modo Cuidador Ativo no Aparelho</span>
+          <HeartPulse aria-hidden="true" className="size-4" />
+          <span>Visão de cuidados no aparelho</span>
         </div>
         <Button
           variant="secondary"
@@ -186,7 +187,9 @@ export default function LocalPetSitterPage() {
         )}
 
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink">{pet.name}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-ink">
+            {pet.name}
+          </h1>
           <p className="text-sm text-muted">
             {speciesLabels[pet.species]}
             {pet.breed ? ` · ${pet.breed}` : ""}
@@ -262,9 +265,13 @@ export default function LocalPetSitterPage() {
                 <span className="text-xs font-semibold text-danger-ink">
                   Veterinário 24h
                 </span>
-                <p className="text-sm font-bold text-ink">{emergencyVet.name}</p>
+                <p className="text-sm font-bold text-ink">
+                  {emergencyVet.name}
+                </p>
                 {emergencyVet.clinicName ? (
-                  <p className="text-xs text-muted">{emergencyVet.clinicName}</p>
+                  <p className="text-xs text-muted">
+                    {emergencyVet.clinicName}
+                  </p>
                 ) : null}
               </div>
               <div className="mt-3 flex gap-2">
@@ -316,7 +323,9 @@ export default function LocalPetSitterPage() {
                       <p className="text-sm font-semibold text-ink">
                         {feed.description}
                       </p>
-                      <p className="text-xs text-muted">Porção: {feed.amount}</p>
+                      <p className="text-xs text-muted">
+                        Porção: {feed.amount}
+                      </p>
                     </div>
                   </div>
 
@@ -382,7 +391,9 @@ export default function LocalPetSitterPage() {
                         key={t}
                         className="flex items-center gap-2 rounded-xl border border-line bg-surface p-2 text-xs"
                       >
-                        <span className="font-mono font-bold text-ink">{t}</span>
+                        <span className="font-mono font-bold text-ink">
+                          {t}
+                        </span>
                         {isGiven ? (
                           <span className="inline-flex items-center gap-1 font-bold text-success-ink">
                             <Check aria-hidden="true" className="size-3.5" />
@@ -424,7 +435,8 @@ export default function LocalPetSitterPage() {
       >
         <div className="flex flex-col gap-4">
           <p className="text-sm text-ink-soft">
-            Você está prestes a sair do modo restrito e voltar a todos os dados do pet.
+            Esta visão organiza os cuidados e permite voltar aos demais dados do
+            pet.
           </p>
           <div className="flex gap-2">
             <Button
@@ -435,7 +447,7 @@ export default function LocalPetSitterPage() {
               Continuar no Cuidador
             </Button>
             <Button onClick={handleExit} className="flex-1">
-              Desbloquear App
+              Voltar ao app
             </Button>
           </div>
         </div>

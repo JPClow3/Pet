@@ -108,7 +108,8 @@ describe("Domínio de Colaboração e Modo Cuidador", () => {
   it("protege e verifica PIN de 4 a 6 dígitos", async () => {
     const pin = "4829";
     const hash = await hashSitterPin(pin);
-    expect(hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(hash).toMatch(/^pbkdf2-sha256:100000:[a-f0-9]{32}:[a-f0-9]{64}$/);
+    expect(await hashSitterPin(pin)).not.toBe(hash);
 
     const valid = await verifySitterPin(pin, hash);
     expect(valid).toBe(true);
@@ -121,6 +122,39 @@ describe("Domínio de Colaboração e Modo Cuidador", () => {
     await expect(hashSitterPin("1234567")).rejects.toThrow();
     await expect(hashSitterPin("abcd")).rejects.toThrow();
   });
+
+  it("mantém a verificação dos PINs legados", async () => {
+    const bytes = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode("zelupi_sitter_pin:4829"),
+    );
+    const legacy = Array.from(new Uint8Array(bytes), (byte) =>
+      byte.toString(16).padStart(2, "0"),
+    ).join("");
+    expect(await verifySitterPin("4829", legacy)).toBe(true);
+    expect(await verifySitterPin("1234", legacy)).toBe(false);
+    expect(await verifySitterPin("4829", "corrupted")).toBe(false);
+  });
+
+  it.each([undefined, null, "", "   "])(
+    "não compartilha notas privadas quando a instrução é %s",
+    (specialCareNotes) => {
+      const data = sanitizeForSitterView({
+        pet: mockPet,
+        records: [],
+        specialCareNotes,
+        emergencyContact: {
+          tutorName: "Tutor",
+          tutorPhone: "11999999999",
+          emergencyVetName: "Vet",
+          emergencyVetPhone: "11988888888",
+          is24h: true,
+        },
+      });
+      expect(data.specialCareNotes).toBeNull();
+      expect(JSON.stringify(data)).not.toContain(mockPet.notes);
+    },
+  );
 
   it("garante privacidade estrita na sanitização para o Modo Cuidador", () => {
     const sitterData = sanitizeForSitterView({
@@ -153,7 +187,9 @@ describe("Domínio de Colaboração e Modo Cuidador", () => {
     expect(sitterData.emergencyContact.emergencyVetPhone).toBe("1133334444");
     expect(sitterData.feedingSchedule).toHaveLength(1);
     expect(sitterData.medicationSchedule).toHaveLength(1);
-    expect(sitterData.medicationSchedule[0].name).toBe("Antibiótico Cefalexina");
+    expect(sitterData.medicationSchedule[0].name).toBe(
+      "Antibiótico Cefalexina",
+    );
 
     // GARANTIA DE PRIVACIDADE: Dados confidenciais NUNCA são vazados
     const serialized = JSON.stringify(sitterData);

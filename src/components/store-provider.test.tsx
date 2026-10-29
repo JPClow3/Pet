@@ -101,22 +101,25 @@ describe("proteção dos dados durante a hidratação", () => {
     expect(localStorage.getItem(STORAGE_KEY)).toBe(original);
   });
 
-  it("permite abrir carteirinha pública sem hidratar ou alterar os dados locais", () => {
-    navigation.pathname = "/p/example-code";
-    const original = "corrupted-private-store";
-    localStorage.setItem(STORAGE_KEY, original);
-    const hydrate = vi.spyOn(useAppStore.persist, "rehydrate");
-    const onMount = vi.fn();
-    render(
-      <StoreProvider>
-        <ChildWithMountEffect onMount={onMount} />
-      </StoreProvider>,
-    );
+  it.each(["/p/example-code", "/sitter/example-token"])(
+    "permite abrir %s sem hidratar ou alterar os dados locais",
+    (pathname) => {
+      navigation.pathname = pathname;
+      const original = "corrupted-private-store";
+      localStorage.setItem(STORAGE_KEY, original);
+      const hydrate = vi.spyOn(useAppStore.persist, "rehydrate");
+      const onMount = vi.fn();
+      render(
+        <StoreProvider>
+          <ChildWithMountEffect onMount={onMount} />
+        </StoreProvider>,
+      );
 
-    expect(screen.getByText("Conteúdo da página")).toBeInTheDocument();
-    expect(onMount).toHaveBeenCalledOnce();
-    expect(hydrate).not.toHaveBeenCalled();
-    expect(useAppStore.getState().ready).toBe(false);
-    expect(localStorage.getItem(STORAGE_KEY)).toBe(original);
-  });
+      expect(screen.getByText("Conteúdo da página")).toBeInTheDocument();
+      expect(onMount).toHaveBeenCalledOnce();
+      expect(hydrate).not.toHaveBeenCalled();
+      expect(useAppStore.getState().ready).toBe(false);
+      expect(localStorage.getItem(STORAGE_KEY)).toBe(original);
+    },
+  );
 });

@@ -44,7 +44,9 @@ Aplique os arquivos `db/migrations/001_cloud_snapshots.sql`,
 `db/migrations/003_managed_public_cards.sql`,
 `db/migrations/004_portable_document_backups.sql`,
 `db/migrations/005_account_ownership.sql` e
-`db/migrations/006_push_notifications.sql`, nesta ordem, como proprietário do banco. Use um
+`db/migrations/006_push_notifications.sql`,
+`db/migrations/007_collaboration_and_sitter.sql` e
+`db/migrations/008_collaboration_security.sql`, nesta ordem, como proprietário do banco. Use um
 login dedicado `pethub_api`, sem `BYPASSRLS`, sem `neon_superuser`, sem criação
 de bancos/roles e membro de `pethub_app`. Exemplo de concessão após criar o login:
 
@@ -92,10 +94,23 @@ real de conta.
 - Sair preserva os dados locais; excluir a cópia na nuvem preserva a conta.
 - Alterar a senha exige a senha atual e encerra as outras sessões. Também há uma
   ação separada para sair dos outros aparelhos, mantendo a sessão atual.
-- Não há exclusão de conta, sincronização automática, mescla por registro,
-  histórico de versões ou compartilhamento familiar nesta etapa.
+- Não há exclusão de conta na interface. As cópias e restaurações completas
+  continuam manuais; a sincronização de doses de pets compartilhados é descrita abaixo.
 - URLs antigas com dados codificados continuam snapshots imutáveis; não são
   publicadas novamente nem convertidas automaticamente.
+
+## Cuidados compartilhados
+
+Convites de colaboração e links de cuidador exigem um pet já salvo na cópia da
+conta na nuvem. A aceitação do convite usa o e-mail confirmado do destinatário.
+Pets com colaboração ou passe de cuidador ativo sincronizam doses pela API de
+cuidados; os demais continuam locais. O registro usa uma chave por proprietário,
+pet e ocorrência, com confirmação do servidor e atualização periódica entre
+aparelhos. Links de cuidador exigem conta para criação; o PIN protege tanto a
+consulta quanto a gravação e tem limite persistido de tentativas.
+
+Veja [as correções e a validação do PR #1](pr-1-review-fixes.md) para a migração
+dos dados existentes, compatibilidade dos PINs e limites do uso sem conexão.
 
 ## Ciclo de vida da conta
 

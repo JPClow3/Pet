@@ -23,7 +23,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Chip, FilterChip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
-import { CheckboxRow, Field, Input, Select, Textarea } from "@/components/ui/field";
+import {
+  CheckboxRow,
+  Field,
+  Input,
+  Select,
+  Textarea,
+} from "@/components/ui/field";
 import { BottomSheet } from "@/components/ui/sheet";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 import {
@@ -33,14 +39,10 @@ import {
   filterPlaces,
   isEmergency24hPlace,
   reviewsForPlace,
-  type Coordinates,
   type PlaceFilters,
 } from "@/lib/domain/places";
-import {
-  placeAttributeLabels,
-  placeCategoryMeta,
-} from "@/lib/domain/labels";
-import { PILOT_CITY_CENTER } from "@/lib/domain/seed";
+import { placeAttributeLabels, placeCategoryMeta } from "@/lib/domain/labels";
+import { useOrigin } from "@/lib/geo";
 import type { PlaceAttribute, PlaceCategory } from "@/lib/domain/schema";
 import { useAppStore } from "@/lib/store/app-store";
 import { useHydrated } from "@/lib/store/hooks";
@@ -86,14 +88,17 @@ export default function ExplorePage() {
   const places = useAppStore((state) => state.places);
   const reviews = useAppStore((state) => state.reviews);
   const settings = useAppStore((state) => state.settings);
-  const updateSettings = useAppStore((state) => state.updateSettings);
   const addPlace = useAppStore((state) => state.addPlace);
   const toggleFavoritePlace = useAppStore((state) => state.toggleFavoritePlace);
   const importOsmPlaces = useAppStore((state) => state.importOsmPlaces);
   const track = useAppStore((state) => state.track);
 
   const [filters, setFilters] = useState<PlaceFilters>(emptyFilters);
-  const [origin, setOrigin] = useState<Coordinates>(PILOT_CITY_CENTER);
+  const {
+    origin,
+    status: locationStatus,
+    request: requestPreciseLocation,
+  } = useOrigin();
   const [view, setView] = useState<"lista" | "mapa">("lista");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -133,7 +138,10 @@ export default function ExplorePage() {
       const next = current.categories.includes(category)
         ? current.categories.filter((item) => item !== category)
         : [...current.categories, category];
-      track("explore_search", { category, active: !current.categories.includes(category) });
+      track("explore_search", {
+        category,
+        active: !current.categories.includes(category),
+      });
       return { ...current, categories: next };
     });
   }
@@ -145,34 +153,6 @@ export default function ExplorePage() {
         : [...current.attributes, attribute];
       return { ...current, attributes: next };
     });
-  }
-
-  function requestPreciseLocation() {
-    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
-      toast.error("Este navegador não oferece localização.");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          setOrigin({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-          await updateSettings({ usePreciseLocation: true });
-          toast.success("Distâncias atualizadas com a sua localização.");
-        } catch (caught) {
-          toast.error(
-            caught instanceof Error
-              ? caught.message
-              : "Não foi possível salvar a preferência de localização.",
-          );
-        }
-      },
-      () => {
-        toast("Continuamos usando o centro da cidade", {
-          description: "Você pode ativar a localização quando quiser.",
-        });
-      },
-      { enableHighAccuracy: false, timeout: 6000 },
-    );
   }
 
   async function handleSearchOpenStreetMap() {
@@ -323,7 +303,8 @@ export default function ExplorePage() {
             </CardTitle>
             <p className="mt-0.5 text-meta leading-relaxed text-ink-soft">
               Consulte o guia offline de primeiros socorros e alimentos tóxicos
-              (uva, xilitol, chocolate, remédios) ou filtre hospitais 24h abaixo.
+              (uva, xilitol, chocolate, remédios) ou filtre hospitais 24h
+              abaixo.
             </p>
           </div>
         </div>
@@ -452,9 +433,13 @@ export default function ExplorePage() {
           className="inline-flex items-center gap-1 font-medium text-teal-ink"
         >
           <LocateFixed aria-hidden="true" className="size-3.5" />
-          {settings.usePreciseLocation
+          {locationStatus === "precisa"
             ? "Usando sua localização"
-            : "Usar minha localização"}
+            : locationStatus === "carregando"
+              ? "Buscando sua localização…"
+              : locationStatus === "negado" || locationStatus === "indisponivel"
+                ? "Tentar localização novamente"
+                : "Usar minha localização"}
         </button>
       </div>
 
@@ -473,7 +458,10 @@ export default function ExplorePage() {
           description="Limpe os filtros, busque clínicas reais próximas via OpenStreetMap ou cadastre seu veterinário de confiança."
           action={
             <div className="flex flex-wrap justify-center gap-2">
-              <Button variant="secondary" onClick={() => setFilters(emptyFilters)}>
+              <Button
+                variant="secondary"
+                onClick={() => setFilters(emptyFilters)}
+              >
                 Limpar filtros
               </Button>
               <Button onClick={() => setCreateOpen(true)}>
@@ -649,7 +637,10 @@ export default function ExplorePage() {
               onChange={(event) => setNewAddress(event.target.value)}
             />
           </Field>
-          <Field htmlFor="place-notes" label="Observações (plantonista, convênio, referências)">
+          <Field
+            htmlFor="place-notes"
+            label="Observações (plantonista, convênio, referências)"
+          >
             <Textarea
               id="place-notes"
               rows={2}

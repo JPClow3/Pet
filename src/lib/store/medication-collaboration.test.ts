@@ -1,11 +1,16 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useAppStore } from "@/lib/store/app-store";
 import { recordMedicationDose } from "@/lib/domain/medication";
 import type { MedicationCourse } from "@/lib/domain/schema";
+import { setCareSyncUser } from "@/lib/cloud/care-sync";
 
 describe("Colaboração Multi-Tutor e Prevenção de Dose Dupla", () => {
-  beforeEach(() => {
-    useAppStore.setState({
+  afterEach(() => {
+    setCareSyncUser(null);
+    vi.restoreAllMocks();
+  });
+  beforeEach(async () => {
+    await useAppStore.setState({
       ready: true,
       tutor: {
         name: "Carlos",
@@ -82,6 +87,55 @@ describe("Colaboração Multi-Tutor e Prevenção de Dose Dupla", () => {
       ],
     });
   });
+
+  it.each(["given", "skipped"] as const)(
+    "publica a dose diária %s e persiste a autoria vencedora de outro aparelho",
+    async (status) => {
+      setCareSyncUser("owner-user");
+      const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        Response.json({
+          event: {
+            id: "shared-event",
+            petId: "pet-luna",
+            ownerUserId: "owner-user",
+            actorUserId: "ana-user",
+            actorName: "Ana",
+            actorRole: "co_tutor",
+            eventType: "medication_dose",
+            recordId: "rec-antibiotico",
+            scheduleId: "sched-1",
+            eventKey: "sched-1:2026-10-28T08:00",
+            status: "given",
+            payload: { eventId: "dose-ana" },
+            occurredAt: "2026-10-28T11:01:00.000Z",
+            createdAt: "2026-10-28T11:01:00.000Z",
+          },
+        }),
+      );
+      const action = useAppStore
+        .getState()
+        .recordMedicationDose("rec-antibiotico", {
+          scheduleId: "sched-1",
+          date: "2026-10-28",
+          time: "08:00",
+          status,
+          expectedEventId: null,
+        });
+      if (status === "given") expect(await action).toBe("dose-ana");
+      else await expect(action).rejects.toThrow(/atualizada por Ana/);
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/cloud/care-sync",
+        expect.objectContaining({ method: "POST" }),
+      );
+      expect(
+        useAppStore.getState().records[0].medication!.events.at(-1),
+      ).toMatchObject({
+        id: "dose-ana",
+        recordedBy: "Ana",
+        actorRole: "co_tutor",
+      });
+    },
+  );
 
   it("registra quem administrou a dose no histórico para consulta da família", async () => {
     // Carlos (tutor logado) dá a dose das 08:00

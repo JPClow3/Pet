@@ -7,6 +7,10 @@ import type { Pet } from "@/lib/domain/schema";
 const mockSitter = vi.hoisted(() => ({
   createPass: vi.fn(),
   updatePet: vi.fn(),
+  user: { id: "user-1", email: "carlos@example.com" } as {
+    id: string;
+    email: string;
+  } | null,
 }));
 
 vi.mock("@/lib/store/app-store", () => ({
@@ -24,7 +28,7 @@ vi.mock("@/lib/cloud/collaboration-client", () => ({
 vi.mock("@/lib/cloud/client", () => ({
   getCloudClient: () => ({
     useSession: () => ({
-      data: { user: { id: "user-1", email: "carlos@example.com" } },
+      data: mockSitter.user ? { user: mockSitter.user } : null,
       isPending: false,
     }),
   }),
@@ -65,6 +69,7 @@ const mockPet: Pet = {
 describe("Modal de Configuração do Modo Cuidador / Pet Sitter", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSitter.user = { id: "user-1", email: "carlos@example.com" };
     mockSitter.updatePet.mockResolvedValue(undefined);
     mockSitter.createPass.mockResolvedValue({
       passId: "pass-1",
@@ -72,6 +77,40 @@ describe("Modal de Configuração do Modo Cuidador / Pet Sitter", () => {
       url: "/sitter/s_test_token_123456789012345678901234567890123",
       expiresAt: "2026-11-05T00:00:00.000Z",
     });
+  });
+
+  it("não preenche as instruções com notas privadas do pet", () => {
+    render(
+      <PetSitterConfigModal
+        pet={mockPet}
+        records={[]}
+        open
+        onClose={vi.fn()}
+      />,
+    );
+    expect(screen.queryByDisplayValue(mockPet.notes!)).not.toBeInTheDocument();
+  });
+
+  it("exige conta para criar um link utilizável em outro aparelho", async () => {
+    mockSitter.user = null;
+    render(
+      <PetSitterConfigModal
+        pet={mockPet}
+        records={[]}
+        open
+        onClose={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: "Gerar Acesso Seguro" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("link", { name: /entre na sua conta/i }),
+    ).toHaveAttribute("href", "/account");
+    expect(mockSitter.createPass).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("heading", { name: "Link do Cuidador Criado!" }),
+    ).not.toBeInTheDocument();
   });
 
   it("renderiza os campos essenciais: PIN, validade, alergias, rotina alimentar e emergência", () => {
