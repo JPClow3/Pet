@@ -15,5 +15,13 @@
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
-  }
+  },
+  // Local preview: set CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE
+  // to the pethub_api URL (same value as DATABASE_URL). Do not commit the secret.
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "cb0363e86fb8499cbc66c990928345a7"
+    }
+  ]
 }

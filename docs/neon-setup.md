@@ -15,6 +15,19 @@ NEON_AUTH_COOKIE_SECRET=SEGREDO_ALEATORIO_COM_PELO_MENOS_32_CARACTERES
 DATABASE_URL=postgresql://pethub_api:SENHA@SEU_ENDPOINT/pethub?sslmode=require
 ```
 
+No Worker publicado, as consultas do papel `pethub_api` passam pelo binding
+`HYPERDRIVE` (configuração `pethub-hyperdrive`) usando o driver TCP Postgres.js.
+Cada chamada abre um cliente novo, limitado a 5 conexões, e o encerra com
+`ctx.waitUntil`. `next dev` e a suíte Vitest usam `DATABASE_URL` quando o binding
+não está presente. Para `pnpm cf:preview` ou `wrangler dev`, defina
+`CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` com a mesma URL do
+`pethub_api`. Não grave essa senha no `wrangler.jsonc`.
+
+O dispatcher agendado permanece no driver HTTP da Neon (`PUSH_DATABASE_URL`,
+papel `pethub_push_api`): esse Hyperdrive cobre apenas um papel. Neon Auth não
+usa essa conexão. O script `scripts/test-cloud-database.mjs` também continua no
+driver HTTP.
+
 O SDK mantém cookies HTTP-only; a chave de cookie e a conexão PostgreSQL nunca
 entram no bundle do navegador. As versões dos dois SDKs Neon estão fixadas.
 
@@ -227,8 +240,9 @@ recuperação, entrada/saída e restauração entre dois navegadores publicados.
 
 Com `DATABASE_URL` apontando para o login restrito, execute
 `node scripts/test-cloud-database.mjs` para repetir as asserções de RLS e revisão
-pela conexão HTTP usada pelo app. As mudanças do teste são revertidas mesmo
-quando todas as asserções passam.
+pelo driver HTTP. O app publicado consulta pelo Hyperdrive; este script não passa
+por ele. As mudanças do teste são revertidas mesmo quando todas as asserções
+passam.
 
 Referências: [Next.js com Neon Auth](https://neon.com/docs/auth/quick-start/nextjs-api-only),
 [códigos de verificação](https://neon.com/docs/auth/guides/email-verification),

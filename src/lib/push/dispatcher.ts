@@ -188,6 +188,8 @@ export async function dispatchPush(
   const fetcher = options.fetcher ?? fetch;
   const now = options.now ? options.now() : new Date();
 
+  // HYPERDRIVE is bound to the pethub_api role only. The dispatcher must keep
+  // using pethub_push_api over the Neon HTTP driver.
   const sql = neon(env.PUSH_DATABASE_URL);
   let execute: (query: unknown) => Promise<unknown>;
 
