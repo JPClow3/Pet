@@ -99,7 +99,7 @@ export default async function PublicCardPage({ params }: { params: Params }) {
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-5 py-10">
       <Brand href="/welcome" className="mb-2 self-center" />
       <section className="flex flex-col items-center gap-3 rounded-feature border border-line/80 bg-paper p-6 text-center shadow-card">
-        <span className="flex size-20 items-center justify-center rounded-2xl bg-blue-soft text-blue-deep">
+        <span className="flex size-20 items-center justify-center rounded-card bg-blue-soft text-blue-deep">
           <PawPrint aria-hidden="true" className="size-9" />
         </span>
         <div>
@@ -123,7 +123,7 @@ export default async function PublicCardPage({ params }: { params: Params }) {
         </p>
 
         {card.lost ? (
-          <div className="flex w-full flex-col gap-2 rounded-2xl bg-danger/12 p-3 text-left">
+          <div className="flex w-full flex-col gap-2 rounded-card bg-danger/12 p-3 text-left">
             <p className="flex items-center gap-2 font-semibold text-danger-ink">
               <Siren aria-hidden="true" className="size-4" />
               {managed

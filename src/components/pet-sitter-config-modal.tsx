@@ -216,7 +216,7 @@ export function PetSitterConfigModal({
             </p>
           </div>
 
-          <div className="rounded-2xl border border-line bg-paper p-4 shadow-sm">
+          <div className="rounded-card border border-line bg-paper p-4 shadow-sm">
             <QrCode value={generatedResult.url} className="size-48" />
           </div>
 
@@ -342,7 +342,7 @@ export function PetSitterConfigModal({
           </Field>
 
           {/* Alergias & Cuidados Especiais */}
-          <div className="flex flex-col gap-3 rounded-2xl border border-line bg-paper p-3.5">
+          <div className="flex flex-col gap-3 rounded-card border border-line bg-paper p-3.5">
             <div className="flex items-center gap-2 text-sm font-bold text-ink">
               <ShieldAlert
                 aria-hidden="true"
@@ -380,7 +380,7 @@ export function PetSitterConfigModal({
           </div>
 
           {/* Rotina Alimentar */}
-          <div className="flex flex-col gap-3 rounded-2xl border border-line bg-paper p-3.5">
+          <div className="flex flex-col gap-3 rounded-card border border-line bg-paper p-3.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-bold text-ink">
                 <Utensils aria-hidden="true" className="size-4 text-teal-ink" />
@@ -452,7 +452,7 @@ export function PetSitterConfigModal({
           </div>
 
           {/* Contatos de Emergência */}
-          <div className="flex flex-col gap-3 rounded-2xl border border-line bg-paper p-3.5">
+          <div className="flex flex-col gap-3 rounded-card border border-line bg-paper p-3.5">
             <div className="flex items-center gap-2 text-sm font-bold text-ink">
               <Phone aria-hidden="true" className="size-4 text-teal-ink" />
               Contatos de Emergência 1-Toque

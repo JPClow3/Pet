@@ -102,7 +102,7 @@ export function DocumentEditor({
         {error ? (
           <p
             role="alert"
-            className="rounded-2xl bg-danger-soft p-3 text-sm text-danger-ink"
+            className="rounded-card bg-danger-soft p-3 text-sm text-danger-ink"
           >
             {error}
           </p>
@@ -129,7 +129,7 @@ export function DocumentEditor({
             />
           </Field>
         ) : (
-          <p className="flex items-start gap-2 rounded-2xl bg-surface p-3 text-sm text-ink-soft">
+          <p className="flex items-start gap-2 rounded-card bg-surface p-3 text-sm text-ink-soft">
             <FileText aria-hidden="true" className="size-5 shrink-0" />
             <span className="min-w-0 break-all">
               {initial.fileName}

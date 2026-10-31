@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Eye, FileText, Printer, QrCode, ShieldCheck, Siren } from "lucide-react";
+import { ChevronRight, Eye, FileText, Printer, ShieldCheck, Siren } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -158,7 +158,7 @@ export default function PetCardPage() {
         </Button>
 
         {pet.lostMode.active ? (
-          <div className="flex flex-col gap-2 rounded-2xl border border-danger/30 bg-danger/10 p-4">
+          <div className="flex flex-col gap-2 rounded-card border border-danger/30 bg-danger/10 p-4">
             <div className="flex items-center justify-between gap-2">
               <span className="font-bold text-danger-ink flex items-center gap-1.5">
                 <Siren className="size-4" /> Cartaz de Pet Perdido Pronto
@@ -218,7 +218,7 @@ export default function PetCardPage() {
       {url ? (
         <Card className="flex flex-col gap-3 border-blue/20 bg-blue-soft/45 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-blue text-white">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-card bg-blue text-white">
               <Eye aria-hidden="true" className="size-5" />
             </span>
             <div>
@@ -335,7 +335,7 @@ export default function PetCardPage() {
             </Chip>
           </li>
         </ul>
-        <p className="rounded-2xl bg-surface px-3 py-2 text-meta leading-relaxed text-muted">
+        <p className="rounded-card bg-surface px-3 py-2 text-meta leading-relaxed text-muted">
           Novos links gerenciados expiram e podem ser revogados ou atualizados
           acima. Mudar a privacidade local não publica nada automaticamente.
           Links antigos que contêm uma cópia dos dados continuam imutáveis e não

@@ -9,7 +9,7 @@ export const metadata = {
 export default function OfflinePage() {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-4 px-6 py-16 text-center">
-      <span className="flex size-16 items-center justify-center rounded-2xl bg-surface-subtle text-teal-ink">
+      <span className="flex size-16 items-center justify-center rounded-card bg-surface-subtle text-teal-ink">
         <CloudOff aria-hidden="true" className="size-7" />
       </span>
       <h1 className="text-2xl font-semibold text-ink">Você está sem conexão</h1>

@@ -124,7 +124,7 @@ export function LostPetPosterModal({
       description={`Crie um cartaz A4 pronto para impressão e WhatsApp de ${pet.name}.`}
     >
       <div className="flex flex-col gap-5 pb-6">
-        <div className="rounded-2xl border border-danger/30 bg-danger/10 p-4">
+        <div className="rounded-card border border-danger/30 bg-danger/10 p-4">
           <div className="flex items-center gap-2 text-danger-ink">
             <Siren aria-hidden="true" className="size-5 shrink-0" />
             <span className="font-bold">Modo Perdido Ativo</span>

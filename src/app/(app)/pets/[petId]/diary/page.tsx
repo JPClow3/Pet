@@ -6,13 +6,11 @@ import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { PageHeader } from "@/components/page-header";
-import { CareTabs } from "@/components/care-tabs";
+import { CareHeader } from "@/components/care-tabs";
 import { PetContextSwitcher } from "@/components/pet-header";
 import { PhotoPicker } from "@/components/photo-picker";
 import { Photo } from "@/components/ui/photo";
 import { Button, ButtonLink } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field, Input, Textarea } from "@/components/ui/field";
@@ -198,48 +196,45 @@ function PetDiaryPage() {
 
   return (
     <div className="flex flex-col gap-4 pb-24">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-meta font-bold uppercase tracking-[0.14em] text-muted">
-          Cuidados
-        </span>
-        <PetContextSwitcher
-          scope={pet.id}
-          onScopeChange={(scope) => {
-            if (scope !== "todos" && scope !== pet.id)
-              router.push(`/pets/${scope}/diary`);
-          }}
-        />
-      </div>
-      <CareTabs active="diario" pet={pet} />
-      <PageHeader
-        title="Diário"
-        subtitle={`A história de ${pet.name}`}
-        backHref="/pets"
+      <CareHeader
+        active="diario"
+        pet={pet}
+        context={
+          <PetContextSwitcher
+            scope={pet.id}
+            onScopeChange={(scope) => {
+              if (scope !== "todos" && scope !== pet.id)
+                router.push(`/pets/${scope}/diary`);
+            }}
+          />
+        }
         action={
           <Button size="sm" onClick={openNew}>
             <Plus aria-hidden="true" className="size-4" />
-            Novo
+            Novo momento
           </Button>
         }
       />
 
-      <Card className="flex items-start gap-3">
+      <p className="flex items-start gap-2 text-meta text-muted">
         <Lock
           aria-hidden="true"
           className="mt-0.5 size-4 shrink-0 text-teal-ink"
         />
-        <p className="text-meta text-muted">
-          O diário é privado por padrão. Informações de saúde nunca são
-          publicadas automaticamente na comunidade.
-        </p>
-      </Card>
+        O diário é privado por padrão. Informações de saúde nunca são
+        publicadas automaticamente na comunidade.
+      </p>
 
       {entries.length === 0 ? (
         <EmptyState
           icon={<NotebookPen aria-hidden="true" className="size-5" />}
           title="Comece pelo momento de hoje"
           description="“Primeiro banho no pet shop novo.”, “31,4 kg — controle mensal.”, “Hoje aprendeu a sentar.”"
-          action={<Button onClick={openNew}>Guardar primeiro momento</Button>}
+          action={
+            <Button variant="secondary" onClick={openNew}>
+              Guardar primeiro momento
+            </Button>
+          }
         />
       ) : (
         <ul className="flex flex-col gap-4">
@@ -266,7 +261,7 @@ function PetDiaryPage() {
                   <Photo
                     src={entry.photo}
                     alt={entry.text.slice(0, 80)}
-                    className="w-full rounded-2xl"
+                    className="w-full rounded-card"
                   />
                 ) : null}
 
@@ -343,7 +338,7 @@ function PetDiaryPage() {
           {draft.restored || draft.storageError ? (
             <p
               role="status"
-              className="rounded-2xl border border-line bg-surface px-4 py-3 text-meta text-ink-soft"
+              className="rounded-card border border-line bg-surface px-4 py-3 text-meta text-ink-soft"
             >
               {draft.storageError ??
                 "Rascunho recuperado nesta aba. Se havia uma nova foto, selecione-a novamente."}
@@ -434,7 +429,7 @@ function PetDiaryPage() {
                 type="button"
                 aria-pressed={visibility === "privado"}
                 onClick={() => setField("visibility", "privado")}
-                className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl border text-label font-medium ${
+                className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-card border text-label font-medium ${
                   visibility === "privado"
                     ? "border-teal-ink bg-mint text-teal-ink"
                     : "border-line bg-paper text-ink-soft"
@@ -447,7 +442,7 @@ function PetDiaryPage() {
                 type="button"
                 aria-pressed={visibility === "publico"}
                 onClick={() => setField("visibility", "publico")}
-                className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl border text-label font-medium ${
+                className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-card border text-label font-medium ${
                   visibility === "publico"
                     ? "border-teal-ink bg-mint text-teal-ink"
                     : "border-line bg-paper text-ink-soft"

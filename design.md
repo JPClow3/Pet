@@ -595,7 +595,7 @@ Test each text/background and state pair independently. Never assume light-mode 
 | Label   | 14/20, 600                     | 14/20   | Controls and metadata                        |
 | Caption | 12/17, 550                     | 13/18   | Never essential alone                        |
 
-Editorial display copy uses tight optical tracking between `-0.035em` and `-0.02em`; operational Manrope remains between `-0.01em` and `0`. Uppercase eyebrows are limited to short section labels and use `0.08em–0.12em`, never the current poster-like treatment on every group.
+Editorial display copy uses tight optical tracking between `-0.035em` and `-0.02em`; operational Manrope remains between `-0.01em` and `0`. No letter-spaced uppercase eyebrows above headings or groups: section labels are sentence case, semibold, muted. Uppercase is reserved for table headers in printed documents.
 
 ### Spacing and geometry
 
@@ -603,7 +603,7 @@ Editorial display copy uses tight optical tracking between `-0.035em` and `-0.02
 - Mobile gutters: 16px at 320px, 20px from 375px.
 - Tablet gutters: 24–32px. Desktop gutters: 32–48px.
 - Touch targets: 48×48px preferred, 44×44px absolute minimum, 8px between adjacent targets.
-- Standard card radius: 18px; featured/emotional card: 24px; controls: 14px; small chips: 999px; sheets: 28px top corners.
+- Standard card radius: 12px; featured card: 16px; controls: 10px; small chips: 999px; sheets: 20px top corners. Keep corners modest: large radii and soft drop shadows on every surface read as template UI.
 - Use pills only for compact selection/status, not every button and container.
 - Standard cards are flat: a 1px hairline or a single surface shift, not both plus a shadow. Hover may change the border or surface but must not lift every card.
 - Shadows are warm and quiet: `shadow-soft` for the current interactive object and `shadow-float` for overlays. Hard-offset sticker shadows are a Welcome/share-card exception, not a system token.

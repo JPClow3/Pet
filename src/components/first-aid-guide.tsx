@@ -130,7 +130,7 @@ export function FirstAidGuide({
     <div className="flex flex-col gap-4">
       <Card className="flex flex-col gap-3 border-danger/35 bg-danger-soft/50 p-4">
         <div className="flex items-start gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-danger-soft text-danger-ink">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-card bg-danger-soft text-danger-ink">
             <Siren aria-hidden="true" className="size-5" />
           </span>
           <div className="min-w-0">
@@ -146,9 +146,9 @@ export function FirstAidGuide({
         </div>
 
         {primaryEmergencyContact ? (
-          <div className="flex flex-col gap-2 rounded-2xl border border-line/80 bg-paper p-3">
+          <div className="flex flex-col gap-2 rounded-card border border-line/80 bg-paper p-3">
             <div className="min-w-0">
-              <span className="text-caption font-bold uppercase tracking-[0.08em] text-danger-ink">
+              <span className="text-caption font-semibold text-danger-ink">
                 {primaryEmergencyContact.badge}
               </span>
               <p className="truncate text-label font-semibold text-ink">
@@ -179,7 +179,7 @@ export function FirstAidGuide({
             </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-2 rounded-2xl border border-dashed border-danger/35 bg-paper p-3">
+          <div className="flex flex-col gap-2 rounded-card border border-dashed border-danger/35 bg-paper p-3">
             <p className="text-label font-semibold text-ink">
               Salve sua clínica 24h de confiança
             </p>
@@ -314,7 +314,7 @@ export function FirstAidGuide({
                         {guide.summary}
                       </p>
 
-                      <div className="rounded-2xl bg-warning-soft/75 p-3">
+                      <div className="rounded-card bg-warning-soft/75 p-3">
                         <p className="flex items-center gap-1.5 text-label font-bold text-warning-ink">
                           <ShieldAlert
                             aria-hidden="true"
@@ -332,7 +332,7 @@ export function FirstAidGuide({
                         </ul>
                       </div>
 
-                      <div className="rounded-2xl border border-teal/25 bg-success-soft/55 p-3">
+                      <div className="rounded-card border border-teal/25 bg-success-soft/55 p-3">
                         <p className="flex items-center gap-1.5 text-label font-bold text-success-ink">
                           <CheckCircle2
                             aria-hidden="true"
@@ -347,7 +347,7 @@ export function FirstAidGuide({
                         </ol>
                       </div>
 
-                      <div className="rounded-2xl border border-danger/25 bg-danger-soft/55 p-3">
+                      <div className="rounded-card border border-danger/25 bg-danger-soft/55 p-3">
                         <p className="flex items-center gap-1.5 text-label font-bold text-danger-ink">
                           <XCircle
                             aria-hidden="true"
@@ -503,7 +503,7 @@ export function FirstAidGuide({
                           {item.summary}
                         </p>
                         {item.symptoms.length > 0 ? (
-                          <div className="rounded-2xl bg-surface/80 p-3">
+                          <div className="rounded-card bg-surface/80 p-3">
                             <p className="text-label font-bold text-ink">
                               {item.risk === "seguro"
                                 ? "Cuidados no preparo"

@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowUpRight,
   CalendarClock,
   Camera,
   ClipboardPlus,
@@ -132,7 +131,7 @@ function AttentionGroup({
       <div className="mb-2 flex items-center gap-2">
         <span
           className={cn(
-            "text-meta font-bold uppercase tracking-[0.14em]",
+            "text-meta font-semibold",
             toneClasses[tone],
           )}
         >
@@ -250,10 +249,10 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col gap-6 pb-8">
-      <section className="rounded-feature border border-blue/20 bg-blue-soft/55 p-5 shadow-none sm:p-7">
-        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <section className="border-b border-line pb-6">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div className="min-w-0 sm:flex-1">
-            <p className="text-meta font-bold uppercase tracking-[0.14em] text-blue-deep">
+            <p className="text-meta text-muted">
               {formatShortDate(todayKey())}
             </p>
             <h1 className="mt-1 font-editorial text-h1 font-semibold leading-none tracking-tight text-ink">
@@ -293,7 +292,7 @@ export default function HomePage() {
             )}
           </div>
         </div>
-        <div className="relative mt-5 flex flex-col sm:max-w-xs">
+        <div className="mt-5 flex flex-col sm:max-w-xs">
           <ButtonLink href={recordHref} variant="blue">
             <ClipboardPlus aria-hidden="true" className="size-4" />
             {hasCareData ? "Registrar cuidado" : "Registrar primeiro cuidado"}
@@ -315,8 +314,7 @@ export default function HomePage() {
                 href="/reminders"
                 className="inline-flex min-h-11 items-center gap-1 text-meta font-bold text-teal-ink hover:text-teal-deep"
               >
-                Abrir tudo{" "}
-                <ArrowUpRight aria-hidden="true" className="size-4" />
+                Abrir tudo
               </Link>
             ) : null}
           </div>
@@ -416,25 +414,25 @@ export default function HomePage() {
               </Link>
               <Link
                 href={`/pets/${activePet.id}/health/new?type=peso`}
-                className="group flex min-h-24 flex-col justify-between rounded-card border border-line bg-paper p-3 text-label font-bold text-ink transition-colors hover:border-blue/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep focus-visible:ring-offset-2"
+                className="group flex min-h-24 flex-col justify-between rounded-card border border-line bg-paper p-3 text-label font-bold text-ink transition-colors hover:border-ink/25 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
               >
-                <Scale aria-hidden="true" className="size-5 text-blue-deep" />{" "}
+                <Scale aria-hidden="true" className="size-5 text-muted" />{" "}
                 Registrar peso
               </Link>
               <Link
                 href={`/pets/${activePet.id}/diary`}
-                className="group flex min-h-24 flex-col justify-between rounded-card border border-line bg-paper p-3 text-label font-bold text-ink transition-colors hover:border-accent/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                className="group flex min-h-24 flex-col justify-between rounded-card border border-line bg-paper p-3 text-label font-bold text-ink transition-colors hover:border-ink/25 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
               >
-                <Camera aria-hidden="true" className="size-5 text-accent-ink" />{" "}
+                <Camera aria-hidden="true" className="size-5 text-muted" />{" "}
                 Guardar momento
               </Link>
               <Link
                 href={`/pets/${activePet.id}/card`}
-                className="group flex min-h-24 flex-col justify-between rounded-card border border-line bg-paper p-3 text-label font-bold text-ink transition-colors hover:border-warning/55 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning-ink focus-visible:ring-offset-2"
+                className="group flex min-h-24 flex-col justify-between rounded-card border border-line bg-paper p-3 text-label font-bold text-ink transition-colors hover:border-ink/25 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
               >
                 <FileText
                   aria-hidden="true"
-                  className="size-5 text-warning-ink"
+                  className="size-5 text-muted"
                 />{" "}
                 Abrir carteirinha
               </Link>

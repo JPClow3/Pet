@@ -321,7 +321,7 @@ function CardControls({
         </>
       ) : null}
       {pending ? (
-        <div className="flex flex-col gap-3 rounded-2xl bg-surface p-4">
+        <div className="flex flex-col gap-3 rounded-card bg-surface p-4">
           <p className="text-meta text-ink">
             {pending.action === "revoke"
               ? "O link e os QR Codes que apontam para ele deixarão de abrir a carteirinha."

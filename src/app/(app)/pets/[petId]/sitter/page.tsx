@@ -152,7 +152,7 @@ export default function LocalPetSitterPage() {
   return (
     <div className="flex flex-col gap-4 pb-16">
       {/* Visão simplificada de cuidados no aparelho */}
-      <div className="flex items-center justify-between rounded-2xl bg-teal-ink px-4 py-3 text-white shadow-sm">
+      <div className="flex items-center justify-between rounded-card bg-teal-ink px-4 py-3 text-white shadow-sm">
         <div className="flex items-center gap-2 text-xs font-semibold">
           <HeartPulse aria-hidden="true" className="size-4" />
           <span>Visão de cuidados no aparelho</span>
@@ -202,7 +202,7 @@ export default function LocalPetSitterPage() {
       {pet.allergies && pet.allergies.length > 0 ? (
         <section
           aria-label="Alergias críticas"
-          className="flex flex-col gap-2 rounded-2xl border-2 border-danger-ink/40 bg-danger-soft/60 p-4 shadow-sm"
+          className="flex flex-col gap-2 rounded-card border-2 border-danger-ink/40 bg-danger-soft/60 p-4 shadow-sm"
         >
           <div className="flex items-center gap-2 font-bold text-danger-ink">
             <ShieldAlert aria-hidden="true" className="size-5 shrink-0" />
@@ -223,12 +223,12 @@ export default function LocalPetSitterPage() {
 
       {/* Contatos de Emergência */}
       <section aria-label="Contatos de emergência">
-        <h2 className="mb-2 text-meta font-bold uppercase tracking-wider text-muted">
+        <h2 className="mb-2 text-meta font-semibold text-muted">
           Emergência 1-Toque
         </h2>
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           {/* Tutor */}
-          <div className="flex flex-col justify-between rounded-2xl border border-line bg-paper p-3.5 shadow-sm">
+          <div className="flex flex-col justify-between rounded-card border border-line bg-paper p-3.5 shadow-sm">
             <div>
               <span className="text-xs font-semibold text-muted">Tutor(a)</span>
               <p className="text-sm font-bold text-ink">
@@ -260,7 +260,7 @@ export default function LocalPetSitterPage() {
 
           {/* Veterinário */}
           {emergencyVet ? (
-            <div className="flex flex-col justify-between rounded-2xl border-2 border-danger-ink/20 bg-paper p-3.5 shadow-sm">
+            <div className="flex flex-col justify-between rounded-card border-2 border-danger-ink/20 bg-paper p-3.5 shadow-sm">
               <div>
                 <span className="text-xs font-semibold text-danger-ink">
                   Veterinário 24h
@@ -303,7 +303,7 @@ export default function LocalPetSitterPage() {
       {/* Rotina Alimentar */}
       {pet.feedingRoutine && pet.feedingRoutine.length > 0 ? (
         <section aria-label="Rotina alimentar">
-          <h2 className="mb-2 flex items-center gap-1.5 text-meta font-bold uppercase tracking-wider text-muted">
+          <h2 className="mb-2 flex items-center gap-1.5 text-meta font-semibold text-muted">
             <Utensils aria-hidden="true" className="size-4 text-teal-ink" />
             Rotina Alimentar
           </h2>
@@ -313,7 +313,7 @@ export default function LocalPetSitterPage() {
               return (
                 <div
                   key={feed.id}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-paper p-3.5 shadow-sm"
+                  className="flex items-center justify-between gap-3 rounded-card border border-line bg-paper p-3.5 shadow-sm"
                 >
                   <div className="flex items-center gap-3">
                     <span className="rounded-xl bg-surface px-2.5 py-1.5 font-mono text-sm font-bold text-teal-ink">
@@ -355,7 +355,7 @@ export default function LocalPetSitterPage() {
       {/* Medicamentos Ativos */}
       {activeMedications.length > 0 ? (
         <section aria-label="Remédios ativos">
-          <h2 className="mb-2 flex items-center gap-1.5 text-meta font-bold uppercase tracking-wider text-muted">
+          <h2 className="mb-2 flex items-center gap-1.5 text-meta font-semibold text-muted">
             <Pill aria-hidden="true" className="size-4 text-teal-ink" />
             Horários de Remédios
           </h2>
@@ -363,7 +363,7 @@ export default function LocalPetSitterPage() {
             {activeMedications.map((med) => (
               <div
                 key={`${med.recordId}-${med.scheduleId}`}
-                className="flex flex-col gap-2.5 rounded-2xl border border-line bg-paper p-4 shadow-sm"
+                className="flex flex-col gap-2.5 rounded-card border border-line bg-paper p-4 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>

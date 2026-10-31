@@ -79,19 +79,19 @@ export function PlaceCard({
       >
         <span
           aria-hidden="true"
-          className="relative flex size-12 shrink-0 items-center justify-center rounded-2xl border border-line/60 bg-paper/95 text-teal-ink shadow-sm"
+          className="relative flex size-12 shrink-0 items-center justify-center rounded-card border border-line/60 bg-paper/95 text-teal-ink shadow-sm"
         >
           <Icon className="size-6" />
         </span>
 
         <div className="flex flex-wrap items-center justify-end gap-1.5">
           {is24h ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-danger-soft px-2.5 py-1 text-caption font-bold uppercase tracking-[0.06em] text-danger-ink">
+            <span className="inline-flex items-center gap-1 rounded-full bg-danger-soft px-2.5 py-1 text-caption font-semibold text-danger-ink">
               <Siren aria-hidden="true" className="size-3.5" />
               24h
             </span>
           ) : null}
-          <span className="rounded-full bg-paper/85 px-2.5 py-1 text-caption font-bold uppercase tracking-[0.08em] text-ink-soft">
+          <span className="rounded-full bg-paper/85 px-2.5 py-1 text-caption font-semibold text-ink-soft">
             {placeCategoryMeta[place.category].label}
           </span>
           {onToggleFavorite ? (

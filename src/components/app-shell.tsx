@@ -8,8 +8,6 @@ import {
   House,
   PawPrint,
   UserRound,
-  ArrowUpRight,
-  ShieldCheck,
 } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
 
@@ -109,7 +107,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-h-13 items-center justify-center gap-3 rounded-2xl px-3 text-body font-semibold transition-colors lg:justify-start",
+                "flex min-h-13 items-center justify-center gap-3 rounded-card px-3 text-body font-semibold transition-colors lg:justify-start",
                 active
                   ? "bg-surface text-ink font-bold"
                   : "text-ink-soft hover:bg-surface/70",
@@ -126,36 +124,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
           );
         })}
-        <div className="mt-auto hidden rounded-card border border-line/80 bg-surface/60 p-4 shadow-none lg:block">
-          <ShieldCheck
-            className="mb-2 size-5 text-teal-ink"
-            aria-hidden="true"
-          />
-          <p className="text-sm font-semibold text-ink">
-            Um cuidado de cada vez.
-          </p>
-          <p className="mt-1 text-xs leading-relaxed text-muted">
-            A história do seu pet, sempre por perto.
-          </p>
-          <Link
-            href="/profile"
-            className="mt-2 flex min-h-11 items-center gap-1.5 text-xs font-bold text-teal-ink hover:text-teal-deep"
-          >
-            Seus dados e privacidade <ArrowUpRight className="size-3.5" />
-          </Link>
-        </div>
       </aside>
 
       <div className="flex min-h-dvh min-w-0 flex-col">
         <header className="sticky top-0 z-20 border-b border-line/60 bg-canvas">
-          <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-4 py-3 sm:px-6 lg:px-10">
+          <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-4 py-3 sm:px-6 md:justify-end lg:px-10">
             <div className="md:hidden">
               <Brand />
             </div>
-            <p className="hidden text-sm text-muted md:block">
-              O cuidado de hoje.{" "}
-              <span className="font-medium text-ink">A história inteira.</span>
-            </p>
             <div className="flex items-center gap-1">
               <ThemeToggle />
               <NotificationBell />
@@ -202,15 +178,15 @@ export function AppShell({ children }: { children: ReactNode }) {
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl text-caption font-semibold transition-colors",
+                      "flex min-h-16 flex-col items-center justify-center gap-1 rounded-card text-caption font-semibold transition-colors",
                       active ? "text-ink font-bold" : "text-muted",
                     )}
                   >
                     <span
                       className={cn(
-                        "flex h-7 w-12 items-center justify-center rounded-full transition-[background-color,transform]",
+                        "flex h-7 w-12 items-center justify-center rounded-full transition-colors",
                         active
-                          ? "bg-surface-subtle text-teal-ink -translate-y-0.5"
+                          ? "bg-surface text-teal-ink"
                           : "text-muted",
                       )}
                     >

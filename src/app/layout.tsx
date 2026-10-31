@@ -25,7 +25,13 @@ const THEME_BOOTSTRAP_SCRIPT = `(function () {
   var root = document.documentElement;
   var theme = "light";
   try {
-    theme = window.localStorage.getItem("theme") === "dark" ? "dark" : "light";
+    var stored = window.localStorage.getItem("theme");
+    theme =
+      stored === "dark" || stored === "light"
+        ? stored
+        : window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
   } catch (error) {}
   root.classList.remove("light", "dark");
   root.classList.add(theme);

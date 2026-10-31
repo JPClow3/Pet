@@ -6,7 +6,7 @@ export default function NotFound() {
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center gap-5 px-6 text-center">
       <title>Página não encontrada · Zelupi</title>
       <PawPrint className="size-12 text-teal-ink" aria-hidden="true" />
-      <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted">
+      <p className="text-xs font-semibold text-muted">
         Caminho não encontrado
       </p>
       <h1 className="font-display text-4xl">Vamos voltar para casa.</h1>

@@ -372,16 +372,13 @@ export default function OnboardingPage() {
           {draft.restored || draft.storageError ? (
             <p
               role="status"
-              className="mb-4 rounded-2xl border border-line bg-surface px-4 py-3 text-meta text-ink-soft"
+              className="mb-4 rounded-card border border-line bg-surface px-4 py-3 text-meta text-ink-soft"
             >
               {draft.storageError ??
                 "Seu rascunho foi recuperado nesta aba. Continue de onde parou."}
             </p>
           ) : null}
           <div className="mb-8">
-            <p className="inline-flex items-center rounded-full border border-warning/30 bg-sun-soft px-3 py-1 text-meta font-bold text-warning-ink">
-              Só o necessário agora
-            </p>
             <h1
               ref={stepHeading}
               tabIndex={-1}
@@ -555,7 +552,7 @@ export default function OnboardingPage() {
               <div className="flex flex-col gap-5">
                 {error ? (
                   <p
-                    className="rounded-2xl bg-accent-soft px-3 py-2 text-meta font-medium text-danger-ink"
+                    className="rounded-card bg-accent-soft px-3 py-2 text-meta font-medium text-danger-ink"
                     role="alert"
                   >
                     {error}
@@ -608,7 +605,7 @@ export default function OnboardingPage() {
                     placeholder="12,4"
                   />
                 </Field>
-                <div className="flex items-start gap-3 rounded-2xl border border-line/80 bg-surface-subtle p-4">
+                <div className="flex items-start gap-3 rounded-card border border-line/80 bg-surface-subtle p-4">
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-surface text-teal-ink">
                     <PawPrint aria-hidden="true" className="size-4" />
                   </span>
@@ -642,7 +639,7 @@ export default function OnboardingPage() {
             <div className="flex flex-1 flex-col">
               {error ? (
                 <p
-                  className="mb-4 rounded-2xl bg-accent-soft px-3 py-2 text-meta font-medium text-danger-ink"
+                  className="mb-4 rounded-card bg-accent-soft px-3 py-2 text-meta font-medium text-danger-ink"
                   role="alert"
                 >
                   {error}
@@ -678,7 +675,7 @@ export default function OnboardingPage() {
                       >
                         <span
                           className={cn(
-                            "flex size-9 items-center justify-center rounded-2xl",
+                            "flex size-9 items-center justify-center rounded-card",
                             selected
                               ? "bg-paper text-teal-ink"
                               : "bg-surface text-ink-soft",
@@ -762,7 +759,7 @@ export default function OnboardingPage() {
                       />
                     </Field>
                   </div>
-                  <p className="flex items-start gap-2 rounded-2xl bg-mint/60 px-3 py-2.5 text-meta leading-relaxed text-teal-ink">
+                  <p className="flex items-start gap-2 rounded-card bg-mint/60 px-3 py-2.5 text-meta leading-relaxed text-teal-ink">
                     <Check
                       aria-hidden="true"
                       className="mt-0.5 size-4 shrink-0"

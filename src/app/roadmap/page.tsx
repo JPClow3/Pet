@@ -1,11 +1,12 @@
 import {
-  ArrowUpRight,
+  ArrowDown,
+  ArrowRight,
   CheckCircle2,
   ChevronDown,
+  Clock,
   FileText,
   PawPrint,
   ShieldCheck,
-  Sparkles,
   Waypoints,
 } from "lucide-react";
 import Link from "next/link";
@@ -146,7 +147,7 @@ function PhaseSection({
       <div className="flex items-start gap-3">
         <PhaseDot accent={phase.accent} />
         <div className="min-w-0">
-          <p className="text-meta font-bold uppercase tracking-[0.14em] text-muted">
+          <p className="text-meta font-semibold text-muted">
             {phase.eyebrow}
           </p>
           <h2
@@ -199,14 +200,14 @@ export default function RoadmapPage() {
           >
             <a
               href="#roadmap"
-              className="hidden min-h-11 items-center rounded-2xl px-3 text-meta font-bold text-ink-soft transition-colors hover:bg-surface sm:inline-flex"
+              className="hidden min-h-11 items-center rounded-card px-3 text-meta font-bold text-ink-soft transition-colors hover:bg-surface sm:inline-flex"
             >
               Ver roadmap
             </a>
             <ButtonLink href="/welcome" variant="secondary" size="sm">
               <span className="hidden sm:inline">Conhecer o app</span>
               <span className="sm:hidden">Zelupi</span>
-              <ArrowUpRight aria-hidden="true" className="size-3.5" />
+              <ArrowRight aria-hidden="true" className="size-3.5" />
             </ButtonLink>
           </nav>
         </div>
@@ -235,7 +236,7 @@ export default function RoadmapPage() {
             <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
               <ButtonLink href="#roadmap" variant="blue" size="sm">
                 Explorar prioridades
-                <ArrowUpRight aria-hidden="true" className="size-4" />
+                <ArrowDown aria-hidden="true" className="size-4" />
               </ButtonLink>
               <span className="inline-flex min-h-11 items-center gap-2 text-meta text-muted">
                 <FileText aria-hidden="true" className="size-4 text-teal-ink" />
@@ -253,7 +254,7 @@ export default function RoadmapPage() {
                 <ShieldCheck aria-hidden="true" className="size-5" />
               </span>
               <div className="min-w-0">
-                <p className="text-meta font-bold uppercase tracking-[0.14em] text-blue-deep">
+                <p className="text-meta font-semibold text-blue-deep">
                   Como priorizamos
                 </p>
                 <h2
@@ -298,7 +299,7 @@ export default function RoadmapPage() {
             </p>
           </div>
           <div className="flex items-start gap-3">
-            <Sparkles
+            <Clock
               aria-hidden="true"
               className="mt-0.5 size-5 shrink-0 text-accent"
             />
@@ -325,7 +326,7 @@ export default function RoadmapPage() {
         >
           <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-meta font-bold uppercase tracking-[0.14em] text-muted">
+              <p className="text-meta font-semibold text-muted">
                 Nesta página
               </p>
               <span className="font-mono text-caption text-muted">
@@ -338,7 +339,7 @@ export default function RoadmapPage() {
                   <li key={phase.id}>
                     <a
                       href={`#${phase.id}`}
-                      className="group flex min-h-11 items-center gap-3 rounded-2xl px-3 text-meta font-semibold text-muted transition-colors hover:bg-paper hover:text-ink"
+                      className="group flex min-h-11 items-center gap-3 rounded-card px-3 text-meta font-semibold text-muted transition-colors hover:bg-paper hover:text-ink"
                     >
                       <span className="font-mono text-caption text-blue group-hover:text-blue-deep">
                         {String(index + 1).padStart(2, "0")}
@@ -388,7 +389,7 @@ export default function RoadmapPage() {
             className="inline-flex min-h-11 items-center gap-1.5 font-bold text-teal-ink hover:text-teal-deep"
           >
             Conhecer a Zelupi
-            <ArrowUpRight aria-hidden="true" className="size-3.5" />
+            <ArrowRight aria-hidden="true" className="size-3.5" />
           </Link>
         </footer>
       </div>

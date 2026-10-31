@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import type { Pet } from "@/lib/domain/schema";
 import { cn } from "@/lib/utils";
@@ -11,6 +12,36 @@ const tabLabels: Record<CareTab, string> = {
   historico: "Histórico",
   diario: "Diário",
 };
+
+/**
+ * One header for every care tab, so the pet context, the section title, the
+ * section's single primary action and the tabs never move between screens.
+ * The H1 is the tab name; there is no back control inside the tabbed area.
+ */
+export function CareHeader({
+  active,
+  pet,
+  context,
+  action,
+}: {
+  active: CareTab;
+  pet?: Pick<Pet, "id"> | null;
+  context: ReactNode;
+  action?: ReactNode;
+}) {
+  return (
+    <header className="flex flex-col gap-2">
+      <div className="flex min-h-11 items-center">{context}</div>
+      <div className="flex min-h-11 flex-wrap items-end justify-between gap-3">
+        <h1 className="font-editorial text-h1 font-semibold leading-none tracking-tight text-ink">
+          {tabLabels[active]}
+        </h1>
+        {action}
+      </div>
+      <CareTabs active={active} pet={pet} className="mt-1" />
+    </header>
+  );
+}
 
 /**
  * A predictable, link-backed sub-navigation for the trusted care surfaces.

@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin, PackageOpen, Sparkles } from "lucide-react";
+import { Info, MapPin, PackageOpen } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
@@ -34,10 +34,10 @@ export function ProductCard({
       <div
         className={`relative flex min-h-32 items-end overflow-hidden border-l-[6px] ${meta.className} p-4`}
       >
-        <span className="relative flex size-12 items-center justify-center rounded-2xl border border-white/80 bg-paper/90 text-ink shadow-sm">
+        <span className="relative flex size-12 items-center justify-center rounded-card border border-white/80 bg-paper/90 text-ink shadow-sm">
           <PackageOpen aria-hidden="true" className="size-6" />
         </span>
-        <span className="absolute right-4 top-4 rounded-full bg-paper/80 px-2.5 py-1 text-caption font-bold uppercase tracking-[0.08em] text-ink-soft/80">
+        <span className="absolute right-4 top-4 rounded-full bg-paper/80 px-2.5 py-1 text-caption font-semibold text-ink-soft/80">
           {meta.label}
         </span>
       </div>
@@ -64,8 +64,8 @@ export function ProductCard({
         </p>
 
         <div className="border-l-2 border-teal bg-lime-soft px-3 py-2.5">
-          <p className="flex items-center gap-1.5 text-caption font-bold uppercase tracking-[0.1em] text-teal-deep">
-            <Sparkles aria-hidden="true" className="size-3.5" />
+          <p className="flex items-center gap-1.5 text-caption font-semibold text-teal-deep">
+            <Info aria-hidden="true" className="size-3.5" />
             Por que apareceu
           </p>
           <ul className="mt-1.5 flex flex-col gap-1">

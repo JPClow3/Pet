@@ -174,7 +174,7 @@ function DoseRow({
     }
   }
   return (
-    <li className="flex flex-col gap-2 rounded-2xl border border-line p-3">
+    <li className="flex flex-col gap-2 rounded-card border border-line p-3">
       <div className="flex flex-wrap justify-between gap-2">
         <p className="font-semibold text-ink">
           {time} · {schedule.amount} {schedule.unit}
@@ -309,7 +309,7 @@ export function MedicationCoursePanel({ record }: { record: HealthRecord }) {
     <Card className="flex flex-col gap-4" id="medication-course">
       {confirmSheet}
       <h2 className="text-lg font-bold text-ink">Plano e doses</h2>
-      <div className="rounded-2xl bg-mint/60 p-3">
+      <div className="rounded-card bg-mint/60 p-3">
         <p className="font-semibold text-teal-ink">
           {active
             ? `${active.amount} ${active.unit} · ${active.times.join(", ")}`

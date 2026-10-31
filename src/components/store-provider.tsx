@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BackupPanel } from "@/components/backup-panel";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-sheet";
 import { downloadText } from "@/lib/download";
 import {
   exportOriginalDeviceData,
@@ -29,6 +30,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [conflict, setConflict] = useState(false);
+  const [confirm, confirmSheet] = useConfirm();
   useEffect(() => {
     if (publicPage) return;
     let cancelled = false;
@@ -136,12 +138,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         <Button
           variant="ghost"
           onClick={async () => {
-            if (
-              !window.confirm(
-                "Apagar a cópia local e começar de novo? Baixe os dados originais antes. Essa ação não pode ser desfeita.",
-              )
-            )
-              return;
+            const confirmed = await confirm({
+              title: "Apagar a cópia local e começar de novo?",
+              description:
+                "Baixe os dados originais antes. Não dá para desfazer.",
+              confirmLabel: "Apagar e recomeçar",
+            });
+            if (!confirmed) return;
             try {
               await resetLocalDataForRecovery();
               setError(null);
@@ -154,6 +157,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         >
           Apagar dados locais e recomeçar
         </Button>
+        {confirmSheet}
       </main>
     );
 
@@ -197,13 +201,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             </Button>
             <Button
               variant="secondary"
-              onClick={() => {
-                if (
-                  window.confirm(
-                    "Atualizar esta aba? Alterações ainda não salvas serão descartadas.",
-                  )
-                )
-                  window.location.reload();
+              onClick={async () => {
+                const confirmed = await confirm({
+                  title: "Atualizar esta aba?",
+                  description:
+                    "Alterações ainda não salvas nesta aba serão descartadas.",
+                  confirmLabel: "Atualizar",
+                });
+                if (confirmed) window.location.reload();
               }}
             >
               Atualizar esta aba
@@ -212,6 +217,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         </aside>
       ) : null}
       {children}
+      {confirmSheet}
     </>
   );
 }

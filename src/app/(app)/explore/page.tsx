@@ -298,7 +298,7 @@ export default function ExplorePage() {
 
       <Card className="flex flex-col gap-3 border-danger/30 bg-danger-soft/50 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-danger-soft text-danger-ink">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-card bg-danger-soft text-danger-ink">
             <ShieldAlert aria-hidden="true" className="size-5" />
           </span>
           <div className="min-w-0">
@@ -399,7 +399,7 @@ export default function ExplorePage() {
           type="button"
           onClick={() => setSheetOpen(true)}
           aria-label="Mais filtros"
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-2xl border border-line bg-paper px-3.5 text-label font-medium text-ink"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-card border border-line bg-paper px-3.5 text-label font-medium text-ink"
         >
           <SlidersHorizontal aria-hidden="true" className="size-4" />
           Filtros

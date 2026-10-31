@@ -145,7 +145,7 @@ export function PetCollaboratorsPanel({ pet }: { pet: Pet }) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 rounded-2xl border border-line/60 bg-surface/50 p-3.5">
+      <div className="flex flex-col gap-2 rounded-card border border-line/60 bg-surface/50 p-3.5">
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm font-semibold text-ink">
             Tutor Principal (Este aparelho)
@@ -160,13 +160,13 @@ export function PetCollaboratorsPanel({ pet }: { pet: Pet }) {
       {/* Lista de co-tutores */}
       {collaborators.length > 0 ? (
         <div className="flex flex-col gap-2">
-          <span className="text-meta font-semibold uppercase tracking-wider text-muted">
+          <span className="text-meta font-semibold text-muted">
             Co-tutores vinculados ({collaborators.length})
           </span>
           {collaborators.map((c) => (
             <div
               key={c.id}
-              className="flex items-center justify-between gap-2 rounded-2xl border border-line bg-paper p-3"
+              className="flex items-center justify-between gap-2 rounded-card border border-line bg-paper p-3"
             >
               <div className="flex flex-col">
                 <span className="text-sm font-semibold text-ink">

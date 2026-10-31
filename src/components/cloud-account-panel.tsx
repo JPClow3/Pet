@@ -629,7 +629,7 @@ function CloudSyncPanel({
         {busy ? "Aguarde…" : "Consultar cópia na nuvem"}
       </Button>
       {remote ? (
-        <div className="rounded-2xl bg-surface p-3 text-meta leading-relaxed text-ink">
+        <div className="rounded-card bg-surface p-3 text-meta leading-relaxed text-ink">
           <p className="font-semibold">
             Na nuvem: {remote.backup.pets.length} pets · versão{" "}
             {remote.revision}
@@ -705,7 +705,7 @@ function CloudSyncPanel({
         </>
       ) : null}
       {pending ? (
-        <div className="flex flex-col gap-3 rounded-2xl border border-warning/50 bg-warning/10 p-4">
+        <div className="flex flex-col gap-3 rounded-card border border-warning/50 bg-warning/10 p-4">
           <h3 className="font-semibold text-ink">
             {pending.kind === "upload"
               ? "Confirmar envio"

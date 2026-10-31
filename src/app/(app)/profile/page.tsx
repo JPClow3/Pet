@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { BackupPanel } from "@/components/backup-panel";
 import { PageHeader } from "@/components/page-header";
 import { StoragePanel } from "@/components/storage-panel";
+import { ThemeSetting } from "@/components/theme-provider";
 import { PushSettingsPanel } from "@/components/push-settings-panel";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { countLabel, useConfirm } from "@/components/ui/confirm-sheet";
@@ -298,6 +299,14 @@ function ProfileContent() {
           <div className="flex flex-wrap gap-2">
             <BackupPanel onRestored={() => router.refresh()} />
           </div>
+        </Card>
+
+        <Card className="flex flex-col gap-3">
+          <CardTitle>Aparência</CardTitle>
+          <p className="text-meta text-muted">
+            Automático acompanha o modo claro ou escuro do aparelho.
+          </p>
+          <ThemeSetting />
         </Card>
 
         {process.env.NODE_ENV !== "production" ? (

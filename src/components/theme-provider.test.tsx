@@ -2,7 +2,11 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { ThemeProvider, ThemeToggle } from "@/components/theme-provider";
+import {
+  ThemeProvider,
+  ThemeSetting,
+  ThemeToggle,
+} from "@/components/theme-provider";
 
 describe("ThemeProvider", () => {
   beforeEach(() => {
@@ -34,5 +38,23 @@ describe("ThemeProvider", () => {
     expect(
       screen.getByRole("button", { name: "Ativar tema claro" }),
     ).toBeInTheDocument();
+  });
+
+  it("volta a seguir o aparelho ao escolher Automático", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem("theme", "dark");
+    render(<ThemeSetting />);
+
+    expect(screen.getByRole("button", { name: "Escuro" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await user.click(screen.getByRole("button", { name: "Automático" }));
+
+    expect(localStorage.getItem("theme")).toBeNull();
+    expect(screen.getByRole("button", { name: "Automático" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 });

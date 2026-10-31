@@ -30,7 +30,7 @@ export function DiscoveryTabs({ active }: { active: DiscoveryTabId }) {
   return (
     <nav
       aria-label="Seções de Descobrir"
-      className="flex overflow-x-auto rounded-2xl border border-line bg-surface/70 p-1 no-scrollbar"
+      className="flex overflow-x-auto rounded-card border border-line bg-surface/70 p-1 no-scrollbar"
     >
       {TABS.map((tab) => {
         const selected = normalizedActive === tab.id;

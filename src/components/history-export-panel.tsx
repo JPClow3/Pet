@@ -38,7 +38,7 @@ export function HistoryExportPanel({
   const validation = selection.success ? "" : selection.error.issues[0].message;
 
   return (
-    <div className="flex flex-col items-start gap-2">
+    <>
       <Button
         variant="secondary"
         size="sm"
@@ -50,10 +50,6 @@ export function HistoryExportPanel({
         <Download aria-hidden="true" className="size-4" />
         Exportar histórico
       </Button>
-      <p className="text-meta text-muted">
-        Escolha o período e os cuidados de {pet.name} para imprimir ou salvar
-        como PDF.
-      </p>
       <BottomSheet
         open={open}
         onClose={() => setOpen(false)}
@@ -168,6 +164,6 @@ export function HistoryExportPanel({
           </Button>
         </div>
       </BottomSheet>
-    </div>
+    </>
   );
 }

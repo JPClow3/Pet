@@ -211,7 +211,7 @@ function MedicationReminderCard({
           className="flex flex-col gap-2 rounded-control border border-line/70 bg-surface/40 p-3"
           aria-label="Mini-cronograma das próximas 24 horas"
         >
-          <div className="flex items-center justify-between text-meta font-bold uppercase tracking-wider text-muted">
+          <div className="flex items-center justify-between text-meta font-semibold text-muted">
             <span className="flex items-center gap-1.5">
               <Clock aria-hidden="true" className="size-3.5 text-teal-ink" />
               Próximas 24 horas

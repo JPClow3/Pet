@@ -52,7 +52,7 @@ export default function RecordDetailPage() {
       {calendarEvent && (record.nextDueDate || record.type === "consulta" || record.type === "vacina" || record.type === "vermifugo") ? (
         <Card className="flex flex-col gap-2.5 border-teal/20 bg-teal-soft/40 p-3.5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-meta font-bold uppercase tracking-wider text-teal-ink">
+            <p className="text-meta font-semibold text-teal-ink">
               Agendamento Confiável
             </p>
             <p className="text-body font-semibold text-ink">
@@ -88,7 +88,7 @@ export default function RecordDetailPage() {
           <Photo
             src={record.attachmentData}
             alt={record.attachmentName ?? "Anexo do registro"}
-            className="w-full rounded-2xl"
+            className="w-full rounded-card"
           />
         </Card>
       ) : null}

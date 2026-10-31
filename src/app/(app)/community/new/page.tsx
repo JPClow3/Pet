@@ -69,7 +69,7 @@ export default function NewPostPage() {
                     aria-pressed={selected}
                     onClick={() => setType(item)}
                     className={cn(
-                      "flex min-h-12 items-center gap-2 rounded-2xl border px-3 text-left text-label font-medium",
+                      "flex min-h-12 items-center gap-2 rounded-card border px-3 text-left text-label font-medium",
                       selected
                         ? "border-blue bg-blue-soft text-blue-deep"
                         : "border-line bg-paper text-ink-soft",

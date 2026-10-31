@@ -85,7 +85,7 @@ export function HealthStatusCard({
     >
       <div className="flex min-w-0 flex-col items-start gap-2 sm:flex-row sm:justify-between sm:gap-3">
         <div className="min-w-0 flex-1">
-          <span className="text-meta font-bold uppercase tracking-[0.12em] text-muted">
+          <span className="text-meta font-semibold text-muted">
             {title}
           </span>
           <p className="mt-1 text-meta leading-snug text-muted">

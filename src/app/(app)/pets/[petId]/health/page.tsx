@@ -9,8 +9,7 @@ import { useMemo, useState } from "react";
 import { RecordTimelineItem } from "@/components/health-status-card";
 import { BulkAddToCalendarButton } from "@/components/add-to-calendar";
 import { createBulkCalendarEvents } from "@/lib/calendar";
-import { CareTabs } from "@/components/care-tabs";
-import { PageHeader } from "@/components/page-header";
+import { CareHeader } from "@/components/care-tabs";
 import { PetContextSwitcher } from "@/components/pet-header";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -30,13 +29,7 @@ const HistoryExportPanel = dynamic(
     import("@/components/history-export-panel").then(
       (mod) => mod.HistoryExportPanel,
     ),
-  {
-    loading: () => (
-      <Card role="status" className="py-4 text-meta text-muted">
-        Carregando exportação de histórico…
-      </Card>
-    ),
-  },
+  { loading: () => null },
 );
 
 const WeightChart = dynamic(
@@ -104,63 +97,35 @@ export default function HealthPage() {
 
   return (
     <div className="flex flex-col gap-4 pb-24">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-meta font-bold uppercase tracking-[0.14em] text-muted">
-          Cuidados
-        </span>
-        <PetContextSwitcher
-          scope={pet.id}
-          onScopeChange={(scope) => {
-            if (scope !== "todos" && scope !== pet.id)
-              router.push(`/pets/${scope}/health`);
-          }}
-        />
-      </div>
-      <CareTabs active="historico" pet={pet} />
-      <PageHeader
-        title="Saúde"
-        subtitle={`Histórico de ${pet.name}`}
-        backHref="/pets"
+      <CareHeader
+        active="historico"
+        pet={pet}
+        context={
+          <PetContextSwitcher
+            scope={pet.id}
+            onScopeChange={(scope) => {
+              if (scope !== "todos" && scope !== pet.id)
+                router.push(`/pets/${scope}/health`);
+            }}
+          />
+        }
         action={
           <ButtonLink href={`/pets/${pet.id}/health/new`} size="sm">
             <Plus aria-hidden="true" className="size-4" />
-            Novo
+            Registrar
           </ButtonLink>
         }
       />
 
-      <Card className="flex flex-col gap-1">
-        <p className="text-meta font-semibold uppercase tracking-wide text-muted">
-          Situação atual
-        </p>
-        <p className="text-h3 font-semibold text-ink">{status.headline}</p>
-        <p className="text-label text-ink-soft/90">{status.detail}</p>
-      </Card>
+      {petRecords.length > 0 ? (
+        <Card className="flex flex-col gap-1">
+          <p className="text-meta font-semibold text-muted">Situação atual</p>
+          <p className="text-h3 font-semibold text-ink">{status.headline}</p>
+          <p className="text-label text-ink-soft/90">{status.detail}</p>
+        </Card>
+      ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <HistoryExportPanel key={pet.id} pet={pet} records={petRecords} />
-          {petCalendarEvents.length > 0 ? (
-            <BulkAddToCalendarButton
-              events={petCalendarEvents}
-              filename={`cuidados-${pet.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-zelupi.ics`}
-              calendarName={`Zelupi — Cuidados de ${pet.name}`}
-              label="Adicionar à agenda do celular"
-              size="sm"
-            />
-          ) : null}
-        </div>
-        <ButtonLink
-          href={`/pets/${pet.id}/vet`}
-          variant="secondary"
-          size="sm"
-          className="gap-1.5 font-semibold text-teal-ink border-teal-ink/30 bg-mint/40 hover:bg-mint"
-        >
-          <Stethoscope aria-hidden="true" className="size-4" />
-          Modo Consulta (Dossiê Clínico)
-        </ButtonLink>
-      </div>
-
+      {petRecords.length > 0 ? (
       <div className="flex flex-wrap gap-2">
         <FilterChip
           selected={filter === "todos"}
@@ -184,6 +149,7 @@ export default function HealthPage() {
           </FilterChip>
         ))}
       </div>
+      ) : null}
 
       {filter === "peso" ? (
         <Card className="flex flex-col gap-3">
@@ -214,7 +180,10 @@ export default function HealthPage() {
           }
           action={
             petRecords.length === 0 ? (
-              <ButtonLink href={`/pets/${pet.id}/health/new`}>
+              <ButtonLink
+                href={`/pets/${pet.id}/health/new`}
+                variant="secondary"
+              >
                 Adicionar registro
               </ButtonLink>
             ) : (
@@ -249,8 +218,27 @@ export default function HealthPage() {
         </ul>
       )}
 
-      <p className="pt-2 text-meta text-muted">
-        A Zelupi organiza o que você registra. Ele não diagnostica nem substitui
+      <div className="flex flex-wrap gap-2 border-t border-line/80 pt-4">
+        <ButtonLink href={`/pets/${pet.id}/vet`} variant="secondary" size="sm">
+          <Stethoscope aria-hidden="true" className="size-4" />
+          Modo consulta
+        </ButtonLink>
+        {petRecords.length > 0 ? (
+          <HistoryExportPanel key={pet.id} pet={pet} records={petRecords} />
+        ) : null}
+        {petCalendarEvents.length > 0 ? (
+          <BulkAddToCalendarButton
+            events={petCalendarEvents}
+            filename={`cuidados-${pet.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-zelupi.ics`}
+            calendarName={`Zelupi — Cuidados de ${pet.name}`}
+            label="Adicionar à agenda do celular"
+            size="sm"
+          />
+        ) : null}
+      </div>
+
+      <p className="text-meta text-muted">
+        A Zelupi organiza o que você registra. Ela não diagnostica nem substitui
         a avaliação de um veterinário.
       </p>
     </div>

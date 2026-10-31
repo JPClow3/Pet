@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  ArrowUpRight,
+  ArrowRight,
   MapPin,
   MessageCircle,
   Plus,
@@ -122,25 +122,15 @@ export default function CommunityPage() {
 
       <DiscoveryTabs active="comunidade" />
 
-          <section className="rounded-feature border border-line bg-paper p-5">
-            <div className="flex items-start gap-3">
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-surface-subtle text-teal-ink">
-                <Radio aria-hidden="true" className="size-5" />
-              </span>
-              <div>
-                <p className="text-caption font-bold uppercase tracking-[0.14em] text-teal-ink">
-                  Prévia da comunidade
-                </p>
-                <h2 className="mt-1 text-h2 font-semibold leading-tight text-ink">
-                  Conheça a proposta da comunidade.
-                </h2>
-                <p className="mt-1.5 max-w-[42ch] text-label leading-relaxed text-muted">
-                  Pessoas, grupos e horários são exemplos. O que você escrever
-                  ou marcar aqui fica somente neste aparelho e não é enviado a
-                  outros tutores.
-                </p>
-              </div>
-            </div>
+          <section className="rounded-card border border-line bg-paper p-4">
+            <h2 className="text-body font-semibold text-ink">
+              Prévia da comunidade
+            </h2>
+            <p className="mt-1 max-w-[56ch] text-label leading-relaxed text-muted">
+              Pessoas, grupos e horários são exemplos. O que você escrever ou
+              marcar aqui fica somente neste aparelho e não é enviado a outros
+              tutores.
+            </p>
           </section>
 
           {offline ? (
@@ -240,7 +230,7 @@ export default function CommunityPage() {
             </div>
           </div>
 
-          <section className="rounded-2xl border border-line/80 bg-surface-subtle px-4 py-3">
+          <section className="rounded-card border border-line/80 bg-surface-subtle px-4 py-3">
             <div className="flex items-start gap-3">
               <ShieldAlert
                 aria-hidden="true"
@@ -310,7 +300,7 @@ export default function CommunityPage() {
           <section className="flex flex-col gap-3 border-t border-line pt-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-caption font-bold uppercase tracking-[0.12em] text-muted">
+                <p className="text-caption font-semibold text-muted">
                   Encontrar seu contexto
                 </p>
                 <h2 className="mt-1 text-h3 font-semibold text-ink">
@@ -322,7 +312,7 @@ export default function CommunityPage() {
                 className="inline-flex min-h-11 items-center gap-1 text-meta font-semibold text-blue-deep"
               >
                 Ver todos
-                <ArrowUpRight aria-hidden="true" className="size-4" />
+                <ArrowRight aria-hidden="true" className="size-4" />
               </Link>
             </div>
             <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
@@ -337,7 +327,7 @@ export default function CommunityPage() {
                       setGroupId(groupId === group.id ? null : group.id);
                       setOnlyMine(false);
                     }}
-                    className={`min-w-[10.5rem] max-w-[14rem] shrink-0 rounded-2xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2 ${groupId === group.id ? "border-teal-ink/40 bg-surface-subtle" : "border-line bg-surface hover:bg-paper"}`}
+                    className={`min-w-[10.5rem] max-w-[14rem] shrink-0 rounded-card border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2 ${groupId === group.id ? "border-teal-ink/40 bg-surface-subtle" : "border-line bg-surface hover:bg-paper"}`}
                   >
                     <p className="line-clamp-1 text-label font-semibold text-ink">
                       {group.name}

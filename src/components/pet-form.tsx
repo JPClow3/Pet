@@ -205,7 +205,7 @@ export function PetForm({
         {draft.restored || draft.storageError ? (
           <p
             role="status"
-            className="rounded-2xl border border-line bg-surface px-4 py-3 text-meta text-ink-soft"
+            className="rounded-card border border-line bg-surface px-4 py-3 text-meta text-ink-soft"
           >
             {draft.storageError ??
               "Rascunho recuperado nesta aba. Se havia uma nova foto, selecione-a novamente."}

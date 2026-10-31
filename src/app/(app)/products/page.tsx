@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, PackageOpen, SlidersHorizontal, Sparkles } from "lucide-react";
+import { Check, PackageOpen, SlidersHorizontal } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { DiscoveryTabs } from "@/components/discovery-tabs";
@@ -88,25 +88,14 @@ export default function ProductsPage() {
       />
       <DiscoveryTabs active="produtos" />
 
-      <section className="rounded-feature border border-line bg-paper p-5">
-        <div className="flex items-start gap-3">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-surface-subtle text-teal-ink">
-            <Sparkles aria-hidden="true" className="size-5" />
-          </span>
-          <div>
-            <p className="text-caption font-bold uppercase tracking-[0.14em] text-teal-ink">
-              Exemplos de recomendações
-            </p>
-            <h2 className="mt-1 text-h2 font-semibold leading-tight text-ink">
-              Você escolhe com contexto.
-            </h2>
-            <p className="mt-1.5 max-w-[42ch] text-label leading-relaxed text-muted">
-              Explore como as sugestões consideram espécie, porte, fase de vida
-              e rotina de {pet.name}. Produtos e preços são fictícios; não há
-              compras.
-            </p>
-          </div>
-        </div>
+      <section className="rounded-card border border-line bg-paper p-4">
+        <h2 className="text-body font-semibold text-ink">
+          Exemplos de recomendações
+        </h2>
+        <p className="mt-1 max-w-[56ch] text-label leading-relaxed text-muted">
+          As sugestões consideram espécie, porte, fase de vida e rotina de{" "}
+          {pet.name}. Produtos e preços são fictícios; não há compras.
+        </p>
       </section>
 
       {offline ? (
@@ -131,7 +120,7 @@ export default function ProductsPage() {
 
       <div className="flex flex-col gap-2 border-b border-line pb-3">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-caption font-bold uppercase tracking-[0.12em] text-muted">
+          <p className="text-caption font-semibold text-muted">
             Filtrar por necessidade
           </p>
           <span className="text-meta text-muted">

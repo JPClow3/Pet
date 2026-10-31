@@ -186,12 +186,12 @@ export default function PlaceDetailPage() {
           <div className="flex flex-col items-end gap-2 text-right">
             <div className="flex flex-wrap justify-end gap-1.5">
               {is24h ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-danger-soft px-3 py-1 text-caption font-bold uppercase tracking-[0.08em] text-danger-ink">
+                <span className="inline-flex items-center gap-1 rounded-full bg-danger-soft px-3 py-1 text-caption font-semibold text-danger-ink">
                   <Siren aria-hidden="true" className="size-3.5" />
                   Emergência 24h
                 </span>
               ) : null}
-              <span className="rounded-full bg-paper/85 px-3 py-1 text-caption font-bold uppercase tracking-[0.08em] text-ink-soft">
+              <span className="rounded-full bg-paper/85 px-3 py-1 text-caption font-semibold text-ink-soft">
                 {placeCategoryMeta[place.category].label}
               </span>
             </div>
@@ -252,7 +252,7 @@ export default function PlaceDetailPage() {
             </p>
           ) : null}
           {place.notes ? (
-            <p className="mt-2 rounded-2xl bg-surface px-3.5 py-2.5 text-label leading-relaxed text-ink-soft">
+            <p className="mt-2 rounded-card bg-surface px-3.5 py-2.5 text-label leading-relaxed text-ink-soft">
               {place.notes}
             </p>
           ) : null}
@@ -283,7 +283,7 @@ export default function PlaceDetailPage() {
             ) : null}
           </div>
         ) : (
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-dashed border-line bg-surface/50 px-3.5 py-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-card border border-dashed border-line bg-surface/50 px-3.5 py-2.5">
             <span className="text-meta text-muted">
               {place.seeded
                 ? "Local fictício: sem telefone para ligar."
@@ -419,7 +419,7 @@ export default function PlaceDetailPage() {
       <section className="flex flex-col gap-3">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="text-caption font-bold uppercase tracking-[0.12em] text-muted">
+            <p className="text-caption font-semibold text-muted">
               Experiências
             </p>
             <h2 className="mt-1 text-h3 font-semibold text-ink">
@@ -649,7 +649,7 @@ export default function PlaceDetailPage() {
                   aria-pressed={rating === value}
                   aria-label={`${value} de 5`}
                   onClick={() => setRating(value)}
-                  className={`flex size-11 items-center justify-center rounded-2xl border text-body font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 ${rating >= value ? "border-sun bg-sun-soft text-warning-ink" : "border-line bg-paper text-muted"}`}
+                  className={`flex size-11 items-center justify-center rounded-card border text-body font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 ${rating >= value ? "border-sun bg-sun-soft text-warning-ink" : "border-line bg-paper text-muted"}`}
                 >
                   {value}
                 </button>

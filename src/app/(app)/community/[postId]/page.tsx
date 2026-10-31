@@ -101,7 +101,7 @@ export default function PostDetailPage() {
         >
           <div className="flex items-start gap-3">
             <span
-              className={`flex size-11 shrink-0 items-center justify-center rounded-2xl ${accent.surface} ${accent.ink}`}
+              className={`flex size-11 shrink-0 items-center justify-center rounded-card ${accent.surface} ${accent.ink}`}
             >
               <TypeIcon aria-hidden="true" className="size-5" />
             </span>
@@ -161,7 +161,7 @@ export default function PostDetailPage() {
           ) : null}
 
           {post.type === "pergunta" || post.type === "dica" ? (
-            <p className="flex items-start gap-2 rounded-2xl bg-sun-soft px-3 py-2.5 text-meta leading-relaxed text-warning-ink">
+            <p className="flex items-start gap-2 rounded-card bg-sun-soft px-3 py-2.5 text-meta leading-relaxed text-warning-ink">
               <ShieldAlert
                 aria-hidden="true"
                 className="mt-0.5 size-4 shrink-0"
@@ -173,7 +173,7 @@ export default function PostDetailPage() {
 
           {post.reported ? (
             <p
-              className="rounded-2xl bg-warning/15 px-3 py-2 text-meta text-warning-ink"
+              className="rounded-card bg-warning/15 px-3 py-2 text-meta text-warning-ink"
               role="status"
             >
               Esta publicação está em análise depois de uma denúncia.
@@ -256,7 +256,7 @@ export default function PostDetailPage() {
         <section className="flex flex-col gap-3">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <p className="text-caption font-bold uppercase tracking-[0.12em] text-muted">
+              <p className="text-caption font-semibold text-muted">
                 Conversa
               </p>
               <CardTitle className="mt-1">

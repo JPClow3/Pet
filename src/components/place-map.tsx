@@ -164,7 +164,7 @@ export function PlaceMap({
               type="button"
               aria-pressed={active}
               onClick={() => handleSelect(place.id)}
-              className={`flex min-h-12 items-center gap-3 rounded-2xl border px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2 ${active ? "border-teal/40 bg-mint/70" : "border-line bg-paper hover:bg-surface"}`}
+              className={`flex min-h-12 items-center gap-3 rounded-card border px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2 ${active ? "border-teal/40 bg-mint/70" : "border-line bg-paper hover:bg-surface"}`}
             >
               <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-mint text-teal-ink">
                 <MapPin aria-hidden="true" className="size-4" />

@@ -248,8 +248,8 @@ export function PetShareStudio({
   return (
     <>
       <Card className="overflow-hidden p-0">
-        <div className="border-b border-line bg-gradient-to-br from-blue-soft/70 via-canvas to-accent-soft/55 px-5 py-5">
-          <p className="text-meta font-extrabold uppercase tracking-[0.16em] text-blue-deep">
+        <div className="border-b border-line bg-canvas px-5 py-5">
+          <p className="text-meta font-semibold text-blue-deep">
             Estúdio da carteirinha
           </p>
           <CardTitle className="mt-1 font-editorial text-h2 font-semibold leading-tight">
@@ -269,7 +269,7 @@ export function PetShareStudio({
 
         <div className="flex flex-col gap-5 p-4 sm:p-5">
           <fieldset>
-            <legend className="mb-2 text-meta font-bold uppercase tracking-[0.1em] text-muted">
+            <legend className="mb-2 text-meta font-semibold text-muted">
               Formato
             </legend>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -279,7 +279,7 @@ export function PetShareStudio({
                 return (
                   <label
                     key={value}
-                    className={`flex min-h-[4.35rem] cursor-pointer flex-col justify-center rounded-2xl border px-2.5 text-left transition-[border-color,background-color,box-shadow] ${
+                    className={`flex min-h-[4.35rem] cursor-pointer flex-col justify-center rounded-card border px-2.5 text-left transition-[border-color,background-color,box-shadow] ${
                       checked
                         ? "border-blue bg-blue-soft text-blue-deep shadow-sm"
                         : "border-line bg-paper text-ink hover:bg-surface"
@@ -304,7 +304,7 @@ export function PetShareStudio({
           </fieldset>
 
           <fieldset>
-            <legend className="mb-2 text-meta font-bold uppercase tracking-[0.1em] text-muted">
+            <legend className="mb-2 text-meta font-semibold text-muted">
               Paleta
             </legend>
             <div className="flex flex-wrap gap-2">
@@ -340,8 +340,8 @@ export function PetShareStudio({
             </div>
           </fieldset>
 
-          <figure className="relative overflow-hidden rounded-sheet border border-line bg-[radial-gradient(circle_at_top_right,var(--color-sun-soft),transparent_42%),linear-gradient(145deg,var(--color-surface),var(--color-canvas)))] p-3 sm:p-5">
-            <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-canvas/90 px-2.5 py-1 text-meta font-bold uppercase tracking-[0.1em] text-ink-soft shadow-sm">
+          <figure className="relative overflow-hidden rounded-sheet border border-line bg-surface p-3 sm:p-5">
+            <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-canvas/90 px-2.5 py-1 text-meta font-semibold text-ink-soft shadow-sm">
               Preview exato
             </span>
             <div
@@ -421,7 +421,7 @@ export function PetShareStudio({
           </Button>
 
           {!shareSupported ? (
-            <p className="flex items-start gap-2 rounded-2xl bg-surface px-3 py-2.5 text-meta leading-relaxed text-muted">
+            <p className="flex items-start gap-2 rounded-card bg-surface px-3 py-2.5 text-meta leading-relaxed text-muted">
               <WifiOff aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
               Compartilhamento direto não está disponível neste navegador. Ao
               tocar em compartilhar, a imagem é baixada.
@@ -459,7 +459,7 @@ export function PetShareStudio({
       </Card>
 
       <Card className="flex items-center gap-3 bg-mint/60">
-        <div className="shrink-0 rounded-2xl border border-teal/15 bg-paper p-2 shadow-sm">
+        <div className="shrink-0 rounded-card border border-teal/15 bg-paper p-2 shadow-sm">
           {publicUrl ? (
             <QrCode value={publicUrl} className="size-14" />
           ) : (

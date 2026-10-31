@@ -11,9 +11,8 @@
 
   --font-display: var(--font-fraunces), Georgia, serif;
 
-  --shadow-card:
-    0 1px 2px rgb(23 33 58 / 0.05), 0 8px 24px -12px rgb(23 33 58 / 0.16);
-  --shadow-float: 0 14px 36px -12px rgb(23 33 58 / 0.3);
+  --shadow-card: 0 1px 2px rgb(23 33 58 / 0.06);
+  --shadow-float: 0 6px 16px -6px rgb(23 33 58 / 0.24);
 
   /* Type roles from design.md. Nothing renders below the 12px caption. */
   --text-caption: 0.75rem;
@@ -32,10 +31,10 @@
   --text-h1--line-height: 2.125rem;
 
   /* Shape roles: controls, standard cards, featured cards, sheets. */
-  --radius-control: 14px;
-  --radius-card: 18px;
-  --radius-feature: 24px;
-  --radius-sheet: 28px;
+  --radius-control: 10px;
+  --radius-card: 12px;
+  --radius-feature: 16px;
+  --radius-sheet: 20px;
 }
 
 @layer base {

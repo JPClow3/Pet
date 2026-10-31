@@ -150,7 +150,7 @@ export function PetContextSwitcher({
               disabled={action.pending}
               aria-current={selectedScope === "todos" ? "true" : undefined}
               className={cn(
-                "flex min-h-14 items-center gap-3 rounded-2xl border px-3 text-left transition-colors",
+                "flex min-h-14 items-center gap-3 rounded-card border px-3 text-left transition-colors",
                 selectedScope === "todos"
                   ? "border-teal-ink bg-mint text-teal-ink"
                   : "border-line bg-paper text-ink-soft hover:bg-surface",
@@ -190,7 +190,7 @@ export function PetContextSwitcher({
                 disabled={action.pending}
                 aria-current={selected ? "true" : undefined}
                 className={cn(
-                  "flex min-h-14 items-center gap-3 rounded-2xl border px-3 text-left transition-colors",
+                  "flex min-h-14 items-center gap-3 rounded-card border px-3 text-left transition-colors",
                   selected
                     ? "border-teal-ink bg-mint text-teal-ink"
                     : "border-line bg-paper text-ink-soft hover:bg-surface",

@@ -58,7 +58,7 @@ export function FilterChip({
       type="button"
       aria-pressed={selected}
       className={cn(
-        "inline-flex min-h-11 max-w-full items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-meta font-semibold transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2",
+        "inline-flex min-h-11 max-w-full shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-meta font-semibold transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2",
         selected
           ? "border-brand bg-brand text-white"
           : "border-line bg-paper text-ink-soft hover:border-teal/50 hover:text-ink",

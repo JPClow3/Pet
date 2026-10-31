@@ -29,11 +29,11 @@ export function PublicMicrochipSection({
   };
 
   return (
-    <div className="w-full flex flex-col gap-3 rounded-2xl border border-line bg-surface/50 p-4 text-left">
+    <div className="w-full flex flex-col gap-3 rounded-card border border-line bg-surface/50 p-4 text-left">
       {microchip ? (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted">
+            <span className="text-xs font-semibold text-muted">
               Microchip de Identificação
             </span>
             <span className="rounded bg-mint px-2 py-0.5 text-xs font-bold text-teal-ink">

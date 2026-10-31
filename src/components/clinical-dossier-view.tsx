@@ -108,7 +108,7 @@ export function ClinicalDossierView({
       {/* Top action header for Vet Clinic */}
       <div className="flex flex-col gap-3 rounded-feature border border-teal-ink/20 bg-mint/40 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
-          <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-teal-ink text-white shadow-sm">
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-card bg-teal-ink text-white shadow-sm">
             <Stethoscope aria-hidden="true" className="size-6" />
           </span>
           <div>
@@ -155,7 +155,7 @@ export function ClinicalDossierView({
 
         {pet.microchip ? (
           <div className="flex items-center gap-2">
-            <span className="text-meta font-bold uppercase tracking-wider text-muted">
+            <span className="text-meta font-semibold text-muted">
               Microchip:
             </span>
             <code className="rounded bg-surface px-2 py-0.5 font-mono text-xs font-bold text-teal-ink">
@@ -186,7 +186,7 @@ export function ClinicalDossierView({
           <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {allergies.length > 0 ? (
               <div className="flex flex-col gap-1.5">
-                <span className="text-meta font-bold uppercase tracking-wider text-danger-ink">
+                <span className="text-meta font-semibold text-danger-ink">
                   Alergias Conhecidas
                 </span>
                 <div className="flex flex-wrap gap-1.5">
@@ -204,7 +204,7 @@ export function ClinicalDossierView({
 
             {chronicConditions.length > 0 ? (
               <div className="flex flex-col gap-1.5">
-                <span className="text-meta font-bold uppercase tracking-wider text-warning-ink">
+                <span className="text-meta font-semibold text-warning-ink">
                   Condições Crônicas / Diagnósticos
                 </span>
                 <div className="flex flex-wrap gap-1.5">
@@ -540,7 +540,7 @@ export function ClinicalDossierView({
       {/* Modal de Pré-visualização de Anexo de Exame */}
       {selectedExam && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-          <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl bg-paper p-5 shadow-xl">
+          <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-card bg-paper p-5 shadow-xl">
             <div className="flex items-center justify-between border-b border-line pb-3">
               <div>
                 <h3 className="font-bold text-lg text-ink">

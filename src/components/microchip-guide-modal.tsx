@@ -89,9 +89,9 @@ export function MicrochipGuideModal({
       >
         <div className="flex flex-col gap-5 pb-6">
           {microchip ? (
-            <div className="rounded-2xl border border-teal-ink/20 bg-mint/50 p-4">
+            <div className="rounded-card border border-teal-ink/20 bg-mint/50 p-4">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-meta font-semibold uppercase tracking-wider text-teal-ink">
+                <span className="text-meta font-semibold text-teal-ink">
                   Microchip de {petName ?? "deste pet"}
                 </span>
                 <Chip tone={isValid ? "teal" : "muted"}>
@@ -126,7 +126,7 @@ export function MicrochipGuideModal({
 
           {/* Bancos de dados */}
           <div className="flex flex-col gap-3">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-ink-soft">
+            <h3 className="text-sm font-semibold text-ink-soft">
               Onde consultar no Brasil
             </h3>
             <p className="text-meta leading-relaxed text-muted">
@@ -174,7 +174,7 @@ export function MicrochipGuideModal({
           </div>
 
           {/* Instruções passo a passo */}
-          <div className="flex flex-col gap-3 rounded-2xl bg-surface/80 p-4">
+          <div className="flex flex-col gap-3 rounded-card bg-surface/80 p-4">
             <h3 className="flex items-center gap-2 text-sm font-bold text-ink">
               <ShieldAlert aria-hidden="true" className="size-4 text-warning-ink" />
               Instruções para quem encontrou o pet

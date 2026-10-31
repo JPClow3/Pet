@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 
-import { CareTabs } from "@/components/care-tabs";
+import { CareHeader } from "@/components/care-tabs";
 import { PetContextSwitcher, type PetScope } from "@/components/pet-header";
 import { ReminderCard } from "@/components/reminder-card";
 import { ReminderForm } from "@/components/reminder-form";
@@ -174,56 +174,21 @@ export default function RemindersPage() {
 
   return (
     <div className="flex flex-col gap-5 pb-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-meta font-bold uppercase tracking-[0.14em] text-muted">
-            Cuidados
-          </p>
-          <h1 className="mt-1 font-editorial text-h1 font-semibold leading-none tracking-tight text-ink">
-            Agenda
-          </h1>
-          <p className="mt-2 max-w-[48ch] text-body leading-relaxed text-muted">
-            Um cuidado, uma chamada para ação. Datas e histórico ficam ligados
-            ao pet certo.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" onClick={() => setCreating(true)}>
-            <Plus aria-hidden="true" className="size-4" />
-            Criar lembrete
-          </Button>
-          <ButtonLink
-            href={
-              scope === "todos" ? "/record/new" : `/pets/${scope}/health/new`
-            }
-            size="sm"
-          >
-            <Plus aria-hidden="true" className="size-4" />
-            Registrar cuidado
-          </ButtonLink>
-          <BulkAddToCalendarButton
-            events={upcomingCalendarEvents}
-            label="Adicionar à agenda do celular"
-            size="sm"
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between gap-3">
-        <PetContextSwitcher scope={scope} allowAll onScopeChange={setScope} />
-        {pets.length > 1 ? (
-          <span className="text-meta text-muted">
-            {scope === "todos" ? `${pets.length} pets` : activePet?.name}
-          </span>
-        ) : null}
-      </div>
-
-      <CareTabs
+      <CareHeader
         active="agenda"
         pet={
           scope === "todos"
             ? activePet
             : (pets.find((pet) => pet.id === scope) ?? activePet)
+        }
+        context={
+          <PetContextSwitcher scope={scope} allowAll onScopeChange={setScope} />
+        }
+        action={
+          <Button size="sm" onClick={() => setCreating(true)}>
+            <Plus aria-hidden="true" className="size-4" />
+            Criar lembrete
+          </Button>
         }
       />
 
@@ -254,6 +219,7 @@ export default function RemindersPage() {
         </div>
       ) : null}
 
+      {scopedItems.length + completed.length > 0 ? (
       <div
         className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 no-scrollbar"
         aria-label="Filtrar agenda"
@@ -268,6 +234,7 @@ export default function RemindersPage() {
           </FilterChip>
         ))}
       </div>
+      ) : null}
 
       <p className="sr-only" aria-live="polite">
         {filter === "concluidos"
@@ -359,8 +326,9 @@ export default function RemindersPage() {
               href={
                 scope === "todos" ? "/record/new" : `/pets/${scope}/health/new`
               }
+              variant="secondary"
             >
-              Adicionar cuidado
+              Registrar cuidado
             </ButtonLink>
           }
         />
@@ -401,10 +369,20 @@ export default function RemindersPage() {
         </div>
       )}
 
-      <Card className="border-line bg-surface/65 text-meta leading-relaxed text-muted">
-        Avisos aparecem dentro da Zelupi a partir das datas que você registra. O
-        app ainda não envia notificações com a tela fechada.
-      </Card>
+      {upcomingCalendarEvents.length > 0 ? (
+        <div className="flex flex-col items-start gap-2">
+          <BulkAddToCalendarButton
+            events={upcomingCalendarEvents}
+            label="Adicionar à agenda do celular"
+            size="sm"
+          />
+          <p className="text-meta leading-relaxed text-muted">
+            Avisos aparecem dentro da Zelupi a partir das datas que você
+            registra. Para alarme com a tela fechada, adicione à agenda do
+            celular.
+          </p>
+        </div>
+      ) : null}
       <BottomSheet
         open={creating}
         onClose={() => setCreating(false)}
@@ -451,7 +429,7 @@ function AgendaGroup({
       <div className="mb-2 flex items-center gap-2">
         <h2
           id={`agenda-${tone}-title`}
-          className={`text-meta font-bold uppercase tracking-[0.14em] ${toneClasses[tone]}`}
+          className={`text-meta font-semibold ${toneClasses[tone]}`}
         >
           {title}
         </h2>

@@ -5,12 +5,12 @@ import {
   ChevronRight,
   FileText,
   Pencil,
+  PencilLine,
   Printer,
   QrCode,
   Scale,
   ShieldCheck,
   Siren,
-  Sparkles,
   Stethoscope,
   Syringe,
   Users,
@@ -21,7 +21,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { CareTabs } from "@/components/care-tabs";
+import { CareHeader } from "@/components/care-tabs";
 import {
   HealthStatusCard,
   RecordTimelineItem,
@@ -136,19 +136,11 @@ export default function MyPetPage() {
 
   return (
     <div className="flex flex-col gap-5 pb-24">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <p className="text-meta font-bold uppercase tracking-[0.14em] text-muted">
-            Cuidados
-          </p>
-          <h1 className="mt-1 font-editorial text-h1 font-semibold leading-none tracking-tight text-ink">
-            Perfil do pet
-          </h1>
-        </div>
-        <PetContextSwitcher scope={pet.id} />
-      </div>
-
-      <CareTabs active="perfil" pet={pet} />
+      <CareHeader
+        active="perfil"
+        pet={pet}
+        context={<PetContextSwitcher scope={pet.id} />}
+      />
 
       <section className="flex flex-col items-center gap-3 rounded-feature border border-line bg-paper p-6 text-center">
         <CareHalo
@@ -187,31 +179,21 @@ export default function MyPetPage() {
           ) : null}
         </div>
 
-        <div className="flex w-full flex-wrap justify-center gap-2 pt-1">
-          <ButtonLink
-            href={`/pets/${pet.id}/card`}
-            size="sm"
-            variant="secondary"
-          >
-            <QrCode aria-hidden="true" className="size-4" />
-            Carteirinha
-          </ButtonLink>
-          <ButtonLink
-            href={`/pets/${pet.id}/vet`}
-            size="sm"
-            variant="secondary"
-          >
-            <Stethoscope aria-hidden="true" className="size-4" />
-            Modo consulta
-          </ButtonLink>
-          <ButtonLink
-            href={`/pets/${pet.id}/edit`}
-            size="sm"
-            variant="secondary"
-          >
-            <Pencil aria-hidden="true" className="size-4" />
-            Editar
-          </ButtonLink>
+        <div className="grid w-full grid-cols-3 gap-2 pt-1">
+          {[
+            { href: `/pets/${pet.id}/card`, label: "Carteirinha", icon: QrCode },
+            { href: `/pets/${pet.id}/vet`, label: "Consulta", icon: Stethoscope },
+            { href: `/pets/${pet.id}/edit`, label: "Editar", icon: Pencil },
+          ].map(({ href, label, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className="flex min-h-16 flex-col items-center justify-center gap-1.5 rounded-control border border-line bg-paper px-2 text-meta font-semibold text-ink transition-colors hover:bg-surface"
+            >
+              <Icon aria-hidden="true" className="size-5 text-teal-ink" />
+              {label}
+            </Link>
+          ))}
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-2">
@@ -277,7 +259,7 @@ export default function MyPetPage() {
           href={`/pets/${pet.id}/edit`}
           className="flex min-h-14 items-center gap-3 rounded-card border border-dashed border-line bg-surface/60 p-4"
         >
-          <Sparkles
+          <PencilLine
             aria-hidden="true"
             className="size-5 shrink-0 text-teal-ink"
           />
@@ -378,10 +360,10 @@ export default function MyPetPage() {
                   <Photo
                     src={entry.photo}
                     alt={entry.text}
-                    className="h-24 w-full rounded-2xl"
+                    className="h-24 w-full rounded-card"
                   />
                 ) : (
-                  <div className="flex h-24 w-full items-center justify-center rounded-2xl bg-surface p-2 text-center text-meta text-muted">
+                  <div className="flex h-24 w-full items-center justify-center rounded-card bg-surface p-2 text-center text-meta text-muted">
                     {entry.text.slice(0, 40)}
                   </div>
                 )}

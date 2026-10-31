@@ -174,7 +174,7 @@ export function DocumentLibrary({
       {error ? (
         <p
           role="alert"
-          className="rounded-2xl bg-danger-soft p-3 text-sm text-danger-ink"
+          className="rounded-card bg-danger-soft p-3 text-sm text-danger-ink"
         >
           {error}
         </p>
@@ -233,7 +233,7 @@ export function DocumentLibrary({
                 aria-busy={busyId === item.id}
               >
                 <div className="flex items-start gap-3">
-                  <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-surface text-teal-ink">
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-card bg-surface text-teal-ink">
                     <FileText aria-hidden="true" className="size-5" />
                   </span>
                   <div className="min-w-0 flex-1">

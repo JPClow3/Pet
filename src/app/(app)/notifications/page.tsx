@@ -77,7 +77,7 @@ export default function NotificationsPage() {
                   className={`flex flex-col gap-2 ${unread ? "border-teal/30 bg-mint/40" : ""}`}
                 >
                   <div className="flex items-start gap-3">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-paper text-teal-ink shadow-card">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-card bg-paper text-teal-ink shadow-card">
                       <Icon aria-hidden="true" className="size-5" />
                     </span>
                     <div className="min-w-0 flex-1">

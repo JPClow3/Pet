@@ -120,7 +120,7 @@ export function CheckboxRow({
   return (
     <label
       htmlFor={id}
-      className="flex min-h-11 cursor-pointer items-start gap-3 rounded-2xl px-1 py-2"
+      className="flex min-h-11 cursor-pointer items-start gap-3 rounded-card px-1 py-2"
     >
       <input
         id={id}

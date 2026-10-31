@@ -50,7 +50,7 @@ export function useConfirm(): [
       description={options?.description}
     >
       {options?.consequences?.length ? (
-        <div className="mb-5 rounded-2xl border border-danger/25 bg-danger-soft/50 p-3">
+        <div className="mb-5 rounded-card border border-danger/25 bg-danger-soft/50 p-3">
           <p className="text-label font-semibold text-danger-ink">
             Será apagado deste aparelho:
           </p>

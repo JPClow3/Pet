@@ -51,7 +51,7 @@ export default function GroupsPage() {
 
       <DiscoveryTabs active="comunidade" />
 
-      <section className="rounded-2xl border border-line/80 bg-surface-subtle px-4 py-3">
+      <section className="rounded-card border border-line/80 bg-surface-subtle px-4 py-3">
         <p className="text-meta leading-relaxed text-muted">
           Grupos nesta prévia organizam conversas por contexto. A atividade
           exibida é demonstrativa e não representa usuários conectados em tempo

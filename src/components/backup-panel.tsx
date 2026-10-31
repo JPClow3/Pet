@@ -130,7 +130,7 @@ export function BackupPanel({
               Backup de{" "}
               {new Date(preview.backup.exportedAt).toLocaleString("pt-BR")}
             </p>
-            <dl className="grid grid-cols-2 gap-3 rounded-2xl bg-surface p-4 text-sm">
+            <dl className="grid grid-cols-2 gap-3 rounded-card bg-surface p-4 text-sm">
               <dt>Pets</dt>
               <dd>{preview.backup.pets.length}</dd>
               <dt>Registros de saúde</dt>

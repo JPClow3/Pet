@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, CheckCheck, Sparkles, Users, X } from "lucide-react";
+import { Check, CheckCheck, Plus, Users, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { PetAvatar } from "@/components/pet-avatar";
@@ -130,7 +130,7 @@ export function BatchCareModal({
       <div className="flex flex-col gap-5">
         {/* Presets Grid */}
         <div>
-          <label className="text-label font-bold uppercase tracking-wider text-muted">
+          <label className="text-label font-semibold text-muted">
             1. Escolha o cuidado
           </label>
           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -172,7 +172,7 @@ export function BatchCareModal({
                   : "border-dashed border-line bg-paper hover:bg-surface/60 text-ink"
               }`}
             >
-              <Sparkles aria-hidden="true" className="size-5 text-teal-ink" />
+              <Plus aria-hidden="true" className="size-5 text-teal-ink" />
               <span className="text-label leading-tight font-semibold">
                 Outro cuidado
               </span>
@@ -200,7 +200,7 @@ export function BatchCareModal({
         {/* Pet Selection */}
         <div>
           <div className="flex items-center justify-between gap-2">
-            <label className="text-label font-bold uppercase tracking-wider text-muted">
+            <label className="text-label font-semibold text-muted">
               2. Selecione os pets ({selectedPetIds.length} de {pets.length})
             </label>
             <div className="flex items-center gap-2">

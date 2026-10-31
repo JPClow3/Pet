@@ -232,7 +232,7 @@ export default function SitterAccessPage() {
                 required
                 autoFocus
                 placeholder="• • • •"
-                className="text-center font-mono text-xl tracking-[0.3em]"
+                className="text-center font-mono text-xl"
                 value={pinInput}
                 onChange={(e) => setPinInput(e.target.value)}
                 disabled={pinVerifying}
@@ -316,7 +316,7 @@ export default function SitterAccessPage() {
       {allergies && allergies.length > 0 ? (
         <section
           aria-label="Alergias e restrições críticas"
-          className="flex flex-col gap-2 rounded-2xl border-2 border-danger-ink/40 bg-danger-soft/60 p-4 shadow-sm"
+          className="flex flex-col gap-2 rounded-card border-2 border-danger-ink/40 bg-danger-soft/60 p-4 shadow-sm"
         >
           <div className="flex items-center gap-2 font-bold text-danger-ink">
             <ShieldAlert aria-hidden="true" className="size-5 shrink-0" />
@@ -341,7 +341,7 @@ export default function SitterAccessPage() {
       {/* RECOMENDAÇÕES / COMPORTAMENTO */}
       {data?.specialCareNotes ? (
         <Card className="flex flex-col gap-1.5 border-line/70 bg-amber-50/50 dark:bg-amber-950/20">
-          <span className="text-meta font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200">
+          <span className="text-meta font-semibold text-amber-900 dark:text-amber-200">
             Cuidados de Comportamento
           </span>
           <p className="text-sm leading-relaxed text-ink">
@@ -352,12 +352,12 @@ export default function SitterAccessPage() {
 
       {/* BOTÕES DE EMERGÊNCIA 1-TOQUE */}
       <section aria-label="Contatos de emergência">
-        <h2 className="mb-2 text-meta font-bold uppercase tracking-wider text-muted">
+        <h2 className="mb-2 text-meta font-semibold text-muted">
           Emergência 1-Toque
         </h2>
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           {/* Contato Tutor */}
-          <div className="flex flex-col justify-between rounded-2xl border border-line bg-paper p-3.5 shadow-sm">
+          <div className="flex flex-col justify-between rounded-card border border-line bg-paper p-3.5 shadow-sm">
             <div>
               <span className="text-xs font-semibold text-muted">Tutor(a)</span>
               <p className="text-sm font-bold text-ink">
@@ -387,7 +387,7 @@ export default function SitterAccessPage() {
           </div>
 
           {/* Veterinário de Emergência 24h */}
-          <div className="flex flex-col justify-between rounded-2xl border-2 border-danger-ink/20 bg-paper p-3.5 shadow-sm">
+          <div className="flex flex-col justify-between rounded-card border-2 border-danger-ink/20 bg-paper p-3.5 shadow-sm">
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-danger-ink">
@@ -436,7 +436,7 @@ export default function SitterAccessPage() {
       {feeding && feeding.length > 0 ? (
         <section aria-label="Rotina alimentar">
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="flex items-center gap-1.5 text-meta font-bold uppercase tracking-wider text-muted">
+            <h2 className="flex items-center gap-1.5 text-meta font-semibold text-muted">
               <Utensils aria-hidden="true" className="size-4 text-teal-ink" />
               Rotina Alimentar
             </h2>
@@ -448,7 +448,7 @@ export default function SitterAccessPage() {
               return (
                 <div
                   key={feed.id}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-paper p-3.5 shadow-sm"
+                  className="flex items-center justify-between gap-3 rounded-card border border-line bg-paper p-3.5 shadow-sm"
                 >
                   <div className="flex items-center gap-3">
                     <span className="rounded-xl bg-surface px-2.5 py-1.5 font-mono text-sm font-bold text-teal-ink">
@@ -497,7 +497,7 @@ export default function SitterAccessPage() {
       {meds && meds.length > 0 ? (
         <section aria-label="Medicamentos do dia">
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="flex items-center gap-1.5 text-meta font-bold uppercase tracking-wider text-muted">
+            <h2 className="flex items-center gap-1.5 text-meta font-semibold text-muted">
               <Pill aria-hidden="true" className="size-4 text-teal-ink" />
               Horários de Remédios
             </h2>
@@ -508,7 +508,7 @@ export default function SitterAccessPage() {
             {meds.map((med) => (
               <div
                 key={`${med.recordId}-${med.scheduleId}`}
-                className="flex flex-col gap-2.5 rounded-2xl border border-line bg-paper p-4 shadow-sm"
+                className="flex flex-col gap-2.5 rounded-card border border-line bg-paper p-4 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>

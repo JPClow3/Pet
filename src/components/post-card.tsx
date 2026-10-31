@@ -66,7 +66,7 @@ export function PostCard({ post, comments }: { post: Post; comments: number }) {
     >
       <div className="flex items-start gap-3">
         <span
-          className={`flex size-10 shrink-0 items-center justify-center rounded-2xl ${accent.surface} ${accent.ink}`}
+          className={`flex size-10 shrink-0 items-center justify-center rounded-card ${accent.surface} ${accent.ink}`}
         >
           <TypeIcon aria-hidden="true" className="size-5" />
         </span>
