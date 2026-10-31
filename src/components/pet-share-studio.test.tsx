@@ -50,11 +50,11 @@ describe("PetShareStudio", () => {
   it("exporta o PNG sem conta ou publicação de link", async () => {
     const user = userEvent.setup();
     render(<PetShareStudio card={card} photo={null} publicUrl={null} />);
-    expect(screen.getByRole("button", { name: "Baixar PNG" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Baixar imagem" })).toBeEnabled();
     expect(
       screen.getByRole("button", { name: "Copiar link público" }),
     ).toBeDisabled();
-    await user.click(screen.getByRole("button", { name: "Baixar PNG" }));
+    await user.click(screen.getByRole("button", { name: "Baixar imagem" }));
     await waitFor(() => expect(downloadPetCard).toHaveBeenCalledOnce());
     expect(createPetCardPng).toHaveBeenLastCalledWith(
       expect.objectContaining({ publicUrl: null }),

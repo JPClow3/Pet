@@ -155,14 +155,14 @@ export function PetShareStudio({
   }
 
   async function handleDownload() {
-    setAction({ state: "generating", message: "Gerando seu PNG…" });
+    setAction({ state: "generating", message: "Gerando a imagem…" });
     try {
       const blob = await generateArtwork();
       downloadPetCard(blob, fileName);
       onTrack?.("png_downloaded");
       setAction({
         state: "success",
-        message: `PNG ${definition.label.toLowerCase()} baixado com sucesso.`,
+        message: `Imagem ${definition.label.toLowerCase()} baixada.`,
       });
       toast.success("Carteirinha baixada", {
         description: "A imagem está pronta para publicar.",
@@ -170,7 +170,7 @@ export function PetShareStudio({
     } catch {
       setAction({
         state: "error",
-        message: "Não foi possível gerar o PNG. Tente novamente.",
+        message: "Não foi possível gerar a imagem. Tente novamente.",
       });
       toast.error("Falha ao gerar a carteirinha");
     }
@@ -193,7 +193,7 @@ export function PetShareStudio({
         setAction({
           state: "unavailable",
           message:
-            "Compartilhamento direto indisponível. Baixamos o PNG para você.",
+            "Compartilhamento direto indisponível. Baixamos a imagem para você.",
         });
         toast("Imagem baixada", {
           description: "Seu navegador não oferece compartilhamento direto.",
@@ -223,7 +223,7 @@ export function PetShareStudio({
       setAction({
         state: "error",
         message: blob
-          ? "O menu de compartilhamento falhou. Baixamos o PNG para você."
+          ? "O menu de compartilhamento falhou. Baixamos a imagem para você."
           : "Não foi possível gerar a imagem. Tente novamente.",
       });
       toast.error("Não foi possível compartilhar");
@@ -252,15 +252,15 @@ export function PetShareStudio({
           <p className="text-meta font-extrabold uppercase tracking-[0.16em] text-blue-deep">
             Estúdio da carteirinha
           </p>
-          <CardTitle className="mt-1 font-editorial text-[1.55rem] font-semibold leading-tight">
+          <CardTitle className="mt-1 font-editorial text-h2 font-semibold leading-tight">
             Pronta para guardar e compartilhar
           </CardTitle>
-          <p className="mt-2 max-w-[50ch] text-[0.88rem] leading-relaxed text-muted">
-            O preview abaixo é a imagem exata do PNG. Apenas os dados públicos
-            autorizados entram na arte.
+          <p className="mt-2 max-w-[50ch] text-label leading-relaxed text-muted">
+            A prévia abaixo é exatamente a imagem baixada. Só os dados públicos
+            que você autorizou entram nela.
           </p>
           <p className="mt-2 max-w-[60ch] text-meta leading-relaxed text-muted">
-            O PNG é uma imagem deste momento e não muda depois de baixado.
+            A imagem mostra este momento e não muda depois de baixada.
             {publicUrl
               ? " Seu QR Code abre o link gerenciado, que pode ser atualizado, revogado ou expirar."
               : " Você pode baixar a imagem sem criar conta ou publicar dados. Publique um link gerenciado para incluir QR Code."}
@@ -340,7 +340,7 @@ export function PetShareStudio({
             </div>
           </fieldset>
 
-          <figure className="relative overflow-hidden rounded-[28px] border border-line bg-[radial-gradient(circle_at_top_right,var(--color-sun-soft),transparent_42%),linear-gradient(145deg,var(--color-surface),var(--color-canvas)))] p-3 sm:p-5">
+          <figure className="relative overflow-hidden rounded-sheet border border-line bg-[radial-gradient(circle_at_top_right,var(--color-sun-soft),transparent_42%),linear-gradient(145deg,var(--color-surface),var(--color-canvas)))] p-3 sm:p-5">
             <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-canvas/90 px-2.5 py-1 text-meta font-bold uppercase tracking-[0.1em] text-ink-soft shadow-sm">
               Preview exato
             </span>
@@ -359,12 +359,12 @@ export function PetShareStudio({
                 <img
                   src={currentPreview.url}
                   alt={previewDescription}
-                  className="max-h-[38rem] w-full rounded-[18px] object-contain shadow-float"
+                  className="max-h-[38rem] w-full rounded-card object-contain shadow-float"
                 />
               ) : currentPreview?.state === "error" ? (
                 <div className="flex min-h-64 flex-col items-center justify-center gap-2 text-center text-danger-ink">
                   <TriangleAlert aria-hidden="true" className="size-6" />
-                  <p className="max-w-[28ch] text-[0.85rem] font-semibold">
+                  <p className="max-w-[28ch] text-label font-semibold">
                     Não foi possível montar o preview. Tente outra vez.
                   </p>
                 </div>
@@ -382,8 +382,7 @@ export function PetShareStudio({
               )}
             </div>
             <figcaption className="mt-3 text-center text-meta text-muted">
-              {definition.width} × {definition.height} px · PNG em alta
-              qualidade
+              Imagem em alta qualidade
             </figcaption>
           </figure>
 
@@ -406,7 +405,7 @@ export function PetShareStudio({
               className="w-full"
             >
               <Download aria-hidden="true" className="size-4" />
-              Baixar PNG
+              Baixar imagem
             </Button>
           </div>
 
@@ -425,7 +424,7 @@ export function PetShareStudio({
             <p className="flex items-start gap-2 rounded-2xl bg-surface px-3 py-2.5 text-meta leading-relaxed text-muted">
               <WifiOff aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
               Compartilhamento direto não está disponível neste navegador. Ao
-              tocar em compartilhar, o PNG será baixado automaticamente.
+              tocar em compartilhar, a imagem é baixada.
             </p>
           ) : null}
 
@@ -476,7 +475,7 @@ export function PetShareStudio({
           <p className="mt-1 text-meta leading-relaxed text-muted">
             {publicUrl
               ? `Ele abre a página pública de ${card.name}. Atualize o link após mudar os dados; revogação e expiração também interrompem o QR Code.`
-              : "O PNG continua disponível sem conta. Nenhum link é criado automaticamente."}
+              : "A imagem funciona sem conta. Nenhum link é criado automaticamente."}
           </p>
         </div>
       </Card>

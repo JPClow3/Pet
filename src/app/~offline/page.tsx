@@ -13,7 +13,7 @@ export default function OfflinePage() {
         <CloudOff aria-hidden="true" className="size-7" />
       </span>
       <h1 className="text-2xl font-semibold text-ink">Você está sem conexão</h1>
-      <p className="text-[0.95rem] leading-relaxed text-muted">
+      <p className="text-body leading-relaxed text-muted">
         Os registros do seu pet ficam salvos neste aparelho. Reabrir a Zelupi
         funciona, mas esta página ainda não estava guardada no cache.
       </p>

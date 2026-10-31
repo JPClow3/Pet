@@ -2,14 +2,13 @@
 
 import {
   ArrowUpRight,
+  CalendarClock,
   Camera,
-  Check,
   ClipboardPlus,
   FileText,
   PawPrint,
   Scale,
   Siren,
-  Syringe,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -20,14 +19,12 @@ import { CareHalo, PetAvatar } from "@/components/pet-avatar";
 import { HealthStatusCard } from "@/components/health-status-card";
 import { PetContextSwitcher, type PetScope } from "@/components/pet-header";
 import { PlaceCard } from "@/components/place-card";
-import { PostCard } from "@/components/post-card";
 import { ReminderCard } from "@/components/reminder-card";
 import { Photo } from "@/components/ui/photo";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
-import { commentsForPost, visiblePosts } from "@/lib/domain/community";
 import { formatShortDate, todayKey } from "@/lib/domain/dates";
 import {
   filterPlaces,
@@ -55,7 +52,7 @@ function TodaySkeleton() {
       aria-busy="true"
     >
       <span className="sr-only">Abrindo a Zelupi</span>
-      <div className="rounded-[28px] border border-line bg-paper p-5">
+      <div className="rounded-sheet border border-line bg-paper p-5">
         <div className="flex items-center gap-4">
           <Skeleton className="size-24 rounded-full" />
           <div className="flex flex-1 flex-col gap-2">
@@ -135,7 +132,7 @@ function AttentionGroup({
       <div className="mb-2 flex items-center gap-2">
         <span
           className={cn(
-            "text-[0.78rem] font-bold uppercase tracking-[0.14em]",
+            "text-meta font-bold uppercase tracking-[0.14em]",
             toneClasses[tone],
           )}
         >
@@ -167,11 +164,9 @@ export default function HomePage() {
   const activePetRecords = usePetRecords(activePet?.id ?? null);
   const reminderItems = useReminderItems();
   const diary = useAppStore((state) => state.diary);
+  const records = useAppStore((state) => state.records);
   const places = useAppStore((state) => state.places);
   const reviews = useAppStore((state) => state.reviews);
-  const posts = useAppStore((state) => state.posts);
-  const comments = useAppStore((state) => state.comments);
-  const blocked = useAppStore((state) => state.blockedAuthorIds);
   const { origin } = useOrigin();
   const [requestedScope, setScope] = useState<PetScope | null>(null);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
@@ -208,13 +203,23 @@ export default function HomePage() {
     () => diary.filter((entry) => entry.petId === activePet?.id).slice(0, 2),
     [diary, activePet?.id],
   );
-  const nearPlaces = useMemo(
-    () => filterPlaces(places, emptyFilters, origin).slice(0, 1),
+  // Only places the tutor saved: demo catalogue entries never appear on Hoje.
+  const savedPlaces = useMemo(
+    () =>
+      filterPlaces(
+        places.filter((place) => !place.seeded),
+        emptyFilters,
+        origin,
+      ).slice(0, 1),
     [places, origin],
   );
-  const feed = useMemo(
-    () => visiblePosts(posts, blocked).slice(0, 1),
-    [posts, blocked],
+  const hasCareData = useMemo(
+    () =>
+      scope === "todos"
+        ? records.length > 0 || reminders.length > 0
+        : records.some((record) => record.petId === scope) ||
+          scopedReminders.length > 0,
+    [records, reminders, scope, scopedReminders],
   );
 
   if (!ready) return <TodaySkeleton />;
@@ -231,24 +236,27 @@ export default function HomePage() {
   }
 
   const attentionCount = overdue.length + today.length;
-  const headline =
-    scope === "todos"
-      ? attentionCount === 0
-        ? "Tudo organizado por hoje."
-        : `${attentionCount} cuidado${attentionCount === 1 ? "" : "s"} pedindo atenção.`
-      : today.length === 0 && overdue.length === 0
-        ? `${activePet.name} está sem cuidados para resolver agora.`
-        : `${activePet.name} tem ${attentionCount} cuidado${attentionCount === 1 ? "" : "s"} para acompanhar.`;
+  const nextItem = soon[0] ?? later[0] ?? null;
+  // Three honest states: nothing recorded, nothing due, or something due.
+  const headline = !hasCareData
+    ? "Ainda sem cuidados registrados."
+    : attentionCount > 0
+      ? `${attentionCount} cuidado${attentionCount === 1 ? "" : "s"} pedindo atenção.`
+      : nextItem
+        ? `Nada pendente até ${formatShortDate(nextItem.dueDate)}.`
+        : "Nada pendente na agenda.";
+  const recordHref =
+    scope === "todos" ? "/record/new" : `/pets/${activePet.id}/health/new`;
 
   return (
     <div className="flex flex-col gap-6 pb-8">
-      <section className="rounded-[24px] border border-blue/20 bg-blue-soft/55 p-5 shadow-none sm:p-7">
+      <section className="rounded-feature border border-blue/20 bg-blue-soft/55 p-5 shadow-none sm:p-7">
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div className="min-w-0 sm:flex-1">
             <p className="text-meta font-bold uppercase tracking-[0.14em] text-blue-deep">
               {formatShortDate(todayKey())}
             </p>
-            <h1 className="mt-1 font-editorial text-[2.25rem] font-semibold leading-none tracking-tight text-ink">
+            <h1 className="mt-1 font-editorial text-h1 font-semibold leading-none tracking-tight text-ink">
               Hoje
             </h1>
             <div className="mt-3 max-w-full">
@@ -259,14 +267,14 @@ export default function HomePage() {
                 className="max-w-full"
               />
             </div>
-            <p className="mt-4 max-w-[38ch] text-[1rem] font-semibold leading-relaxed text-ink">
+            <p className="mt-4 max-w-[38ch] text-body font-semibold leading-relaxed text-ink">
               {headline}
             </p>
-            <p className="mt-1 max-w-[42ch] text-[0.88rem] leading-relaxed text-ink-soft">
-              {scope === "todos"
-                ? "A agenda mostra cada cuidado com o nome do pet para você agir sem trocar de contexto."
-                : `A agenda de ${activePet.name} aparece aqui, com histórico preservado.`}
-            </p>
+            {!hasCareData ? (
+              <p className="mt-1 max-w-[42ch] text-label leading-relaxed text-ink-soft">
+                Registre a vacina mais recente para a Zelupi avisar a próxima.
+              </p>
+            ) : null}
           </div>
           <div className="self-start sm:self-auto">
             {scope === "todos" ? (
@@ -285,89 +293,46 @@ export default function HomePage() {
             )}
           </div>
         </div>
-        <div className="relative mt-5 flex flex-col gap-2 sm:max-w-xl sm:flex-row">
-          <ButtonLink
-            href={
-              scope === "todos"
-                ? "/record/new"
-                : `/pets/${activePet.id}/health/new`
-            }
-            size="sm"
-            variant="blue"
-          >
+        <div className="relative mt-5 flex flex-col sm:max-w-xs">
+          <ButtonLink href={recordHref} variant="blue">
             <ClipboardPlus aria-hidden="true" className="size-4" />
-            Registrar cuidado
-          </ButtonLink>
-          {pets.length >= 2 ? (
-            <button
-              type="button"
-              onClick={() => setBatchModalOpen(true)}
-              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[14px] border border-teal-ink/30 bg-mint/50 px-3 text-[0.85rem] font-semibold text-teal-deep transition-colors hover:bg-mint hover:border-teal-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink"
-            >
-              <Users aria-hidden="true" className="size-4 text-teal-ink" />
-              Cuidado compartilhado
-            </button>
-          ) : null}
-          <ButtonLink
-            href={scope === "todos" ? "/pets" : `/pets/${activePet.id}/card`}
-            size="sm"
-            variant="secondary"
-          >
-            <FileText aria-hidden="true" className="size-4" />
-            {scope === "todos" ? "Ver pets" : "Carteirinha"}
+            {hasCareData ? "Registrar cuidado" : "Registrar primeiro cuidado"}
           </ButtonLink>
         </div>
       </section>
 
       <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(19rem,0.72fr)] lg:items-start">
         <section className="min-w-0" aria-labelledby="today-agenda-title">
-          <div className="mb-3 flex items-end justify-between gap-3">
-            <div>
-              <p className="text-meta font-bold uppercase tracking-[0.14em] text-muted">
-                Próximo passo
-              </p>
-              <h2
-                id="today-agenda-title"
-                className="mt-1 font-editorial text-[1.7rem] font-semibold leading-tight text-ink"
-              >
-                Sua agenda
-              </h2>
-            </div>
-            <Link
-              href="/reminders"
-              className="inline-flex min-h-11 items-center gap-1 text-meta font-bold text-teal-ink hover:text-teal-deep"
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2
+              id="today-agenda-title"
+              className="text-h2 font-semibold text-ink"
             >
-              Abrir tudo <ArrowUpRight aria-hidden="true" className="size-4" />
-            </Link>
+              Sua agenda
+            </h2>
+            {scopedReminders.length > 0 ? (
+              <Link
+                href="/reminders"
+                className="inline-flex min-h-11 items-center gap-1 text-meta font-bold text-teal-ink hover:text-teal-deep"
+              >
+                Abrir tudo{" "}
+                <ArrowUpRight aria-hidden="true" className="size-4" />
+              </Link>
+            ) : null}
           </div>
 
           {scopedReminders.length === 0 ? (
-            <Card className="border-success-ink/30 bg-success-soft shadow-none">
-              <div className="flex items-start gap-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-[14px] bg-canvas text-success-ink">
-                  <Check aria-hidden="true" className="size-5" />
-                </span>
-                <div>
-                  <h3 className="text-[1rem] font-bold text-ink">
-                    Tudo organizado por hoje
-                  </h3>
-                  <p className="mt-1 text-[0.9rem] leading-relaxed text-ink-soft">
-                    Registre o próximo cuidado quando quiser ou veja o histórico
-                    para conferir a história completa.
-                  </p>
-                  <Link
-                    href={
-                      scope === "todos"
-                        ? "/reminders"
-                        : `/pets/${activePet.id}/health`
-                    }
-                    className="mt-3 inline-flex min-h-11 items-center text-meta font-bold text-success-ink"
-                  >
-                    Ver próximos cuidados →
-                  </Link>
-                </div>
-              </div>
-            </Card>
+            <div className="flex items-start gap-3 rounded-card border border-dashed border-line bg-paper p-4">
+              <CalendarClock
+                aria-hidden="true"
+                className="mt-0.5 size-5 shrink-0 text-muted"
+              />
+              <p className="text-label leading-relaxed text-ink-soft">
+                {hasCareData
+                  ? "Nenhuma próxima data marcada. Ao registrar vacina, vermífugo ou antiparasitário, a próxima dose aparece aqui."
+                  : "As próximas vacinas e remédios aparecem aqui depois do primeiro registro."}
+              </p>
+            </div>
           ) : (
             <div className="flex flex-col gap-5">
               <AttentionGroup
@@ -407,20 +372,20 @@ export default function HomePage() {
         </section>
 
         <aside className="flex min-w-0 flex-col gap-5 lg:sticky lg:top-24">
+          {/* With an empty agenda the status card would only repeat it. */}
+          {activePetRecords.length > 0 && scopedReminders.length > 0 ? (
           <section aria-labelledby="today-context-title">
-            <div className="mb-3 flex items-end justify-between gap-3">
-              <div>
-                <p className="text-meta font-bold uppercase tracking-[0.14em] text-muted">
-                  Contexto
-                </p>
-                <h2
-                  id="today-context-title"
-                  className="mt-1 font-editorial text-[1.5rem] font-semibold leading-tight text-ink"
-                >
-                  Para {activePet.name}
-                </h2>
-              </div>
-              <Link href="/pets" className="text-meta font-bold text-teal-ink">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2
+                id="today-context-title"
+                className="text-h2 font-semibold text-ink"
+              >
+                Para {activePet.name}
+              </h2>
+              <Link
+                href="/pets"
+                className="inline-flex min-h-11 items-center text-meta font-bold text-teal-ink"
+              >
                 Perfil
               </Link>
             </div>
@@ -429,12 +394,13 @@ export default function HomePage() {
               href={`/pets/${activePet.id}/health`}
             />
           </section>
+          ) : null}
 
           <section aria-labelledby="today-shortcuts-title">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2
                 id="today-shortcuts-title"
-                className="font-editorial text-[1.35rem] font-semibold text-ink"
+                className="text-h3 font-semibold text-ink"
               >
                 Ações rápidas
               </h2>
@@ -442,29 +408,29 @@ export default function HomePage() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Link
-                href={`/pets/${activePet.id}/health/new`}
-                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-paper p-3 text-[0.88rem] font-bold text-ink transition-colors hover:border-teal/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
+                href="/first-aid"
+                className="group flex min-h-24 flex-col justify-between rounded-card border border-danger/30 bg-paper p-3 text-label font-bold text-ink transition-colors hover:border-danger/60 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger-ink focus-visible:ring-offset-2"
               >
-                <Syringe aria-hidden="true" className="size-5 text-teal-ink" />{" "}
-                Registrar cuidado
+                <Siren aria-hidden="true" className="size-5 text-danger-ink" />{" "}
+                Emergência
               </Link>
               <Link
                 href={`/pets/${activePet.id}/health/new?type=peso`}
-                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-paper p-3 text-[0.88rem] font-bold text-ink transition-colors hover:border-blue/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep focus-visible:ring-offset-2"
+                className="group flex min-h-24 flex-col justify-between rounded-card border border-line bg-paper p-3 text-label font-bold text-ink transition-colors hover:border-blue/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep focus-visible:ring-offset-2"
               >
                 <Scale aria-hidden="true" className="size-5 text-blue-deep" />{" "}
                 Registrar peso
               </Link>
               <Link
                 href={`/pets/${activePet.id}/diary`}
-                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-paper p-3 text-[0.88rem] font-bold text-ink transition-colors hover:border-accent/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                className="group flex min-h-24 flex-col justify-between rounded-card border border-line bg-paper p-3 text-label font-bold text-ink transition-colors hover:border-accent/45 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
               >
                 <Camera aria-hidden="true" className="size-5 text-accent-ink" />{" "}
                 Guardar momento
               </Link>
               <Link
                 href={`/pets/${activePet.id}/card`}
-                className="group flex min-h-24 flex-col justify-between rounded-[18px] border border-line bg-paper p-3 text-[0.88rem] font-bold text-ink transition-colors hover:border-warning/55 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning-ink focus-visible:ring-offset-2"
+                className="group flex min-h-24 flex-col justify-between rounded-card border border-line bg-paper p-3 text-label font-bold text-ink transition-colors hover:border-warning/55 hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning-ink focus-visible:ring-offset-2"
               >
                 <FileText
                   aria-hidden="true"
@@ -476,7 +442,7 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => setBatchModalOpen(true)}
-                  className="group col-span-2 flex min-h-16 flex-row items-center justify-between rounded-[18px] border border-teal-ink/30 bg-mint/35 p-3 text-left text-[0.88rem] font-bold text-ink transition-colors hover:border-teal/55 hover:bg-mint/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
+                  className="group col-span-2 flex min-h-16 flex-row items-center justify-between rounded-card border border-teal-ink/30 bg-mint/35 p-3 text-left text-label font-bold text-ink transition-colors hover:border-teal/55 hover:bg-mint/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="flex size-9 items-center justify-center rounded-full bg-white dark:bg-card">
@@ -486,7 +452,7 @@ export default function HomePage() {
                       <p className="leading-tight font-bold text-teal-deep">
                         Cuidado compartilhado
                       </p>
-                      <p className="text-[11px] font-normal text-muted">
+                      <p className="text-caption font-normal text-muted">
                         Passeio, alimentação, etc. para vários pets de uma vez
                       </p>
                     </div>
@@ -503,54 +469,42 @@ export default function HomePage() {
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2
                 id="today-diary-title"
-                className="font-editorial text-[1.35rem] font-semibold text-ink"
+                className="text-h3 font-semibold text-ink"
               >
                 Diário
               </h2>
               <Link
                 href={`/pets/${activePet.id}/diary`}
-                className="text-meta font-bold text-teal-ink"
+                className="inline-flex min-h-11 items-center text-meta font-bold text-teal-ink"
               >
                 Abrir diário
               </Link>
             </div>
             {petDiary.length === 0 ? (
-              <Card className="border-accent-ink/25 bg-accent-soft/55 shadow-none">
-                <div className="flex items-start gap-3">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-[14px] bg-canvas text-accent-ink">
-                    <Camera aria-hidden="true" className="size-5" />
-                  </span>
-                  <div>
-                    <h3 className="text-[0.95rem] font-bold text-ink">
-                      A história de {activePet.name} começa aqui
-                    </h3>
-                    <p className="mt-1 text-[0.86rem] leading-relaxed text-ink-soft">
-                      Guarde uma foto ou uma linha. O diário é privado por
-                      padrão.
-                    </p>
-                  </div>
-                </div>
-              </Card>
+              <p className="rounded-card border border-dashed border-line bg-paper p-4 text-label leading-relaxed text-ink-soft">
+                Guarde uma foto ou uma linha sobre {activePet.name}. O diário é
+                privado.
+              </p>
             ) : (
               <ul className="flex flex-col gap-2">
                 {petDiary.map((entry) => (
                   <li
                     key={entry.id}
-                    className="flex items-center gap-3 rounded-[18px] border border-line bg-paper p-3"
+                    className="flex items-center gap-3 rounded-card border border-line bg-paper p-3"
                   >
                     {entry.photo ? (
                       <Photo
                         src={entry.photo}
                         alt=""
-                        className="size-14 shrink-0 rounded-[14px]"
+                        className="size-14 shrink-0 rounded-control"
                       />
                     ) : (
-                      <span className="flex size-14 shrink-0 items-center justify-center rounded-[14px] bg-accent-soft text-accent-ink">
+                      <span className="flex size-14 shrink-0 items-center justify-center rounded-control bg-accent-soft text-accent-ink">
                         <Camera aria-hidden="true" className="size-5" />
                       </span>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="line-clamp-2 text-[0.88rem] leading-relaxed text-ink-soft">
+                      <p className="line-clamp-2 text-label leading-relaxed text-ink-soft">
                         {entry.text}
                       </p>
                       <p className="mt-1 text-meta text-muted">
@@ -565,48 +519,34 @@ export default function HomePage() {
         </aside>
       </div>
 
-      <section
-        className="border-t border-line/80 pt-6"
-        aria-labelledby="today-discover-title"
-      >
-        <div className="mb-3 flex items-end justify-between gap-3">
-          <div>
-            <p className="text-meta font-bold uppercase tracking-[0.14em] text-muted">
-              Depois do cuidado
-            </p>
+      {savedPlaces.length > 0 ? (
+        <section
+          className="border-t border-line/80 pt-6"
+          aria-labelledby="today-discover-title"
+        >
+          <div className="mb-3 flex items-center justify-between gap-3">
             <h2
               id="today-discover-title"
-              className="mt-1 font-editorial text-[1.5rem] font-semibold text-ink"
+              className="text-h3 font-semibold text-ink"
             >
-              Descobrir
+              Seus locais de confiança
             </h2>
+            <Link
+              href="/explore"
+              className="inline-flex min-h-11 items-center text-meta font-bold text-teal-ink"
+            >
+              Ver tudo
+            </Link>
           </div>
-          <Link href="/explore" className="text-meta font-bold text-teal-ink">
-            Ver tudo
-          </Link>
-        </div>
-        <div className="grid gap-3 lg:grid-cols-2">
-          {nearPlaces.map((place) => (
+          {savedPlaces.map((place) => (
             <PlaceCard
               key={place.id}
               place={place}
               topCriteria={criterionScores(reviewsForPlace(reviews, place.id))}
             />
           ))}
-          {feed.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              comments={commentsForPost(comments, post.id).length}
-            />
-          ))}
-        </div>
-        {nearPlaces.length === 0 && feed.length === 0 ? (
-          <p className="rounded-[18px] border border-dashed border-line bg-surface/60 p-4 text-[0.9rem] text-muted">
-            Locais e comunidade aparecem aqui quando houver conteúdo disponível.
-          </p>
-        ) : null}
-      </section>
+        </section>
+      ) : null}
 
       {activePet.lostMode.active ? (
         <Card className="border-danger/35 bg-danger-soft shadow-none">
@@ -619,7 +559,7 @@ export default function HomePage() {
               <p className="font-bold text-danger-ink">
                 Modo perdido ativo para {activePet.name}
               </p>
-              <p className="mt-1 text-[0.88rem] leading-relaxed text-danger-ink/90">
+              <p className="mt-1 text-label leading-relaxed text-danger-ink/90">
                 A carteirinha pública mostra o aviso e o contato que você
                 escolheu.
               </p>

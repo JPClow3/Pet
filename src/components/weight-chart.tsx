@@ -49,9 +49,9 @@ export function WeightChart({
 
   if (sortedPoints.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-[20px] border border-dashed border-line bg-surface/40 p-6 text-center text-muted">
+      <div className="flex flex-col items-center justify-center rounded-card border border-dashed border-line bg-surface/40 p-6 text-center text-muted">
         <Scale aria-hidden="true" className="size-8 text-muted/60" />
-        <p className="mt-2 text-[0.92rem] font-semibold text-ink">
+        <p className="mt-2 text-body font-semibold text-ink">
           Sem pesagens registradas
         </p>
         <p className="mt-0.5 max-w-[34ch] text-meta text-muted">
@@ -154,7 +154,7 @@ export function WeightChart({
       </div>
 
       {/* SVG Chart */}
-      <div className="relative overflow-hidden rounded-[20px] border border-line bg-surface/20 p-2">
+      <div className="relative overflow-hidden rounded-card border border-line bg-surface/20 p-2">
         <svg
           viewBox={`0 0 ${width} ${height}`}
           className="w-full overflow-visible select-none"
@@ -182,7 +182,7 @@ export function WeightChart({
             x={padLeft - 6}
             y={padTop + 4}
             textAnchor="end"
-            className="fill-muted text-[10px] tabular-nums"
+            className="fill-muted text-caption tabular-nums"
           >
             {yMax.toFixed(1).replace(".", ",")}
           </text>
@@ -200,7 +200,7 @@ export function WeightChart({
             x={padLeft - 6}
             y={getY(yMid) + 4}
             textAnchor="end"
-            className="fill-muted text-[10px] tabular-nums"
+            className="fill-muted text-caption tabular-nums"
           >
             {yMid.toFixed(1).replace(".", ",")}
           </text>
@@ -217,7 +217,7 @@ export function WeightChart({
             x={padLeft - 6}
             y={padTop + chartH + 3}
             textAnchor="end"
-            className="fill-muted text-[10px] tabular-nums"
+            className="fill-muted text-caption tabular-nums"
           >
             {yMin.toFixed(1).replace(".", ",")}
           </text>
@@ -238,7 +238,7 @@ export function WeightChart({
                 x={width - padRight - 2}
                 y={targetY - 5}
                 textAnchor="end"
-                className="fill-sky-700 text-[10px] font-semibold"
+                className="fill-sky-700 text-caption font-semibold"
               >
                 Meta {targetWeightKg?.toFixed(1).replace(".", ",")} kg
               </text>
@@ -320,7 +320,7 @@ export function WeightChart({
                 x={coordinates[0].x}
                 y={padTop + chartH + 18}
                 textAnchor="start"
-                className="fill-muted text-[10px]"
+                className="fill-muted text-caption"
               >
                 {formatShortDate(coordinates[0].date)}
               </text>
@@ -336,7 +336,7 @@ export function WeightChart({
                     x={midX}
                     y={padTop + chartH + 18}
                     textAnchor="middle"
-                    className="fill-muted text-[10px]"
+                    className="fill-muted text-caption"
                   >
                     {formatShortDate(coordinates[midIdx].date)}
                   </text>
@@ -346,7 +346,7 @@ export function WeightChart({
                 x={coordinates[coordinates.length - 1].x}
                 y={padTop + chartH + 18}
                 textAnchor="end"
-                className="fill-muted text-[10px]"
+                className="fill-muted text-caption"
               >
                 {formatShortDate(coordinates[coordinates.length - 1].date)}
               </text>
@@ -356,7 +356,7 @@ export function WeightChart({
               x={coordinates[0].x}
               y={padTop + chartH + 18}
               textAnchor="middle"
-              className="fill-muted text-[10px]"
+              className="fill-muted text-caption"
             >
               {formatShortDate(coordinates[0].date)}
             </text>
@@ -369,13 +369,13 @@ export function WeightChart({
         <aside
           role="note"
           aria-label="Aviso de variação de peso"
-          className="flex items-start gap-2.5 rounded-[16px] border border-amber-500/25 bg-amber-500/10 p-3 text-ink"
+          className="flex items-start gap-2.5 rounded-control border border-amber-500/25 bg-amber-500/10 p-3 text-ink"
         >
           <AlertCircle
             aria-hidden="true"
             className="size-5 shrink-0 text-amber-600"
           />
-          <div className="flex-1 text-[0.85rem] leading-relaxed">
+          <div className="flex-1 text-label leading-relaxed">
             <p className="font-semibold text-amber-950 dark:text-amber-200">
               Variação de {alert.percentage.toFixed(1).replace(".", ",")}% detectada (
               {alert.deltaKg > 0

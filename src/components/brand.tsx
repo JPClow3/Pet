@@ -47,7 +47,7 @@ export function Brand({
       <span
         aria-hidden="true"
         className={cn(
-          "text-[1.6rem] font-extrabold leading-none tracking-[-0.065em]",
+          "text-h1 font-extrabold leading-none tracking-[-0.065em]",
           compactOnTablet && "md:hidden lg:inline",
         )}
       >

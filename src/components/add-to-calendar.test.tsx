@@ -37,7 +37,7 @@ describe("AddToCalendarButton", () => {
     await user.click(button);
 
     expect(screen.getByText("Google Agenda")).toBeInTheDocument();
-    expect(screen.getByText(/Apple Calendar \/ Outros \(\.ics\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Agenda do celular \(iPhone, Android\)/i)).toBeInTheDocument();
     expect(screen.getByText(/alarmes automáticos/i)).toBeInTheDocument();
   });
 
@@ -70,7 +70,7 @@ describe("AddToCalendarButton", () => {
       screen.getByRole("button", { name: /Adicionar ao Calendário/i }),
     );
 
-    const appleBtn = screen.getByText(/Apple Calendar/i);
+    const appleBtn = screen.getByText(/Agenda do celular/i);
     await user.click(appleBtn);
 
     expect(downloadText).toHaveBeenCalledWith(

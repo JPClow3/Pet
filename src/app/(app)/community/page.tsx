@@ -2,7 +2,6 @@
 
 import {
   ArrowUpRight,
-  HeartPulse,
   MapPin,
   MessageCircle,
   Plus,
@@ -15,7 +14,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { DiscoveryTabs } from "@/components/discovery-tabs";
-import { FirstAidGuide } from "@/components/first-aid-guide";
 import { PageHeader } from "@/components/page-header";
 import { PostCard } from "@/components/post-card";
 import { Button, ButtonLink } from "@/components/ui/button";
@@ -32,17 +30,14 @@ import {
 import { postTypeMeta } from "@/lib/domain/labels";
 import type { PostType } from "@/lib/domain/schema";
 import { useAppStore, MY_AUTHOR } from "@/lib/store/app-store";
-import { useActivePet, useHydrated } from "@/lib/store/hooks";
+import { useHydrated } from "@/lib/store/hooks";
 
 const types = Object.keys(postTypeMeta) as PostType[];
 
 type FeedMode = "para_voce" | "perto" | "seguindo";
-type CommunityPrimaryTab = "socorros" | "comunidade";
 
 export default function CommunityPage() {
   const ready = useHydrated();
-  const activePet = useActivePet();
-  const places = useAppStore((state) => state.places);
   const posts = useAppStore((state) => state.posts);
   const comments = useAppStore((state) => state.comments);
   const groups = useAppStore((state) => state.groups);
@@ -50,7 +45,6 @@ export default function CommunityPage() {
   const blocked = useAppStore((state) => state.blockedAuthorIds);
   const settings = useAppStore((state) => state.settings);
 
-  const [primaryTab, setPrimaryTab] = useState<CommunityPrimaryTab>("socorros");
   const [typesFilter, setTypesFilter] = useState<PostType[]>([]);
   const [query, setQuery] = useState("");
   const [onlyMine, setOnlyMine] = useState(false);
@@ -111,81 +105,36 @@ export default function CommunityPage() {
   }
 
   if (!ready)
-    return <SkeletonScreen label="Carregando primeiros socorros e comunidade" />;
+    return <SkeletonScreen label="Carregando comunidade" />;
 
   return (
     <div className="flex flex-col gap-4 pb-24">
       <PageHeader
-        title="Primeiros socorros e comunidade"
-        subtitle="Guia de emergência e alimentos tóxicos 100% offline, mais prévia local da comunidade."
+        title="Comunidade"
+        subtitle="Prévia local: pessoas e grupos são exemplos."
         action={
-          primaryTab === "comunidade" ? (
-            <ButtonLink href="/community/new" size="sm">
-              <Plus aria-hidden="true" className="size-4" />
-              Criar exemplo
-            </ButtonLink>
-          ) : (
-            <ButtonLink href="/explore" size="sm" variant="secondary">
-              Clínicas 24h
-            </ButtonLink>
-          )
+          <ButtonLink href="/community/new" size="sm">
+            <Plus aria-hidden="true" className="size-4" />
+            Criar exemplo
+          </ButtonLink>
         }
       />
 
       <DiscoveryTabs active="comunidade" />
 
-      <div
-        role="tablist"
-        aria-label="Alternar entre Guia de Primeiros Socorros e Prévia da Comunidade"
-        className="grid grid-cols-1 gap-2 rounded-2xl border border-line bg-surface/70 p-1.5 sm:grid-cols-2"
-      >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={primaryTab === "socorros"}
-          onClick={() => setPrimaryTab("socorros")}
-          className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 py-2 text-[0.86rem] font-semibold transition-colors ${
-            primaryTab === "socorros"
-              ? "bg-paper text-teal-ink shadow-sm"
-              : "text-muted hover:text-ink"
-          }`}
-        >
-          <HeartPulse aria-hidden="true" className="size-4 shrink-0" />
-          <span>Primeiros socorros & alimentos tóxicos</span>
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={primaryTab === "comunidade"}
-          onClick={() => setPrimaryTab("comunidade")}
-          className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 py-2 text-[0.86rem] font-semibold transition-colors ${
-            primaryTab === "comunidade"
-              ? "bg-paper text-teal-ink shadow-sm"
-              : "text-muted hover:text-ink"
-          }`}
-        >
-          <Users aria-hidden="true" className="size-4 shrink-0" />
-          <span>Prévia da comunidade ({posts.length})</span>
-        </button>
-      </div>
-
-      {primaryTab === "socorros" ? (
-        <FirstAidGuide activePet={activePet} places={places} />
-      ) : (
-        <>
-          <section className="rounded-[24px] border border-line bg-paper p-5">
+          <section className="rounded-feature border border-line bg-paper p-5">
             <div className="flex items-start gap-3">
               <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-surface-subtle text-teal-ink">
                 <Radio aria-hidden="true" className="size-5" />
               </span>
               <div>
-                <p className="text-[0.7rem] font-bold uppercase tracking-[0.14em] text-teal-ink">
+                <p className="text-caption font-bold uppercase tracking-[0.14em] text-teal-ink">
                   Prévia da comunidade
                 </p>
-                <h2 className="mt-1 text-[1.22rem] font-semibold leading-tight text-ink">
+                <h2 className="mt-1 text-h2 font-semibold leading-tight text-ink">
                   Conheça a proposta da comunidade.
                 </h2>
-                <p className="mt-1.5 max-w-[42ch] text-[0.9rem] leading-relaxed text-muted">
+                <p className="mt-1.5 max-w-[42ch] text-label leading-relaxed text-muted">
                   Pessoas, grupos e horários são exemplos. O que você escrever
                   ou marcar aqui fica somente neste aparelho e não é enviado a
                   outros tutores.
@@ -204,12 +153,11 @@ export default function CommunityPage() {
                 className="mt-0.5 size-5 shrink-0 text-warning-ink"
               />
               <div>
-                <p className="text-[0.9rem] font-semibold text-ink">
+                <p className="text-label font-semibold text-ink">
                   Você está sem conexão
                 </p>
                 <p className="mt-1 text-meta leading-relaxed text-muted">
-                  A prévia salva e o guia de primeiros socorros continuam
-                  disponíveis offline. Publicações reais precisam de conexão e
+                  A prévia salva continua disponível offline. Publicações reais precisam de conexão e
                   moderação ativa.
                 </p>
               </div>
@@ -239,7 +187,7 @@ export default function CommunityPage() {
                   role="tab"
                   aria-selected={selected}
                   onClick={() => setMode(item.id)}
-                  className={`inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-[0.88rem] font-semibold transition-colors ${selected ? "border-blue text-blue-deep" : "border-transparent text-muted hover:text-ink"}`}
+                  className={`inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-label font-semibold transition-colors ${selected ? "border-blue text-blue-deep" : "border-transparent text-muted hover:text-ink"}`}
                 >
                   <Icon aria-hidden="true" className="size-4" />
                   {item.label}
@@ -269,7 +217,7 @@ export default function CommunityPage() {
                   setOnlyMine((current) => !current);
                   setGroupId(null);
                 }}
-                className="min-h-10"
+                className="min-h-11"
               >
                 Minhas publicações
               </FilterChip>
@@ -284,7 +232,7 @@ export default function CommunityPage() {
                         : [...current, type],
                     )
                   }
-                  className="min-h-10"
+                  className="min-h-11"
                 >
                   {postTypeMeta[type].label}
                 </FilterChip>
@@ -309,7 +257,11 @@ export default function CommunityPage() {
             <EmptyState
               icon={<MapPin aria-hidden="true" className="size-5" />}
               title="Ainda há pouca atividade nesta região"
-              description={`Não encontramos publicações marcadas como ${settings.city}. Você pode explorar grupos por interesse.`}
+              description={
+                settings.city
+                  ? `Não encontramos publicações marcadas como ${settings.city}. Você pode explorar grupos por interesse.`
+                  : "Informe sua cidade em Ajustes para ver publicações perto de você."
+              }
               action={
                 <ButtonLink href="/community/groups">
                   Ver grupos por interesse
@@ -358,16 +310,16 @@ export default function CommunityPage() {
           <section className="flex flex-col gap-3 border-t border-line pt-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[0.7rem] font-bold uppercase tracking-[0.12em] text-muted">
+                <p className="text-caption font-bold uppercase tracking-[0.12em] text-muted">
                   Encontrar seu contexto
                 </p>
-                <h2 className="mt-1 text-[1.05rem] font-semibold text-ink">
+                <h2 className="mt-1 text-h3 font-semibold text-ink">
                   Grupos por interesse
                 </h2>
               </div>
               <Link
                 href="/community/groups"
-                className="inline-flex min-h-10 items-center gap-1 text-[0.82rem] font-semibold text-blue-deep"
+                className="inline-flex min-h-11 items-center gap-1 text-meta font-semibold text-blue-deep"
               >
                 Ver todos
                 <ArrowUpRight aria-hidden="true" className="size-4" />
@@ -387,7 +339,7 @@ export default function CommunityPage() {
                     }}
                     className={`min-w-[10.5rem] max-w-[14rem] shrink-0 rounded-2xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2 ${groupId === group.id ? "border-teal-ink/40 bg-surface-subtle" : "border-line bg-surface hover:bg-paper"}`}
                   >
-                    <p className="line-clamp-1 text-[0.88rem] font-semibold text-ink">
+                    <p className="line-clamp-1 text-label font-semibold text-ink">
                       {group.name}
                     </p>
                     <p className="mt-1 text-meta text-muted">
@@ -398,12 +350,10 @@ export default function CommunityPage() {
             </div>
           </section>
 
-          <p className="text-[0.72rem] leading-relaxed text-muted">
+          <p className="text-caption leading-relaxed text-muted">
             Esta é uma prévia local. Pessoas, grupos e atividade exibidos como
-            exemplo não representam usuários conectados em tempo real.
+            exemplo não são pessoas reais.
           </p>
-        </>
-      )}
     </div>
   );
 }

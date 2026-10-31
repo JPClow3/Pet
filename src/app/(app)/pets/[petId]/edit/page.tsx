@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { CheckboxRow, Field, Input } from "@/components/ui/field";
+import { countLabel, useConfirm } from "@/components/ui/confirm-sheet";
 import type { Pet } from "@/lib/domain/schema";
 import { useAppStore } from "@/lib/store/app-store";
 import { useAsyncAction } from "@/lib/use-async-action";
@@ -35,6 +36,7 @@ function EditPetContent({ pet }: { pet: Pet }) {
   const [initialPet] = useState(pet);
   const [card, setCard] = useState(pet.card);
   const action = useAsyncAction();
+  const [confirm, confirmSheet] = useConfirm();
   return (
     <div className="flex flex-col gap-4 pb-6">
       <PageHeader
@@ -55,7 +57,7 @@ function EditPetContent({ pet }: { pet: Pet }) {
         />
       </Card>
       <Card className="flex flex-col gap-3">
-        <h2 className="text-[1rem] font-semibold text-ink">
+        <h2 className="text-body font-semibold text-ink">
           Carteirinha pública
         </h2>
         <p className="text-meta text-muted">
@@ -127,7 +129,7 @@ function EditPetContent({ pet }: { pet: Pet }) {
         </ButtonLink>
       </Card>
       <Card className="flex flex-col gap-2">
-        <h2 className="text-[1rem] font-semibold text-ink">Remover pet</h2>
+        <h2 className="text-body font-semibold text-ink">Remover pet</h2>
         <p className="text-meta text-muted">
           Isso apaga registros, documentos, lembretes e diário de {pet.name}{" "}
           neste aparelho. Faça um backup antes.
@@ -135,9 +137,38 @@ function EditPetContent({ pet }: { pet: Pet }) {
         <Button
           variant="danger"
           disabled={action.pending}
-          onClick={() => {
-            if (!window.confirm(`Remover ${pet.name} e todo o histórico?`))
-              return;
+          onClick={async () => {
+            const state = useAppStore.getState();
+            const owned = <T extends { petId: string }>(items: T[]) =>
+              items.filter((item) => item.petId === pet.id).length;
+            const confirmed = await confirm({
+              title: `Remover ${pet.name}?`,
+              description:
+                "Não dá para desfazer. Baixe um backup antes, se quiser guardar.",
+              consequences: [
+                countLabel(
+                  owned(state.records),
+                  "registro de saúde",
+                  "registros de saúde",
+                ),
+                countLabel(owned(state.reminders), "lembrete", "lembretes"),
+                countLabel(
+                  owned(state.diary),
+                  "momento do diário",
+                  "momentos do diário",
+                ),
+                countLabel(
+                  state.documents.filter(
+                    (document) =>
+                      document.petId === pet.id && !document.deletedAt,
+                  ).length,
+                  "documento",
+                  "documentos",
+                ),
+              ],
+              confirmLabel: `Remover ${pet.name}`,
+            });
+            if (!confirmed) return;
             void action.run(async () => {
               await useAppStore.getState().removePet(pet.id);
               toast.success(`${pet.name} foi removido`);
@@ -147,6 +178,7 @@ function EditPetContent({ pet }: { pet: Pet }) {
         >
           Remover {pet.name}
         </Button>
+        {confirmSheet}
       </Card>
     </div>
   );

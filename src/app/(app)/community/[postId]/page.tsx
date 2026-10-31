@@ -16,6 +16,7 @@ import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
 import { Button, ButtonLink } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-sheet";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -61,6 +62,7 @@ export default function PostDetailPage() {
 
   const [draft, setDraft] = useState("");
   const action = useAsyncAction();
+  const [confirm, confirmSheet] = useConfirm();
 
   const comments = useMemo(
     () => (post ? commentsForPost(allComments, post.id) : []),
@@ -74,8 +76,8 @@ export default function PostDetailPage() {
       <EmptyState
         icon={<MessageCircle aria-hidden="true" className="size-5" />}
         title="Publicação não encontrada"
-        description="Ela pode ter sido removida ou denunciada. O feed continua disponível."
-        action={<ButtonLink href="/community">Voltar ao feed</ButtonLink>}
+        description="Ela pode ter sido removida ou denunciada. As outras publicações continuam disponíveis."
+        action={<ButtonLink href="/community">Voltar à comunidade</ButtonLink>}
       />
     );
   }
@@ -86,6 +88,7 @@ export default function PostDetailPage() {
 
   return (
     <div className="flex flex-col gap-4 pb-10">
+      {confirmSheet}
       <fieldset disabled={action.pending} className="contents">
         <PageHeader
           title="Publicação"
@@ -108,7 +111,7 @@ export default function PostDetailPage() {
                   {postTypeMeta[post.type].label}
                 </Chip>
                 {isDemoPost(post) ? (
-                  <span className="rounded-full bg-sun-soft px-2.5 py-1 text-[0.68rem] font-bold text-warning-ink">
+                  <span className="rounded-full bg-sun-soft px-2.5 py-1 text-caption font-bold text-warning-ink">
                     Exemplo local
                   </span>
                 ) : null}
@@ -136,10 +139,10 @@ export default function PostDetailPage() {
           </div>
 
           <div>
-            <h1 className="text-[1.42rem] font-semibold leading-tight text-ink">
+            <h1 className="text-h2 font-semibold leading-tight text-ink">
               {post.title}
             </h1>
-            <p className="mt-3 text-[0.98rem] leading-relaxed text-ink-soft">
+            <p className="mt-3 text-body leading-relaxed text-ink-soft">
               {post.body}
             </p>
           </div>
@@ -195,8 +198,14 @@ export default function PostDetailPage() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => {
-                  if (!window.confirm("Excluir esta publicação?")) return;
+                onClick={async () => {
+                  const confirmed = await confirm({
+                    title: "Excluir esta publicação?",
+                    description:
+                      "Os comentários dela também somem deste aparelho.",
+                    confirmLabel: "Excluir publicação",
+                  });
+                  if (!confirmed) return;
                   void action.run(async () => {
                     await removePost(post.id);
                     toast.success("Publicação excluída");
@@ -247,7 +256,7 @@ export default function PostDetailPage() {
         <section className="flex flex-col gap-3">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <p className="text-[0.7rem] font-bold uppercase tracking-[0.12em] text-muted">
+              <p className="text-caption font-bold uppercase tracking-[0.12em] text-muted">
                 Conversa
               </p>
               <CardTitle className="mt-1">
@@ -262,10 +271,10 @@ export default function PostDetailPage() {
           {comments.map((comment) => (
             <Card
               key={comment.id}
-              className="flex flex-col gap-2 rounded-[20px] border-l-4 border-l-teal p-4"
+              className="flex flex-col gap-2 rounded-card border-l-4 border-l-teal p-4"
             >
               <div className="flex items-start justify-between gap-2">
-                <span className="text-[0.95rem] font-semibold text-ink">
+                <span className="text-body font-semibold text-ink">
                   {comment.authorName}
                 </span>
                 <time
@@ -275,7 +284,7 @@ export default function PostDetailPage() {
                   {relativeTimeLabel(comment.createdAt)}
                 </time>
               </div>
-              <p className="text-[0.92rem] leading-relaxed text-ink-soft/90">
+              <p className="text-body leading-relaxed text-ink-soft/90">
                 {comment.body}
               </p>
               <div className="flex items-center gap-1 border-t border-line/70 pt-2">
@@ -309,9 +318,9 @@ export default function PostDetailPage() {
             </Card>
           ))}
 
-          <Card className="flex flex-col gap-3 rounded-[20px] border-blue/20 bg-blue-soft/40 p-4">
+          <Card className="flex flex-col gap-3 rounded-card border-blue/20 bg-blue-soft/40 p-4">
             <label
-              className="text-[0.88rem] font-semibold text-ink"
+              className="text-label font-semibold text-ink"
               htmlFor="comment-body"
             >
               Sua resposta de exemplo (somente neste aparelho)

@@ -261,7 +261,7 @@ export function PetSitterConfigModal({
             <Link
               href={generatedResult.url}
               target="_blank"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[14px] text-sm font-semibold text-teal-ink hover:underline"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control text-sm font-semibold text-teal-ink hover:underline"
             >
               Visualizar como o cuidador verá
               <ExternalLink aria-hidden="true" className="size-4" />

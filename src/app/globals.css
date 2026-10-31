@@ -15,8 +15,27 @@
     0 1px 2px rgb(23 33 58 / 0.05), 0 8px 24px -12px rgb(23 33 58 / 0.16);
   --shadow-float: 0 14px 36px -12px rgb(23 33 58 / 0.3);
 
+  /* Type roles from design.md. Nothing renders below the 12px caption. */
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.0625rem;
   --text-meta: 0.8125rem;
   --text-meta--line-height: 1.15rem;
+  --text-label: 0.875rem;
+  --text-label--line-height: 1.25rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+  --text-h3: 1.125rem;
+  --text-h3--line-height: 1.5rem;
+  --text-h2: 1.375rem;
+  --text-h2--line-height: 1.75rem;
+  --text-h1: 1.875rem;
+  --text-h1--line-height: 2.125rem;
+
+  /* Shape roles: controls, standard cards, featured cards, sheets. */
+  --radius-control: 14px;
+  --radius-card: 18px;
+  --radius-feature: 24px;
+  --radius-sheet: 28px;
 }
 
 @layer base {

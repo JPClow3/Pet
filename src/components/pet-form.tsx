@@ -212,10 +212,10 @@ export function PetForm({
           </p>
         ) : null}
         <div className="flex flex-col gap-2 border-b border-line/80 pb-5">
-          <p className="text-[1rem] font-semibold text-ink">
+          <p className="text-body font-semibold text-ink">
             {initial ? "Atualize o que mudou" : "Comece pelo essencial"}
           </p>
-          <p className="text-[0.92rem] leading-relaxed text-muted">
+          <p className="text-body leading-relaxed text-muted">
             Nome e espécie bastam para começar. O restante é opcional e pode ser
             completado depois.
           </p>
@@ -230,7 +230,7 @@ export function PetForm({
           <p
             id="pet-form-error"
             role="alert"
-            className="rounded-[14px] bg-danger/10 px-3 py-2 text-[0.85rem] font-semibold text-danger-ink"
+            className="rounded-control bg-danger/10 px-3 py-2 text-label font-semibold text-danger-ink"
           >
             {error}
           </p>
@@ -254,7 +254,7 @@ export function PetForm({
         </Field>
 
         <fieldset className="flex flex-col gap-2">
-          <legend className="mb-1 text-[0.85rem] font-semibold text-ink">
+          <legend className="mb-1 text-label font-semibold text-ink">
             Espécie
           </legend>
           <div className="grid grid-cols-3 gap-2">
@@ -268,7 +268,7 @@ export function PetForm({
                   aria-pressed={selected}
                   onClick={() => setField("species", option.value)}
                   className={cn(
-                    "flex min-h-20 flex-col items-center justify-center gap-1 rounded-[18px] border px-2 text-center text-[0.85rem] font-semibold transition-[background-color,border-color,transform] active:scale-[0.98]",
+                    "flex min-h-20 flex-col items-center justify-center gap-1 rounded-card border px-2 text-center text-label font-semibold transition-[background-color,border-color,transform] active:scale-[0.98]",
                     selected
                       ? "border-teal-ink bg-mint text-teal-ink"
                       : "border-line bg-paper text-ink-soft hover:bg-surface",
@@ -288,9 +288,9 @@ export function PetForm({
         <details
           open={detailsOpen}
           onToggle={(event) => setDetailsOpen(event.currentTarget.open)}
-          className="group rounded-[18px] border border-line/80 bg-surface/45"
+          className="group rounded-card border border-line/80 bg-surface/45"
         >
-          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 text-[0.9rem] font-semibold text-ink [&::-webkit-details-marker]:hidden">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 text-label font-semibold text-ink [&::-webkit-details-marker]:hidden">
             <span>
               Adicionar mais detalhes{" "}
               <span className="font-normal text-muted">(opcional)</span>
@@ -403,7 +403,7 @@ export function PetForm({
             </div>
 
             <fieldset className="flex flex-col gap-1">
-              <legend className="text-[0.85rem] font-semibold text-ink">
+              <legend className="text-label font-semibold text-ink">
                 Rotina
               </legend>
               <p className="text-meta text-muted">

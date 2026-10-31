@@ -77,9 +77,9 @@ describe("Painel de Colaboradores e Multi-Tutor", () => {
   it("renderiza o painel com tutor principal e lista de co-tutores vinculados", async () => {
     render(<PetCollaboratorsPanel pet={mockPet} />);
 
-    expect(screen.getByText("Multi-Tutor & Família")).toBeInTheDocument();
+    expect(screen.getByText("Cuidadores e família")).toBeInTheDocument();
     expect(
-      screen.getByText(/Sincronização em tempo real de remédios para evitar dupla dosagem/i),
+      screen.getByText(/vê os remédios dados, para ninguém repetir a dose/i),
     ).toBeInTheDocument();
 
     await waitFor(() => {
@@ -100,9 +100,9 @@ describe("Painel de Colaboradores e Multi-Tutor", () => {
     await user.click(inviteBtn);
 
     expect(
-      screen.getByRole("heading", { name: "Convidar Co-Tutor / Familiar" }),
+      screen.getByRole("heading", { name: "Convidar cuidador ou familiar" }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Nome da pessoa")).toBeInTheDocument();
-    expect(screen.getByLabelText("E-mail da conta Neon")).toBeInTheDocument();
+    expect(screen.getByLabelText("E-mail da conta Zelupi")).toBeInTheDocument();
   });
 });

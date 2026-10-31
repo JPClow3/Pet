@@ -41,11 +41,11 @@ import {
   criterionScores,
   directionsUrl,
   distanceKm,
+  formatKm,
   isEmergency24hPlace,
-  phoneCallUrl,
+  placeContactLinks,
   placeRating,
   reviewsForPlace,
-  whatsappUrl,
 } from "@/lib/domain/places";
 import type { PlaceAttribute } from "@/lib/domain/schema";
 import { placeCategoryIcons } from "@/lib/icons";
@@ -117,16 +117,15 @@ export default function PlaceDetailPage() {
   const Icon = placeCategoryIcons[place.category];
   const distance = distanceKm(origin, place);
   const is24h = isEmergency24hPlace(place);
-  const callHref = phoneCallUrl(place.phone);
-  const waHref = whatsappUrl(
-    place.whatsapp ?? place.phone,
+  const { callHref, waHref } = placeContactLinks(
+    place,
     `Olá! Vi o contato de ${place.name} na Zelupi e gostaria de atendimento veterinário.`,
   );
   const sourceLabel =
     place.source === "osm"
-      ? "OpenStreetMap"
+      ? "Mapa colaborativo"
       : place.seeded
-        ? "Exemplo do catálogo"
+        ? "Exemplo fictício"
         : "Adicionado neste aparelho";
   const theme = placeVisualThemes[place.category];
 
@@ -178,25 +177,25 @@ export default function PlaceDetailPage() {
       />
 
       <section
-        className={`relative overflow-hidden rounded-[28px] border-l-[6px] ${theme.surface} ${theme.rail} p-5`}
+        className={`relative overflow-hidden rounded-sheet border-l-[6px] ${theme.surface} ${theme.rail} p-5`}
       >
         <div className="relative flex flex-wrap items-end justify-between gap-4">
-          <span className="flex size-16 items-center justify-center rounded-[22px] border border-line/60 bg-paper/90 text-teal-ink shadow-sm backdrop-blur-sm">
+          <span className="flex size-16 items-center justify-center rounded-feature border border-line/60 bg-paper/90 text-teal-ink shadow-sm backdrop-blur-sm">
             <Icon aria-hidden="true" className="size-8" />
           </span>
           <div className="flex flex-col items-end gap-2 text-right">
             <div className="flex flex-wrap justify-end gap-1.5">
               {is24h ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-danger-soft px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.08em] text-danger-ink">
+                <span className="inline-flex items-center gap-1 rounded-full bg-danger-soft px-3 py-1 text-caption font-bold uppercase tracking-[0.08em] text-danger-ink">
                   <Siren aria-hidden="true" className="size-3.5" />
                   Emergência 24h
                 </span>
               ) : null}
-              <span className="rounded-full bg-paper/85 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.08em] text-ink-soft">
+              <span className="rounded-full bg-paper/85 px-3 py-1 text-caption font-bold uppercase tracking-[0.08em] text-ink-soft">
                 {placeCategoryMeta[place.category].label}
               </span>
             </div>
-            <span className="text-[0.72rem] font-semibold text-ink-soft">
+            <span className="text-caption font-semibold text-ink-soft">
               {sourceLabel}
             </span>
           </div>
@@ -214,12 +213,12 @@ export default function PlaceDetailPage() {
           {place.source === "osm" ? (
             <Chip tone="info">
               <Globe aria-hidden="true" className="size-3.5" />
-              Dados colaborativos OpenStreetMap
+              Dados de mapa colaborativo
             </Chip>
           ) : place.seeded ? (
             <Chip tone="warning">
               <ShieldAlert aria-hidden="true" className="size-3.5" />
-              Exemplo do catálogo · edite para usar seus contatos reais
+              Exemplo fictício · adicione um contato real para usar
             </Chip>
           ) : place.verified ? (
             <Chip tone="teal">
@@ -232,7 +231,7 @@ export default function PlaceDetailPage() {
         </div>
 
         <div>
-          <p className="flex items-start gap-2 text-[0.95rem] leading-relaxed text-ink-soft">
+          <p className="flex items-start gap-2 text-body leading-relaxed text-ink-soft">
             <MapPin
               aria-hidden="true"
               className="mt-0.5 size-5 shrink-0 text-blue"
@@ -242,10 +241,10 @@ export default function PlaceDetailPage() {
             </span>
           </p>
           <p className="mt-1 pl-7 text-meta text-muted">
-            {distance} km de distância estimada a partir{" "}
+            {formatKm(distance)} de distância estimada a partir{" "}
             {status === "precisa"
               ? "da sua localização"
-              : "do centro de São Paulo"}
+              : `do centro de ${place.city}`}
           </p>
           {place.openingHours ? (
             <p className="mt-1 pl-7 text-meta font-semibold text-ink-soft">
@@ -253,7 +252,7 @@ export default function PlaceDetailPage() {
             </p>
           ) : null}
           {place.notes ? (
-            <p className="mt-2 rounded-2xl bg-surface px-3.5 py-2.5 text-[0.88rem] leading-relaxed text-ink-soft">
+            <p className="mt-2 rounded-2xl bg-surface px-3.5 py-2.5 text-label leading-relaxed text-ink-soft">
               {place.notes}
             </p>
           ) : null}
@@ -264,7 +263,7 @@ export default function PlaceDetailPage() {
             {callHref ? (
               <a
                 href={callHref}
-                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-[14px] bg-teal px-4 text-[0.92rem] font-semibold text-white transition-colors hover:bg-teal-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
+                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-control bg-teal px-4 text-body font-semibold text-white transition-colors hover:bg-teal-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
               >
                 <Phone aria-hidden="true" className="size-4" />
                 Ligar ({place.phone})
@@ -275,7 +274,7 @@ export default function PlaceDetailPage() {
                 href={waHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-[14px] border border-success-ink/35 bg-success-soft px-4 text-[0.92rem] font-semibold text-success-ink transition-colors hover:border-success-ink/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success-ink focus-visible:ring-offset-2"
+                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-control border border-success-ink/35 bg-success-soft px-4 text-body font-semibold text-success-ink transition-colors hover:border-success-ink/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success-ink focus-visible:ring-offset-2"
               >
                 <MessageCircle aria-hidden="true" className="size-4" />
                 Chamar no WhatsApp
@@ -286,7 +285,9 @@ export default function PlaceDetailPage() {
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-dashed border-line bg-surface/50 px-3.5 py-2.5">
             <span className="text-meta text-muted">
-              Nenhum telefone ou WhatsApp salvo para acionamento rápido.
+              {place.seeded
+                ? "Local fictício: sem telefone para ligar."
+                : "Nenhum telefone ou WhatsApp salvo para acionamento rápido."}
             </span>
             <button
               type="button"
@@ -330,7 +331,7 @@ export default function PlaceDetailPage() {
 
         <div className="flex flex-col gap-2 sm:flex-row">
           {place.seeded ? (
-            <p className="flex min-h-12 flex-1 items-center rounded-[14px] bg-surface px-4 text-meta font-semibold text-muted">
+            <p className="flex min-h-12 flex-1 items-center rounded-control bg-surface px-4 text-meta font-semibold text-muted">
               Rotas indisponíveis para locais fictícios do exemplo
             </p>
           ) : (
@@ -343,7 +344,7 @@ export default function PlaceDetailPage() {
                   () => {},
                 )
               }
-              className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-[14px] bg-blue px-4 text-[0.9rem] font-semibold text-white transition-colors hover:bg-blue-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
+              className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-control bg-blue px-4 text-label font-semibold text-white transition-colors hover:bg-blue-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
             >
               <Navigation aria-hidden="true" className="size-4" />
               Abrir rota no mapa
@@ -357,7 +358,7 @@ export default function PlaceDetailPage() {
             Escrever avaliação local
           </Button>
         </div>
-        <p className="text-[0.7rem] leading-relaxed text-muted">
+        <p className="text-caption leading-relaxed text-muted">
           {place.seeded
             ? "Este endereço é ilustrativo. Edite os contatos ou cadastre sua própria clínica de confiança para uso real."
             : "A rota abre em outro aplicativo. Confirme horário, plantão e disponibilidade por telefone antes de visitar."}
@@ -395,7 +396,7 @@ export default function PlaceDetailPage() {
                 key={score.attribute}
                 className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3"
               >
-                <span className="min-w-[7.5rem] flex-1 text-[0.88rem] text-ink-soft sm:w-40 sm:flex-none">
+                <span className="min-w-[7.5rem] flex-1 text-label text-ink-soft sm:w-40 sm:flex-none">
                   {placeAttributeLabels[score.attribute].label}
                 </span>
                 <span className="h-2 min-w-[5rem] flex-1 overflow-hidden rounded-full bg-paper">
@@ -418,10 +419,10 @@ export default function PlaceDetailPage() {
       <section className="flex flex-col gap-3">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="text-[0.7rem] font-bold uppercase tracking-[0.12em] text-muted">
+            <p className="text-caption font-bold uppercase tracking-[0.12em] text-muted">
               Experiências
             </p>
-            <h2 className="mt-1 text-[1.14rem] font-semibold text-ink">
+            <h2 className="mt-1 text-h3 font-semibold text-ink">
               Relatos de tutores
             </h2>
           </div>
@@ -441,10 +442,10 @@ export default function PlaceDetailPage() {
           <ul className="flex flex-col gap-3">
             {placeReviews.map((review) => (
               <li key={review.id}>
-                <Card className="flex flex-col gap-2 rounded-[20px] p-4">
+                <Card className="flex flex-col gap-2 rounded-card p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-[0.95rem] font-semibold text-ink">
+                      <p className="text-body font-semibold text-ink">
                         {review.authorName}
                       </p>
                       <p className="mt-0.5 flex items-center gap-1 text-meta text-warning-ink">
@@ -463,7 +464,7 @@ export default function PlaceDetailPage() {
                     </time>
                   </div>
                   {review.text ? (
-                    <p className="text-[0.92rem] leading-relaxed text-ink-soft/90">
+                    <p className="text-body leading-relaxed text-ink-soft/90">
                       {review.text}
                     </p>
                   ) : null}
@@ -496,9 +497,9 @@ export default function PlaceDetailPage() {
             Fonte e atualização:
           </strong>{" "}
           {place.source === "osm"
-            ? "dados importados do OpenStreetMap. Confirme plantão e telefone antes de se deslocar."
+            ? "mapa colaborativo (© colaboradores do OpenStreetMap). Confirme plantão e telefone antes de se deslocar."
             : place.seeded
-              ? "este local vem de uma prévia do catálogo. Você pode editar os contatos acima para personalizar neste aparelho."
+              ? "este local é fictício e só ilustra o catálogo. Ao adicionar um telefone real, ele passa a ser um local seu neste aparelho."
               : "local cadastrado e gerenciado por você neste aparelho."}
         </p>
       </Card>
@@ -522,7 +523,7 @@ export default function PlaceDetailPage() {
 
       <Link
         href="/explore"
-        className="inline-flex min-h-11 items-center gap-1 self-start text-[0.85rem] font-semibold text-blue-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
+        className="inline-flex min-h-11 items-center gap-1 self-start text-label font-semibold text-blue-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
       >
         <ChevronRight aria-hidden="true" className="size-4 rotate-180" />
         Voltar para Locais
@@ -637,7 +638,7 @@ export default function PlaceDetailPage() {
           className="flex min-w-0 flex-col gap-5"
         >
           <fieldset className="flex flex-col gap-2">
-            <legend className="text-[0.88rem] font-semibold text-ink">
+            <legend className="text-label font-semibold text-ink">
               Nota geral
             </legend>
             <div className="flex flex-wrap gap-2">
@@ -648,7 +649,7 @@ export default function PlaceDetailPage() {
                   aria-pressed={rating === value}
                   aria-label={`${value} de 5`}
                   onClick={() => setRating(value)}
-                  className={`flex size-11 items-center justify-center rounded-2xl border text-[0.95rem] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 ${rating >= value ? "border-sun bg-sun-soft text-warning-ink" : "border-line bg-paper text-muted"}`}
+                  className={`flex size-11 items-center justify-center rounded-2xl border text-body font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 ${rating >= value ? "border-sun bg-sun-soft text-warning-ink" : "border-line bg-paper text-muted"}`}
                 >
                   {value}
                 </button>
@@ -657,7 +658,7 @@ export default function PlaceDetailPage() {
           </fieldset>
 
           <fieldset className="flex flex-col gap-2">
-            <legend className="text-[0.88rem] font-semibold text-ink">
+            <legend className="text-label font-semibold text-ink">
               O que você observou
             </legend>
             <p className="text-meta text-muted">
@@ -679,7 +680,7 @@ export default function PlaceDetailPage() {
                           : [...current, attribute],
                       )
                     }
-                    className={`min-h-10 rounded-full border px-3 text-[0.82rem] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 ${selected ? "border-teal bg-teal text-white" : "border-line bg-paper text-ink-soft hover:bg-lime-soft"}`}
+                    className={`min-h-11 rounded-full border px-3 text-meta font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 ${selected ? "border-teal bg-teal text-white" : "border-line bg-paper text-ink-soft hover:bg-lime-soft"}`}
                   >
                     {placeAttributeLabels[attribute].label}
                   </button>

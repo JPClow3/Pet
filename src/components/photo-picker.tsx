@@ -55,7 +55,7 @@ export function PhotoPicker({
         aria-label={
           photo ? `Trocar foto de ${name}` : `Adicionar foto de ${name}`
         }
-        className="relative flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-[20px] border border-dashed border-line bg-surface text-muted transition-[border-color,background-color] hover:border-teal-ink hover:bg-mint disabled:pointer-events-none disabled:opacity-60"
+        className="relative flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-card border border-dashed border-line bg-surface text-muted transition-[border-color,background-color] hover:border-teal-ink hover:bg-mint disabled:pointer-events-none disabled:opacity-60"
       >
         {photo ? (
           <Photo src={photo} alt={`Foto de ${name}`} className="size-full" />
@@ -70,7 +70,7 @@ export function PhotoPicker({
       </button>
 
       <div className="flex min-w-0 flex-col gap-1">
-        <p className="text-[0.9rem] font-semibold text-ink">Foto do perfil</p>
+        <p className="text-label font-semibold text-ink">Foto do perfil</p>
         <p id={`${inputId}-hint`} className="max-w-[26ch] text-meta text-muted">
           {busy
             ? "Processando foto…"
@@ -81,7 +81,7 @@ export function PhotoPicker({
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={busy}
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-[14px] border border-line bg-paper px-3 text-[0.85rem] font-semibold text-ink transition-colors hover:bg-surface disabled:pointer-events-none disabled:opacity-50"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-control border border-line bg-paper px-3 text-label font-semibold text-ink transition-colors hover:bg-surface disabled:pointer-events-none disabled:opacity-50"
           >
             <ImagePlus aria-hidden="true" className="size-4" />
             {photo ? "Trocar" : "Escolher"}
@@ -90,7 +90,7 @@ export function PhotoPicker({
             type="button"
             onClick={() => cameraRef.current?.click()}
             disabled={busy}
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-[14px] border border-line bg-paper px-3 text-[0.85rem] font-semibold text-ink transition-colors hover:bg-surface disabled:pointer-events-none disabled:opacity-50"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-control border border-line bg-paper px-3 text-label font-semibold text-ink transition-colors hover:bg-surface disabled:pointer-events-none disabled:opacity-50"
           >
             <Camera aria-hidden="true" className="size-4" />
             Câmera
@@ -104,7 +104,7 @@ export function PhotoPicker({
               setError(null);
             }}
             disabled={busy}
-            className="inline-flex min-h-9 items-center gap-1 self-start rounded-full px-2 text-meta font-medium text-muted transition-colors hover:bg-surface hover:text-ink disabled:pointer-events-none disabled:opacity-50"
+            className="inline-flex min-h-11 items-center gap-1 self-start rounded-full px-2 text-meta font-medium text-muted transition-colors hover:bg-surface hover:text-ink disabled:pointer-events-none disabled:opacity-50"
           >
             <X aria-hidden="true" className="size-3.5" />
             Remover foto

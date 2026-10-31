@@ -28,13 +28,15 @@ import { useCurrentTime } from "@/lib/use-current-time";
 
 const stateTone: Record<string, ChipTone> = {
   vazio: "muted",
-  em_dia: "teal",
+  sem_agenda: "muted",
+  em_dia: "muted",
   atencao: "warning",
   vencido: "danger",
 };
 
 const stateIcon = {
   vazio: Clock,
+  sem_agenda: Clock,
   em_dia: CircleCheck,
   atencao: TriangleAlert,
   vencido: CircleAlert,
@@ -42,14 +44,16 @@ const stateIcon = {
 
 const stateLabel = {
   vazio: "Sem registros",
-  em_dia: "Em dia",
+  sem_agenda: "Sem datas",
+  em_dia: "Sem pendências",
   atencao: "Atenção",
   vencido: "Vencido",
 } as const;
 
 const stateSurface = {
   vazio: "border-line bg-paper hover:border-teal/35",
-  em_dia: "border-success-ink/30 bg-success-soft hover:border-success-ink/55",
+  sem_agenda: "border-line bg-paper hover:border-teal/35",
+  em_dia: "border-line bg-paper hover:border-teal/35",
   atencao: "border-warning/45 bg-warning-soft hover:border-warning-ink/65",
   vencido: "border-danger/35 bg-danger-soft hover:border-danger/60",
 } as const;
@@ -75,7 +79,7 @@ export function HealthStatusCard({
       aria-label={`${title}: ${status.headline}`}
       data-state={status.state}
       className={cn(
-        "group flex flex-col gap-3 rounded-[18px] border p-4 transition-[border-color,background-color,transform] duration-200 hover:bg-surface/45 active:scale-[0.995] sm:p-5",
+        "group flex flex-col gap-3 rounded-card border p-4 transition-[border-color,background-color,transform] duration-200 hover:bg-surface/45 active:scale-[0.995] sm:p-5",
         stateSurface[status.state],
       )}
     >
@@ -98,10 +102,10 @@ export function HealthStatusCard({
       </div>
 
       <div>
-        <p className="text-[1.1rem] font-bold leading-snug text-ink">
+        <p className="text-h3 font-bold leading-snug text-ink">
           {status.headline}
         </p>
-        <p className="mt-1 text-[0.92rem] leading-relaxed text-ink-soft">
+        <p className="mt-1 text-body leading-relaxed text-ink-soft">
           {status.detail}
         </p>
       </div>
@@ -153,14 +157,14 @@ export function RecordTimelineItem({ record }: { record: HealthRecord }) {
   return (
     <div
       data-completed={record.completedAt ? "true" : undefined}
-      className="group flex gap-3 rounded-[18px] px-2 py-1 transition-colors hover:bg-surface/70"
+      className="group flex gap-3 rounded-card px-2 py-1 transition-colors hover:bg-surface/70"
     >
-      <span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-[14px] bg-surface text-ink-soft">
+      <span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-control bg-surface text-ink-soft">
         <Icon aria-hidden="true" className="size-4" />
       </span>
       <div className="min-w-0 flex-1 border-b border-line/80 pb-3">
         <div className="flex items-baseline justify-between gap-3">
-          <p className="min-w-0 truncate text-[0.95rem] font-semibold text-ink">
+          <p className="min-w-0 truncate text-body font-semibold text-ink">
             {record.title}
           </p>
           <time
@@ -181,7 +185,7 @@ export function RecordTimelineItem({ record }: { record: HealthRecord }) {
           ) : null}
         </p>
         {record.notes ? (
-          <p className="mt-1 text-[0.9rem] leading-relaxed text-ink-soft/90">
+          <p className="mt-1 text-label leading-relaxed text-ink-soft/90">
             {record.notes}
           </p>
         ) : null}

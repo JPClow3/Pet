@@ -55,7 +55,7 @@ export default function RecordDetailPage() {
             <p className="text-meta font-bold uppercase tracking-wider text-teal-ink">
               Agendamento Confiável
             </p>
-            <p className="text-[0.95rem] font-semibold text-ink">
+            <p className="text-body font-semibold text-ink">
               {record.nextDueDate
                 ? `Próxima data: ${formatShortDate(record.nextDueDate)}`
                 : `Data prevista: ${formatShortDate(record.date)}`}
@@ -75,7 +75,7 @@ export default function RecordDetailPage() {
 
       {record.completedAt ? (
         <Card className="border-teal/25 bg-mint/60">
-          <p className="text-[0.9rem] text-teal-ink">
+          <p className="text-label text-teal-ink">
             Ciclo concluído. O próximo cuidado virou um novo registro na linha
             do tempo.
           </p>
@@ -84,7 +84,7 @@ export default function RecordDetailPage() {
 
       {record.attachmentData ? (
         <Card className="flex flex-col gap-2">
-          <h2 className="text-[1rem] font-semibold text-ink">Anexo</h2>
+          <h2 className="text-body font-semibold text-ink">Anexo</h2>
           <Photo
             src={record.attachmentData}
             alt={record.attachmentName ?? "Anexo do registro"}
@@ -108,10 +108,17 @@ export default function RecordDetailPage() {
             router.replace(`/pets/${pet.id}/health`);
           }}
           onDelete={async () => {
-            if (!window.confirm(`Excluir "${record.title}" do histórico?`))
-              return;
-            await removeRecord(record.id);
-            toast.success("Registro excluído");
+            const deleted = record;
+            await removeRecord(deleted.id);
+            toast.success("Registro excluído", {
+              action: {
+                label: "Desfazer",
+                onClick: () =>
+                  void useAppStore
+                    .getState()
+                    .restoreDeleted({ collection: "records", item: deleted }),
+              },
+            });
             router.replace(`/pets/${pet.id}/health`);
           }}
         />

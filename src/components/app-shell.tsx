@@ -73,7 +73,7 @@ function NotificationBell() {
     >
       <Bell aria-hidden="true" className="size-5" />
       {unread > 0 ? (
-        <span className="absolute right-1.5 top-1.5 flex min-w-4 items-center justify-center rounded-full bg-danger-ink px-1 text-[0.65rem] font-semibold leading-4 text-white">
+        <span className="absolute right-1.5 top-1.5 flex min-w-4 items-center justify-center rounded-full bg-danger-ink px-1 text-caption font-semibold leading-4 text-white">
           {unread > 9 ? "9+" : unread}
         </span>
       ) : null}
@@ -109,7 +109,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-h-13 items-center justify-center gap-3 rounded-2xl px-3 text-[0.95rem] font-semibold transition-colors lg:justify-start",
+                "flex min-h-13 items-center justify-center gap-3 rounded-2xl px-3 text-body font-semibold transition-colors lg:justify-start",
                 active
                   ? "bg-surface text-ink font-bold"
                   : "text-ink-soft hover:bg-surface/70",
@@ -126,7 +126,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
           );
         })}
-        <div className="mt-auto hidden rounded-[18px] border border-line/80 bg-surface/60 p-4 shadow-none lg:block">
+        <div className="mt-auto hidden rounded-card border border-line/80 bg-surface/60 p-4 shadow-none lg:block">
           <ShieldCheck
             className="mb-2 size-5 text-teal-ink"
             aria-hidden="true"
@@ -202,7 +202,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl text-[0.7rem] font-semibold transition-colors",
+                      "flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl text-caption font-semibold transition-colors",
                       active ? "text-ink font-bold" : "text-muted",
                     )}
                   >

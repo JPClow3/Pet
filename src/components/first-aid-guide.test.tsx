@@ -5,14 +5,45 @@ import { FirstAidGuide } from "./first-aid-guide";
 import { seedPlaces } from "@/lib/domain/seed";
 
 describe("FirstAidGuide", () => {
-  it("funciona offline para busca rápida de alimentos e exibe contatos de emergência 24h", async () => {
-    const user = userEvent.setup();
+  it("nunca oferece ligar para uma clínica fictícia do exemplo", () => {
     render(<FirstAidGuide places={seedPlaces} />);
+
+    expect(
+      screen.queryByRole("link", { name: /Ligar agora/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Salve sua clínica 24h de confiança"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /Salvar clínica 24h/i }),
+    ).toHaveAttribute("href", "/explore?cadastrar=1");
+  });
+
+  it("funciona offline para busca rápida e liga para a clínica 24h salva pelo tutor", async () => {
+    const user = userEvent.setup();
+    render(
+      <FirstAidGuide
+        places={[
+          ...seedPlaces,
+          {
+            ...seedPlaces[0],
+            id: "place-mine",
+            name: "Hospital da Vila",
+            category: "veterinario",
+            attributes: ["emergencia_24h"],
+            seeded: false,
+            source: "local",
+            favorite: true,
+            phone: "(81) 3333-4444",
+          },
+        ]}
+      />,
+    );
 
     expect(screen.getByText(/100% Offline/i)).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Ligar agora/i }),
-    ).toHaveAttribute("href", "tel:1130620100");
+    ).toHaveAttribute("href", "tel:8133334444");
 
     const searchInput = screen.getByRole("searchbox", {
       name: /Buscar alimento, substância ou emergência/i,

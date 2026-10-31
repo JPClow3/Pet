@@ -118,7 +118,7 @@ export default function WelcomePage() {
               aria-hidden="true"
               className="absolute -inset-x-4 inset-y-8 rounded-[44%_56%_48%_52%] bg-mint sm:-inset-x-7"
             />
-            <div className="relative rotate-[-2deg] rounded-[24px] border border-line bg-paper p-5 shadow-card sm:p-7">
+            <div className="relative rotate-[-2deg] rounded-feature border border-line bg-paper p-5 shadow-card sm:p-7">
               <div className="flex items-center gap-3 border-b border-line pb-5">
                 <BrandMark className="size-12" />
                 <div>

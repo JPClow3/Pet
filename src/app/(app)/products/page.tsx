@@ -88,19 +88,19 @@ export default function ProductsPage() {
       />
       <DiscoveryTabs active="produtos" />
 
-      <section className="rounded-[24px] border border-line bg-paper p-5">
+      <section className="rounded-feature border border-line bg-paper p-5">
         <div className="flex items-start gap-3">
           <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-surface-subtle text-teal-ink">
             <Sparkles aria-hidden="true" className="size-5" />
           </span>
           <div>
-            <p className="text-[0.7rem] font-bold uppercase tracking-[0.14em] text-teal-ink">
+            <p className="text-caption font-bold uppercase tracking-[0.14em] text-teal-ink">
               Exemplos de recomendações
             </p>
-            <h2 className="mt-1 text-[1.22rem] font-semibold leading-tight text-ink">
+            <h2 className="mt-1 text-h2 font-semibold leading-tight text-ink">
               Você escolhe com contexto.
             </h2>
-            <p className="mt-1.5 max-w-[42ch] text-[0.9rem] leading-relaxed text-muted">
+            <p className="mt-1.5 max-w-[42ch] text-label leading-relaxed text-muted">
               Explore como as sugestões consideram espécie, porte, fase de vida
               e rotina de {pet.name}. Produtos e preços são fictícios; não há
               compras.
@@ -119,7 +119,7 @@ export default function ProductsPage() {
             className="mt-0.5 size-5 shrink-0 text-warning-ink"
           />
           <div>
-            <p className="text-[0.9rem] font-semibold text-ink">
+            <p className="text-label font-semibold text-ink">
               Você está sem conexão
             </p>
             <p className="mt-1 text-meta leading-relaxed text-muted">
@@ -131,7 +131,7 @@ export default function ProductsPage() {
 
       <div className="flex flex-col gap-2 border-b border-line pb-3">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-[0.72rem] font-bold uppercase tracking-[0.12em] text-muted">
+          <p className="text-caption font-bold uppercase tracking-[0.12em] text-muted">
             Filtrar por necessidade
           </p>
           <span className="text-meta text-muted">
@@ -148,7 +148,7 @@ export default function ProductsPage() {
               key={item.id}
               selected={category === item.id}
               onClick={() => setCategory(item.id)}
-              className="min-h-10"
+              className="min-h-11"
             >
               {item.label}
             </FilterChip>

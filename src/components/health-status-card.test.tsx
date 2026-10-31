@@ -45,14 +45,15 @@ describe("HealthStatusCard", () => {
     expect(screen.getByText(/Venceu em/)).toBeInTheDocument();
   });
 
-  it("tranquiliza quando está tudo em dia", () => {
+  it("mostra até quando nada está pendente, em tom neutro", () => {
     render(
       <HealthStatusCard
         records={[record({ nextDueDate: shiftDays(todayKey(), 120) })]}
         href="/pets/pet-1/health"
       />,
     );
-    expect(screen.getByText("Tudo em dia por aqui")).toBeInTheDocument();
+    expect(screen.getByText(/^Nada pendente até /)).toBeInTheDocument();
+    expect(screen.getByText("Sem pendências")).toBeInTheDocument();
   });
 });
 

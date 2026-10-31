@@ -1,33 +1,14 @@
-"use client";
+import type { Metadata } from "next";
 
-import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import { AppGate } from "@/components/app-gate";
+import { brand } from "@/lib/brand";
 
-import { AppShell } from "@/components/app-shell";
-import { SkeletonScreen } from "@/components/ui/skeleton";
-import { useAppStore } from "@/lib/store/app-store";
-import { useHydrated } from "@/lib/store/hooks";
-import { useEffect } from "react";
-import { PushSyncProvider } from "@/lib/push/provider";
+// Each route layout sets its own title; the template is restated here because
+// templates only reach direct children ("Agenda · Zelupi").
+export const metadata: Metadata = {
+  title: { default: "Hoje", template: `%s · ${brand.name}` },
+};
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
-  const ready = useHydrated();
-  const hasTutor = useAppStore((state) => Boolean(state.tutor));
-  const router = useRouter();
-
-  useEffect(() => {
-    if (ready && !hasTutor) {
-      router.replace("/welcome");
-    }
-  }, [ready, hasTutor, router]);
-
-  if (!ready || !hasTutor) {
-    return (
-      <AppShell>
-        <SkeletonScreen label="Abrindo a Zelupi" />
-      </AppShell>
-    );
-  }
-
-  return <AppShell><PushSyncProvider />{children as ReactNode}</AppShell>;
+  return <AppGate>{children}</AppGate>;
 }

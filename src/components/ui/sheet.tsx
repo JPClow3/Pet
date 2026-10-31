@@ -95,7 +95,7 @@ export function BottomSheet({
         <Dialog.Viewport className="fixed inset-0 z-40 flex items-end justify-center sm:items-center sm:p-6">
           <Dialog.Popup
             ref={popupRef}
-            className="relative max-h-[90dvh] w-full max-w-lg overflow-x-hidden overflow-y-auto overscroll-contain rounded-t-[28px] border border-line bg-paper px-4 pt-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-float outline-none transition-[opacity,transform] duration-200 data-[ending-style]:translate-y-6 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-6 data-[starting-style]:opacity-0 sm:rounded-[28px] sm:p-7"
+            className="relative max-h-[90dvh] w-full max-w-lg overflow-x-hidden overflow-y-auto overscroll-contain rounded-t-sheet border border-line bg-paper px-4 pt-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-float outline-none transition-[opacity,transform] duration-200 data-[ending-style]:translate-y-6 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-6 data-[starting-style]:opacity-0 sm:rounded-sheet sm:p-7"
           >
             {open ? (
               <div aria-live="polite" aria-atomic="true" className="sr-only">

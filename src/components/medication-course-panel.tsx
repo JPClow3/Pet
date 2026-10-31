@@ -9,6 +9,7 @@ import {
   parseMedicationPlanDraft,
 } from "@/components/medication-plan-fields";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-sheet";
 import { Card } from "@/components/ui/card";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import {
@@ -298,6 +299,7 @@ export function MedicationCoursePanel({ record }: { record: HealthRecord }) {
   const date = pickedDate ?? today;
   const [editing, setEditing] = useState(false);
   const [ending, setEnding] = useState(false);
+  const [confirm, confirmSheet] = useConfirm();
   const [error, setError] = useState<string | null>(null);
   const [historyLimit, setHistoryLimit] = useState(20);
   const occurrences = medicationDayOccurrences(course, date);
@@ -305,6 +307,7 @@ export function MedicationCoursePanel({ record }: { record: HealthRecord }) {
   const history = [...course.events].reverse();
   return (
     <Card className="flex flex-col gap-4" id="medication-course">
+      {confirmSheet}
       <h2 className="text-lg font-bold text-ink">Plano e doses</h2>
       <div className="rounded-2xl bg-mint/60 p-3">
         <p className="font-semibold text-teal-ink">
@@ -366,12 +369,13 @@ export function MedicationCoursePanel({ record }: { record: HealthRecord }) {
               variant="danger"
               disabled={ending}
               onClick={async () => {
-                if (
-                  !window.confirm(
-                    "Encerrar os próximos horários deste plano? As doses e correções anteriores serão preservadas.",
-                  )
-                )
-                  return;
+                const confirmed = await confirm({
+                  title: "Encerrar este plano?",
+                  description:
+                    "Os próximos horários deixam de aparecer. As doses já registradas continuam no histórico.",
+                  confirmLabel: "Encerrar plano",
+                });
+                if (!confirmed) return;
                 setEnding(true);
                 setError(null);
                 try {

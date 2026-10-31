@@ -135,9 +135,11 @@ export function PetCollaboratorsPanel({ pet }: { pet: Pet }) {
             <Users aria-hidden="true" className="size-5" />
           </span>
           <div>
-            <CardTitle>Multi-Tutor & Família</CardTitle>
+            <CardTitle>Cuidadores e família</CardTitle>
             <p className="mt-0.5 text-meta text-muted">
-              Sincronização em tempo real de remédios para evitar dupla dosagem.
+              {user
+                ? "Quem você convidar vê os remédios dados, para ninguém repetir a dose."
+                : "Hoje os cuidados ficam só neste aparelho. Com uma conta Zelupi, quem você convidar vê os remédios dados, para ninguém repetir a dose."}
             </p>
           </div>
         </div>
@@ -151,7 +153,7 @@ export function PetCollaboratorsPanel({ pet }: { pet: Pet }) {
           <Chip tone="teal">Proprietário</Chip>
         </div>
         <p className="text-meta text-muted">
-          {user?.email ?? "Conta local (conecte uma conta Neon para sincronizar entre aparelhos)"}
+          {user?.email ?? "Só neste aparelho. Entre na sua conta Zelupi para usar em outros aparelhos."}
         </p>
       </div>
 
@@ -228,8 +230,8 @@ export function PetCollaboratorsPanel({ pet }: { pet: Pet }) {
       <BottomSheet
         open={showInviteModal}
         onClose={() => setShowInviteModal(false)}
-        title="Convidar Co-Tutor / Familiar"
-        description={`Vincule outra conta Neon ao perfil de ${pet.name} para compartilhar os cuidados em tempo real.`}
+        title="Convidar cuidador ou familiar"
+        description={`A pessoa precisa de uma conta Zelupi. Depois de aceitar, ela vê e registra os cuidados de ${pet.name}.`}
       >
         <form onSubmit={(e) => void handleSendInvite(e)} className="flex flex-col gap-4">
           <Field htmlFor="collab-name" label="Nome da pessoa">
@@ -243,7 +245,7 @@ export function PetCollaboratorsPanel({ pet }: { pet: Pet }) {
             />
           </Field>
 
-          <Field htmlFor="collab-email" label="E-mail da conta Neon">
+          <Field htmlFor="collab-email" label="E-mail da conta Zelupi">
             <Input
               id="collab-email"
               type="email"

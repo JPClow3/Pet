@@ -75,7 +75,7 @@ function RoadmapItemCard({
       <div className="grid grid-cols-[2rem_minmax(0,1fr)] items-start gap-3 sm:grid-cols-[2.25rem_minmax(0,1fr)] sm:gap-4">
         <span
           aria-hidden="true"
-          className="mt-0.5 flex size-8 items-center justify-center rounded-[10px] border border-line bg-canvas font-mono text-[0.68rem] font-bold text-muted sm:size-9 sm:rounded-xl"
+          className="mt-0.5 flex size-8 items-center justify-center rounded-control border border-line bg-canvas font-mono text-caption font-bold text-muted sm:size-9 sm:rounded-xl"
         >
           {String(number).padStart(2, "0")}
         </span>
@@ -85,18 +85,18 @@ function RoadmapItemCard({
               {item.status}
             </Chip>
             {item.source ? (
-              <span className="max-w-full break-all font-mono text-[0.65rem] text-muted">
+              <span className="max-w-full break-all font-mono text-caption text-muted">
                 {item.source}
               </span>
             ) : null}
           </div>
-          <h3 className="mt-2 max-w-[66ch] text-[1rem] font-bold leading-snug tracking-tight text-ink sm:text-[1.05rem]">
+          <h3 className="mt-2 max-w-[66ch] text-body font-bold leading-snug tracking-tight text-ink sm:text-h3">
             {item.title}
           </h3>
-          <p className="mt-1.5 max-w-[70ch] text-[0.88rem] leading-relaxed text-ink-soft">
+          <p className="mt-1.5 max-w-[70ch] text-label leading-relaxed text-ink-soft">
             {item.summary}
           </p>
-          <details className="group/details mt-3 max-w-[70ch] rounded-[14px] border border-line/70 bg-canvas/60 px-3">
+          <details className="group/details mt-3 max-w-[70ch] rounded-control border border-line/70 bg-canvas/60 px-3">
             <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-meta font-semibold text-teal-ink [&::-webkit-details-marker]:hidden">
               <span className="inline-flex items-center gap-2">
                 <span
@@ -151,17 +151,17 @@ function PhaseSection({
           </p>
           <h2
             id={`${phase.id}-title`}
-            className="mt-1 font-editorial text-[1.55rem] font-semibold leading-tight tracking-[-0.025em] text-ink sm:text-[1.7rem]"
+            className="mt-1 font-editorial text-h2 font-semibold leading-tight tracking-[-0.025em] text-ink sm:text-h1"
           >
             {phase.title}
           </h2>
-          <p className="mt-1.5 max-w-[62ch] text-[0.88rem] leading-relaxed text-muted">
+          <p className="mt-1.5 max-w-[62ch] text-label leading-relaxed text-muted">
             {phase.description}
           </p>
         </div>
       </div>
 
-      <div className="mt-4 rounded-[20px] border border-line/80 bg-paper p-5 shadow-none sm:p-6">
+      <div className="mt-4 rounded-card border border-line/80 bg-paper p-5 shadow-none sm:p-6">
         {items.map((item, index) => (
           <RoadmapItemCard
             key={item.id}
@@ -222,7 +222,7 @@ export default function RoadmapPage() {
             <h1 className="mt-3 max-w-[18ch] font-editorial text-[clamp(2.35rem,6vw,4rem)] font-semibold leading-[0.96] tracking-[-0.045em] text-ink">
               Confiança antes de complexidade.
             </h1>
-            <p className="mt-4 max-w-[58ch] text-[0.98rem] leading-relaxed text-ink-soft sm:text-[1.05rem]">
+            <p className="mt-4 max-w-[58ch] text-body leading-relaxed text-ink-soft sm:text-h3">
               O mapa aberto da Zelupi: o que estamos corrigindo, o que precisa
               de uma base mais forte e o que só faz sentido quando a confiança
               vier primeiro.
@@ -246,10 +246,10 @@ export default function RoadmapPage() {
 
           <aside
             aria-labelledby="principles-title"
-            className="min-w-0 rounded-[24px] border border-blue/20 bg-blue-soft/55 p-5 shadow-none sm:p-6"
+            className="min-w-0 rounded-feature border border-blue/20 bg-blue-soft/55 p-5 shadow-none sm:p-6"
           >
             <div className="flex items-start gap-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-[14px] bg-canvas text-blue-deep">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-canvas text-blue-deep">
                 <ShieldCheck aria-hidden="true" className="size-5" />
               </span>
               <div className="min-w-0">
@@ -258,7 +258,7 @@ export default function RoadmapPage() {
                 </p>
                 <h2
                   id="principles-title"
-                  className="mt-1 text-[1.05rem] font-bold tracking-tight text-ink"
+                  className="mt-1 text-h3 font-bold tracking-tight text-ink"
                 >
                   Uma base de cada vez.
                 </h2>
@@ -268,12 +268,12 @@ export default function RoadmapPage() {
               {principles.map(([number, label, detail]) => (
                 <li
                   key={number}
-                  className="flex min-w-0 items-start gap-3 rounded-[16px] border border-line/70 bg-paper/60 p-3"
+                  className="flex min-w-0 items-start gap-3 rounded-control border border-line/70 bg-paper/60 p-3"
                 >
-                  <span className="font-mono text-[0.68rem] font-bold text-blue-deep">
+                  <span className="font-mono text-caption font-bold text-blue-deep">
                     {number}
                   </span>
-                  <span className="min-w-0 text-[0.8rem] leading-tight text-ink">
+                  <span className="min-w-0 text-meta leading-tight text-ink">
                     <strong className="font-bold">{label}</strong>
                     <span className="block text-muted">{detail}</span>
                   </span>
@@ -328,7 +328,7 @@ export default function RoadmapPage() {
               <p className="text-meta font-bold uppercase tracking-[0.14em] text-muted">
                 Nesta página
               </p>
-              <span className="font-mono text-[0.68rem] text-muted">
+              <span className="font-mono text-caption text-muted">
                 {roadmapItems.length} itens
               </span>
             </div>
@@ -340,7 +340,7 @@ export default function RoadmapPage() {
                       href={`#${phase.id}`}
                       className="group flex min-h-11 items-center gap-3 rounded-2xl px-3 text-meta font-semibold text-muted transition-colors hover:bg-paper hover:text-ink"
                     >
-                      <span className="font-mono text-[0.68rem] text-blue group-hover:text-blue-deep">
+                      <span className="font-mono text-caption text-blue group-hover:text-blue-deep">
                         {String(index + 1).padStart(2, "0")}
                       </span>
                       <span className="min-w-0">{phase.title}</span>

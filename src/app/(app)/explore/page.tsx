@@ -53,7 +53,7 @@ const PlaceMap = dynamic(
     loading: () => (
       <div
         role="status"
-        className="flex h-72 w-full items-center justify-center rounded-3xl border border-line bg-surface/60 text-meta text-muted"
+        className="flex h-72 w-full items-center justify-center rounded-feature border border-line bg-surface/60 text-meta text-muted"
       >
         Carregando mapa local…
       </div>
@@ -102,7 +102,13 @@ export default function ExplorePage() {
   const [view, setView] = useState<"lista" | "mapa">("lista");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
+  // "/explore?cadastrar=1" (from the first-aid screen) opens the form directly.
+  // The page renders a skeleton until hydrated, so the sheet never hydrates.
+  const [createOpen, setCreateOpen] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).has("cadastrar"),
+  );
   const [osmLoading, setOsmLoading] = useState(false);
 
   // Trusted place form state
@@ -173,7 +179,9 @@ export default function ExplorePage() {
       const imported = await importOsmPlaces(osmPlaces);
       track("explore_search", { source: "osm", imported });
       toast.success(
-        `${imported} local(is) do OpenStreetMap sincronizado(s) neste aparelho.`,
+        imported === 1
+          ? "1 clínica real salva neste aparelho."
+          : `${imported} clínicas reais salvas neste aparelho.`,
         {
           description:
             "Confirme horário e plantão por telefone antes de se deslocar.",
@@ -183,7 +191,7 @@ export default function ExplorePage() {
       toast.error(
         caught instanceof Error
           ? caught.message
-          : "Sem conexão com o OpenStreetMap agora. Os locais salvos neste aparelho continuam disponíveis offline.",
+          : "Sem conexão com o mapa agora. Os locais salvos neste aparelho continuam disponíveis offline.",
       );
     } finally {
       setOsmLoading(false);
@@ -244,18 +252,14 @@ export default function ExplorePage() {
 
   return (
     <div className="flex flex-col gap-5 pb-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-meta font-bold uppercase tracking-[0.14em] text-muted">
-            Emergência e confiança · {settings.city}
-          </p>
-          <h1 className="mt-1 font-editorial text-[2rem] font-semibold leading-none tracking-tight text-ink sm:text-[2.25rem]">
-            Clínicas 24h e locais
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div className="min-w-0 sm:flex-1 sm:basis-[18rem]">
+          <h1 className="text-h1 font-bold tracking-tight text-ink">
+            Descobrir
           </h1>
-          <p className="mt-1.5 max-w-xl text-[0.95rem] leading-relaxed text-ink-soft">
-            Guarde veterinários, hospitais 24h, farmácias de manipulação e pet
-            shops de confiança com ligação e WhatsApp rápidos, ou consulte o
-            OpenStreetMap.
+          <p className="mt-1.5 max-w-xl text-body text-ink-soft">
+            Guarde veterinários, clínicas 24h, farmácias e pet shops de
+            confiança para ligar rápido quando precisar.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -268,7 +272,7 @@ export default function ExplorePage() {
               type="button"
               onClick={() => setView("lista")}
               aria-pressed={view === "lista"}
-              className={`inline-flex min-h-9 items-center gap-1 rounded-full px-3 text-[0.82rem] font-medium ${
+              className={`inline-flex min-h-11 items-center gap-1 rounded-full px-3 text-label font-medium ${
                 view === "lista" ? "bg-brand text-white" : "text-ink-soft"
               }`}
             >
@@ -279,7 +283,7 @@ export default function ExplorePage() {
               type="button"
               onClick={() => setView("mapa")}
               aria-pressed={view === "mapa"}
-              className={`inline-flex min-h-9 items-center gap-1 rounded-full px-3 text-[0.82rem] font-medium ${
+              className={`inline-flex min-h-11 items-center gap-1 rounded-full px-3 text-label font-medium ${
                 view === "mapa" ? "bg-brand text-white" : "text-ink-soft"
               }`}
             >
@@ -298,7 +302,7 @@ export default function ExplorePage() {
             <ShieldAlert aria-hidden="true" className="size-5" />
           </span>
           <div className="min-w-0">
-            <CardTitle className="text-[1rem]">
+            <CardTitle className="text-body">
               Situação de urgência ou ingestão suspeita?
             </CardTitle>
             <p className="mt-0.5 text-meta leading-relaxed text-ink-soft">
@@ -309,24 +313,39 @@ export default function ExplorePage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2 sm:shrink-0">
-          <Button
-            size="sm"
-            variant={filters.emergencyOnly ? "danger" : "secondary"}
-            onClick={() =>
-              setFilters((current) => ({
-                ...current,
-                emergencyOnly: !current.emergencyOnly,
-              }))
-            }
-          >
-            <Siren aria-hidden="true" className="size-4" />
-            {filters.emergencyOnly
-              ? "Mostrando 24h"
-              : `Clínicas 24h (${emergencyCount})`}
-          </Button>
+          {emergencyCount > 0 ? (
+            <Button
+              size="sm"
+              variant={filters.emergencyOnly ? "danger" : "secondary"}
+              onClick={() =>
+                setFilters((current) => ({
+                  ...current,
+                  emergencyOnly: !current.emergencyOnly,
+                }))
+              }
+            >
+              <Siren aria-hidden="true" className="size-4" />
+              {filters.emergencyOnly
+                ? "Mostrando 24h"
+                : `Suas clínicas 24h (${emergencyCount})`}
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                setNewCategory("veterinario");
+                setNewIs24h(true);
+                setCreateOpen(true);
+              }}
+            >
+              <Siren aria-hidden="true" className="size-4" />
+              Salvar clínica 24h
+            </Button>
+          )}
           <Link
-            href="/community"
-            className="inline-flex min-h-9 items-center justify-center rounded-full border border-line bg-paper px-3.5 text-[0.85rem] font-semibold text-teal-ink transition-colors hover:border-teal/50"
+            href="/first-aid"
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-line bg-paper px-3.5 text-label font-semibold text-teal-ink transition-colors hover:border-teal/50"
           >
             Guia de primeiros socorros →
           </Link>
@@ -334,18 +353,6 @@ export default function ExplorePage() {
       </Card>
 
       <div className="flex flex-wrap items-center gap-2">
-        <FilterChip
-          selected={Boolean(filters.emergencyOnly)}
-          onClick={() =>
-            setFilters((current) => ({
-              ...current,
-              emergencyOnly: !current.emergencyOnly,
-            }))
-          }
-        >
-          <Siren aria-hidden="true" className="size-3.5" />
-          Emergência 24h ({emergencyCount})
-        </FilterChip>
         <FilterChip
           selected={Boolean(filters.favoritesOnly)}
           onClick={() =>
@@ -362,12 +369,12 @@ export default function ExplorePage() {
           type="button"
           disabled={osmLoading}
           onClick={() => void handleSearchOpenStreetMap()}
-          className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-line bg-paper px-3.5 py-1.5 text-[0.82rem] font-semibold text-ink-soft transition-colors hover:border-teal/50 hover:text-ink disabled:opacity-60"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-line bg-paper px-3.5 py-1.5 text-label font-semibold text-ink-soft transition-colors hover:border-teal/50 hover:text-ink disabled:opacity-60"
         >
           <Globe aria-hidden="true" className="size-3.5 text-teal-ink" />
           {osmLoading
-            ? "Buscando no OpenStreetMap…"
-            : "Buscar clínicas próximas (OSM)"}
+            ? "Buscando clínicas no mapa…"
+            : "Buscar clínicas reais por perto"}
         </button>
       </div>
 
@@ -392,7 +399,7 @@ export default function ExplorePage() {
           type="button"
           onClick={() => setSheetOpen(true)}
           aria-label="Mais filtros"
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-2xl border border-line bg-paper px-3.5 text-[0.88rem] font-medium text-ink"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-2xl border border-line bg-paper px-3.5 text-label font-medium text-ink"
         >
           <SlidersHorizontal aria-hidden="true" className="size-4" />
           Filtros
@@ -430,7 +437,7 @@ export default function ExplorePage() {
         <button
           type="button"
           onClick={requestPreciseLocation}
-          className="inline-flex items-center gap-1 font-medium text-teal-ink"
+          className="inline-flex min-h-11 items-center gap-1 font-medium text-teal-ink"
         >
           <LocateFixed aria-hidden="true" className="size-3.5" />
           {locationStatus === "precisa"
@@ -455,7 +462,7 @@ export default function ExplorePage() {
       {filtered.length === 0 ? (
         <EmptyState
           title="Nenhum lugar combina com esses filtros"
-          description="Limpe os filtros, busque clínicas reais próximas via OpenStreetMap ou cadastre seu veterinário de confiança."
+          description="Limpe os filtros, busque clínicas reais por perto ou cadastre seu veterinário de confiança."
           action={
             <div className="flex flex-wrap justify-center gap-2">
               <Button
@@ -534,7 +541,7 @@ export default function ExplorePage() {
               setFilters({ ...filters, verifiedOnly: value })
             }
             label="Apenas locais conferidos"
-            description="Indica dados revisados por você ou no exemplo inicial."
+            description="Mostra só os locais que você cadastrou e conferiu."
           />
           <div className="flex flex-wrap gap-2">
             <Button
@@ -592,7 +599,7 @@ export default function ExplorePage() {
                 id="place-phone"
                 type="tel"
                 maxLength={40}
-                placeholder="Ex.: (11) 3062-0100"
+                placeholder="Ex.: (00) 0000-0000"
                 value={newPhone}
                 onChange={(event) => setNewPhone(event.target.value)}
               />
@@ -602,7 +609,7 @@ export default function ExplorePage() {
                 id="place-whatsapp"
                 type="tel"
                 maxLength={40}
-                placeholder="Ex.: (11) 99000-0100"
+                placeholder="Ex.: (00) 00000-0000"
                 value={newWhatsapp}
                 onChange={(event) => setNewWhatsapp(event.target.value)}
               />

@@ -65,7 +65,7 @@ export function buildPublicCard(input: {
     name: pet.name,
     species: pet.species,
     breed: pet.card.shareBreed ? pet.breed : null,
-    city: pet.card.shareCity ? city : null,
+    city: pet.card.shareCity && city ? city : null,
     microchip: pet.microchip ?? null,
     lost: pet.lostMode.active
       ? {

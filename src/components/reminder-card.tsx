@@ -170,7 +170,7 @@ function MedicationReminderCard({
 
   return (
     <article
-      className="flex flex-col gap-3 rounded-[18px] border border-line bg-paper p-4"
+      className="flex flex-col gap-3 rounded-card border border-line bg-paper p-4"
       data-urgency={item.urgency}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -208,7 +208,7 @@ function MedicationReminderCard({
       {/* Mini-cronograma visual das Próximas 24 horas */}
       {timelineDoses.length > 0 ? (
         <section
-          className="flex flex-col gap-2 rounded-[16px] border border-line/70 bg-surface/40 p-3"
+          className="flex flex-col gap-2 rounded-control border border-line/70 bg-surface/40 p-3"
           aria-label="Mini-cronograma das próximas 24 horas"
         >
           <div className="flex items-center justify-between text-meta font-bold uppercase tracking-wider text-muted">
@@ -283,7 +283,7 @@ function MedicationReminderCard({
                       Dar dose
                     </button>
                   ) : (
-                    <span className="text-[11px] text-muted">Planejada</span>
+                    <span className="text-caption text-muted">Planejada</span>
                   )}
                 </div>
               );
@@ -450,14 +450,14 @@ function CareReminderCard({
     <article
       data-urgency={item.urgency}
       className={cn(
-        "flex flex-col gap-3 rounded-[18px] border border-line border-l-4 bg-paper p-4 transition-[border-color,background-color] duration-200 hover:border-teal/45 hover:bg-surface/45",
+        "flex flex-col gap-3 rounded-card border border-line border-l-4 bg-paper p-4 transition-[border-color,background-color] duration-200 hover:border-teal/45 hover:bg-surface/45",
         urgencySurface[item.urgency],
       )}
     >
       <div className="flex min-w-0 items-start gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-[1rem] font-bold text-ink">{item.title}</h3>
+            <h3 className="text-body font-bold text-ink">{item.title}</h3>
             <Chip tone={urgencyTone[item.urgency]}>
               {urgencyLabels[item.urgency]}
             </Chip>
@@ -479,7 +479,7 @@ function CareReminderCard({
             ) : null}
           </p>
           {item.notes ? (
-            <p className="mt-2 text-[0.9rem] leading-relaxed text-ink-soft">
+            <p className="mt-2 text-label leading-relaxed text-ink-soft">
               {item.notes}
             </p>
           ) : null}
@@ -542,12 +542,12 @@ function CareReminderCard({
         description={`${item.petName} · ${reminderAttentionText(item)} · ${item.reason}`}
       >
         <div className="flex flex-col gap-3">
-          <p className="text-[0.92rem] leading-relaxed text-muted">
+          <p className="text-body leading-relaxed text-muted">
             Concluir registra o cuidado feito hoje. Adiar mantém o item na
             agenda e só muda quando ele volta a pedir atenção.
           </p>
           {item.source === "registro" ? (
-            <p className="rounded-[14px] bg-surface px-3 py-2 text-meta text-muted">
+            <p className="rounded-control bg-surface px-3 py-2 text-meta text-muted">
               {record?.recurrenceMonths
                 ? `Concluir registra o cuidado de hoje e cria o próximo para ${formatShortDate(addMonthsToKey(todayKey(), record.recurrenceMonths))}.`
                 : "Concluir registra o cuidado de hoje no histórico, sem criar outro aviso."}
@@ -556,7 +556,7 @@ function CareReminderCard({
           {actionError ? (
             <p
               role="alert"
-              className="rounded-[14px] bg-danger/10 px-3 py-2 text-meta font-semibold text-danger-ink"
+              className="rounded-control bg-danger/10 px-3 py-2 text-meta font-semibold text-danger-ink"
             >
               {actionError}
             </p>
@@ -593,7 +593,7 @@ function CareReminderCard({
           <div className="border-t border-line/80 pt-3">
             <label
               htmlFor={`reschedule-${item.key}`}
-              className="text-[0.85rem] font-semibold text-ink"
+              className="text-label font-semibold text-ink"
             >
               Reagendar para uma data específica
             </label>
@@ -607,7 +607,7 @@ function CareReminderCard({
                   setRescheduleDate(event.target.value);
                   setActionError(null);
                 }}
-                className="min-h-12 flex-1 rounded-[14px] border border-line bg-paper px-3.5 text-base text-ink focus:border-teal-ink focus:outline-none"
+                className="min-h-12 flex-1 rounded-control border border-line bg-paper px-3.5 text-base text-ink focus:border-teal-ink focus:outline-none"
               />
               <Button
                 variant="mint"
@@ -646,12 +646,8 @@ function CareReminderCard({
                 variant="danger"
                 disabled={pending !== null}
                 onClick={() => {
-                  if (
-                    window.confirm(
-                      `Encerrar os próximos avisos de "${item.title}"? O histórico será preservado.`,
-                    )
-                  )
-                    runAction(
+                  // No confirm: the toast offers Undo right away.
+                  runAction(
                       "change",
                       () => useAppStore.getState().stopReminderRecurrence(item),
                       "Recorrência encerrada",
@@ -664,7 +660,7 @@ function CareReminderCard({
             </div>
           ) : null}
           <div className="border-t border-line/80 pt-3">
-            <p className="text-[0.85rem] font-semibold text-ink">
+            <p className="text-label font-semibold text-ink">
               Adicionar ao calendário nativo do celular
             </p>
             <p className="mt-0.5 text-meta text-muted">
@@ -700,9 +696,18 @@ function CareReminderCard({
               toast.success("Lembrete atualizado");
             }}
             onDelete={async () => {
-              await useAppStore.getState().removeReminder(manualReminder.id);
+              const deleted = manualReminder;
+              await useAppStore.getState().removeReminder(deleted.id);
               setEditing(false);
-              toast.success("Lembrete excluído");
+              toast.success("Lembrete excluído", {
+                action: {
+                  label: "Desfazer",
+                  onClick: () =>
+                    void useAppStore
+                      .getState()
+                      .restoreDeleted({ collection: "reminders", item: deleted }),
+                },
+              });
             }}
           />
         </BottomSheet>

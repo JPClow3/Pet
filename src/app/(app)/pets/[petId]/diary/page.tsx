@@ -245,7 +245,7 @@ function PetDiaryPage() {
         <ul className="flex flex-col gap-4">
           {entries.map((entry) => (
             <li key={entry.id}>
-              <article className="flex flex-col gap-2 rounded-3xl border border-line bg-paper p-4">
+              <article className="flex flex-col gap-2 rounded-feature border border-line bg-paper p-4">
                 <div className="flex items-center justify-between gap-2">
                   <time className="text-meta text-muted" dateTime={entry.date}>
                     {formatFullDate(entry.date)}
@@ -270,7 +270,7 @@ function PetDiaryPage() {
                   />
                 ) : null}
 
-                <p className="text-[0.98rem] leading-relaxed text-ink-soft">
+                <p className="text-body leading-relaxed text-ink-soft">
                   {entry.text}
                 </p>
 
@@ -303,11 +303,18 @@ function PetDiaryPage() {
                     variant="ghost"
                     disabled={removal.pending}
                     onClick={() => {
-                      if (!window.confirm("Excluir este momento do diário?"))
-                        return;
                       void removal.run(async () => {
                         await removeDiaryEntry(entry.id);
-                        toast.success("Momento excluído");
+                        toast.success("Momento excluído", {
+                          action: {
+                            label: "Desfazer",
+                            onClick: () =>
+                              void useAppStore.getState().restoreDeleted({
+                                collection: "diary",
+                                item: entry,
+                              }),
+                          },
+                        });
                       });
                     }}
                   >
@@ -386,7 +393,7 @@ function PetDiaryPage() {
           </Field>
 
           <fieldset className="flex flex-col gap-2">
-            <legend className="text-[0.85rem] font-medium text-ink">
+            <legend className="text-label font-medium text-ink">
               Marcadores
             </legend>
             <div className="flex flex-wrap gap-2">
@@ -405,7 +412,7 @@ function PetDiaryPage() {
                           : [...tags, tag].slice(0, 8),
                       )
                     }
-                    className={`min-h-9 rounded-full border px-3 text-[0.85rem] font-medium ${
+                    className={`min-h-11 rounded-full border px-3 text-label font-medium ${
                       selected
                         ? "border-teal-ink bg-teal-ink text-white"
                         : "border-line bg-paper text-ink-soft"
@@ -419,7 +426,7 @@ function PetDiaryPage() {
           </fieldset>
 
           <fieldset className="flex flex-col gap-2">
-            <legend className="text-[0.85rem] font-medium text-ink">
+            <legend className="text-label font-medium text-ink">
               Visibilidade desejada
             </legend>
             <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -427,7 +434,7 @@ function PetDiaryPage() {
                 type="button"
                 aria-pressed={visibility === "privado"}
                 onClick={() => setField("visibility", "privado")}
-                className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl border text-[0.9rem] font-medium ${
+                className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl border text-label font-medium ${
                   visibility === "privado"
                     ? "border-teal-ink bg-mint text-teal-ink"
                     : "border-line bg-paper text-ink-soft"
@@ -440,7 +447,7 @@ function PetDiaryPage() {
                 type="button"
                 aria-pressed={visibility === "publico"}
                 onClick={() => setField("visibility", "publico")}
-                className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl border text-[0.9rem] font-medium ${
+                className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl border text-label font-medium ${
                   visibility === "publico"
                     ? "border-teal-ink bg-mint text-teal-ink"
                     : "border-line bg-paper text-ink-soft"

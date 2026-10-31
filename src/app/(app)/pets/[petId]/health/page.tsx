@@ -133,10 +133,8 @@ export default function HealthPage() {
         <p className="text-meta font-semibold uppercase tracking-wide text-muted">
           Situação atual
         </p>
-        <p className="text-[1.05rem] font-semibold text-ink">
-          {status.headline}
-        </p>
-        <p className="text-[0.9rem] text-ink-soft/90">{status.detail}</p>
+        <p className="text-h3 font-semibold text-ink">{status.headline}</p>
+        <p className="text-label text-ink-soft/90">{status.detail}</p>
       </Card>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -147,7 +145,7 @@ export default function HealthPage() {
               events={petCalendarEvents}
               filename={`cuidados-${pet.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-zelupi.ics`}
               calendarName={`Zelupi — Cuidados de ${pet.name}`}
-              label="Exportar calendário (.ics)"
+              label="Adicionar à agenda do celular"
               size="sm"
             />
           ) : null}
@@ -223,7 +221,7 @@ export default function HealthPage() {
               <button
                 type="button"
                 onClick={() => setFilter("todos")}
-                className="min-h-11 rounded-full border border-line px-4 text-[0.9rem] font-medium text-ink"
+                className="min-h-11 rounded-full border border-line px-4 text-label font-medium text-ink"
               >
                 Limpar filtro
               </button>

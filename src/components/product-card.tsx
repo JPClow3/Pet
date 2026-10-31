@@ -4,6 +4,7 @@ import { MapPin, PackageOpen, Sparkles } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
+import { formatKm } from "@/lib/domain/places";
 import type { Recommendation } from "@/lib/domain/products";
 
 const categoryMeta: Record<
@@ -36,7 +37,7 @@ export function ProductCard({
         <span className="relative flex size-12 items-center justify-center rounded-2xl border border-white/80 bg-paper/90 text-ink shadow-sm">
           <PackageOpen aria-hidden="true" className="size-6" />
         </span>
-        <span className="absolute right-4 top-4 rounded-full bg-paper/80 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-ink-soft/80">
+        <span className="absolute right-4 top-4 rounded-full bg-paper/80 px-2.5 py-1 text-caption font-bold uppercase tracking-[0.08em] text-ink-soft/80">
           {meta.label}
         </span>
       </div>
@@ -47,7 +48,7 @@ export function ProductCard({
         </p>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="text-[1.08rem] font-semibold leading-tight text-ink">
+            <h3 className="text-h3 font-semibold leading-tight text-ink">
               {product.name}
             </h3>
             <p className="mt-1 text-meta text-muted">{product.brand}</p>
@@ -58,12 +59,12 @@ export function ProductCard({
           </Chip>
         </div>
 
-        <p className="text-[0.92rem] leading-relaxed text-ink-soft/90">
+        <p className="text-body leading-relaxed text-ink-soft/90">
           {product.description}
         </p>
 
         <div className="border-l-2 border-teal bg-lime-soft px-3 py-2.5">
-          <p className="flex items-center gap-1.5 text-[0.72rem] font-bold uppercase tracking-[0.1em] text-teal-deep">
+          <p className="flex items-center gap-1.5 text-caption font-bold uppercase tracking-[0.1em] text-teal-deep">
             <Sparkles aria-hidden="true" className="size-3.5" />
             Por que apareceu
           </p>
@@ -82,7 +83,7 @@ export function ProductCard({
         {partnerDistanceKm !== null ? (
           <p className="flex items-center gap-1.5 text-meta text-muted">
             <MapPin aria-hidden="true" className="size-3.5 text-blue" />
-            Distância ilustrativa: {partnerDistanceKm} km
+            Distância ilustrativa: {formatKm(partnerDistanceKm)}
           </p>
         ) : null}
 

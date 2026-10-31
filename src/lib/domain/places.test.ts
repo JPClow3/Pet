@@ -8,10 +8,13 @@ import {
   emptyFilters,
   fetchNearbyOsmPlaces,
   filterPlaces,
+  formatKm,
   isEmergency24hPlace,
   parseOverpassResponse,
   phoneCallUrl,
+  placeContactLinks,
   placeRating,
+  sanitizeSeededPlace,
   whatsappUrl,
 } from "./places";
 import { seedPlaces } from "./seed";
@@ -182,7 +185,8 @@ describe("seed", () => {
       { ...emptyFilters, emergencyOnly: true },
       origin,
     );
-    expect(emergency.length).toBeGreaterThanOrEqual(3);
+    // Fictional demo clinics never count as emergency options.
+    expect(emergency).toHaveLength(1);
     expect(emergency.every((item) => isEmergency24hPlace(item))).toBe(true);
     expect(emergency[0].id).toBe("place-fav-vet");
 
@@ -193,6 +197,56 @@ describe("seed", () => {
     );
     expect(favorites).toHaveLength(1);
     expect(favorites[0].id).toBe("place-fav-vet");
+  });
+
+  it("nunca apresenta locais de exemplo como reais, abertos ou ligáveis", () => {
+    for (const item of seedPlaces) {
+      expect(item.seeded).toBe(true);
+      expect(item.verified).toBe(false);
+      expect(item.openNow).toBeNull();
+      expect(item.phone ?? null).toBeNull();
+      expect(item.whatsapp ?? null).toBeNull();
+      expect(item.attributes).not.toContain("emergencia_24h");
+      expect(isEmergency24hPlace(item)).toBe(false);
+      expect(placeContactLinks(item)).toEqual({ callHref: null, waHref: null });
+    }
+  });
+
+  it("limpa exemplos antigos salvos com telefone e plantão 24h", () => {
+    const legacy = place({
+      id: "place-bicho-bem",
+      seeded: true,
+      verified: true,
+      openNow: true,
+      attributes: ["emergencia_24h", "equipe_paciente"],
+      phone: "(11) 3062-0100",
+      whatsapp: "5511990000100",
+      openingHours: "Plantão 24h todos os dias",
+    });
+    const cleaned = sanitizeSeededPlace(legacy);
+    expect(cleaned).toMatchObject({
+      seeded: true,
+      verified: false,
+      openNow: null,
+      phone: null,
+      whatsapp: null,
+      openingHours: null,
+    });
+    expect(cleaned.attributes).toEqual(["equipe_paciente"]);
+  });
+
+  it("um exemplo com o telefone do tutor passa a ser um local do tutor", () => {
+    const edited = sanitizeSeededPlace(
+      place({ seeded: true, phone: "(81) 3333-4444" }),
+    );
+    expect(edited.seeded).toBe(false);
+    expect(edited.source).toBe("local");
+    expect(placeContactLinks(edited).callHref).toBe("tel:8133334444");
+  });
+
+  it("formata distâncias com vírgula decimal", () => {
+    expect(formatKm(1.6).replace(/\s/g, " ")).toBe("1,6 km");
+    expect(formatKm(3).replace(/\s/g, " ")).toBe("3 km");
   });
 
   it("formata links diretos de ligação e WhatsApp com segurança", () => {

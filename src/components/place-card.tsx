@@ -16,9 +16,9 @@ import Link from "next/link";
 import { Chip } from "@/components/ui/chip";
 import { placeAttributeLabels, placeCategoryMeta } from "@/lib/domain/labels";
 import {
+  formatKm,
   isEmergency24hPlace,
-  phoneCallUrl,
-  whatsappUrl,
+  placeContactLinks,
   type CriterionScore,
   type PlaceWithDistance,
 } from "@/lib/domain/places";
@@ -46,9 +46,8 @@ export function PlaceCard({
 }) {
   const Icon = placeCategoryIcons[place.category];
   const is24h = isEmergency24hPlace(place);
-  const callHref = phoneCallUrl(place.phone);
-  const waHref = whatsappUrl(
-    place.whatsapp ?? place.phone,
+  const { callHref, waHref } = placeContactLinks(
+    place,
     `Olá! Vi o contato de ${place.name} na Zelupi e gostaria de atendimento veterinário.`,
   );
 
@@ -56,24 +55,25 @@ export function PlaceCard({
     .filter((score) => score.positiveRatio >= 0.5)
     .slice(0, 2)
     .map((score) => score.attribute);
-  const attributes =
+  const attributes = (
     observedCriteria.length > 0
       ? observedCriteria
       : place.attributes
           .filter((attribute) => !placeAttributeLabels[attribute].negative)
-          .slice(0, 2);
+          .slice(0, 2)
+  ).filter((attribute) => !place.seeded || attribute !== "emergencia_24h");
 
   const sourceLabel =
     place.source === "osm"
-      ? "OpenStreetMap · confirme por telefone"
+      ? "Mapa colaborativo · confirme por telefone"
       : place.seeded
-        ? "Exemplo do catálogo"
+        ? "Exemplo fictício · sem contato"
         : "Local de confiança neste aparelho";
 
   const theme = placeVisualThemes[place.category];
 
   return (
-    <article className="group flex min-h-[15.25rem] flex-col overflow-hidden rounded-[24px] border border-line/80 bg-paper shadow-none transition-[border-color,background-color] duration-150 hover:border-teal/50">
+    <article className="group flex min-h-[15.25rem] flex-col overflow-hidden rounded-feature border border-line/80 bg-paper shadow-none transition-[border-color,background-color] duration-150 hover:border-teal/50">
       <div
         className={`relative flex min-h-24 items-end justify-between gap-2 overflow-hidden border-l-[6px] ${theme.surface} ${theme.rail} p-4`}
       >
@@ -86,12 +86,12 @@ export function PlaceCard({
 
         <div className="flex flex-wrap items-center justify-end gap-1.5">
           {is24h ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-danger-soft px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.06em] text-danger-ink">
+            <span className="inline-flex items-center gap-1 rounded-full bg-danger-soft px-2.5 py-1 text-caption font-bold uppercase tracking-[0.06em] text-danger-ink">
               <Siren aria-hidden="true" className="size-3.5" />
               24h
             </span>
           ) : null}
-          <span className="rounded-full bg-paper/85 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-ink-soft">
+          <span className="rounded-full bg-paper/85 px-2.5 py-1 text-caption font-bold uppercase tracking-[0.08em] text-ink-soft">
             {placeCategoryMeta[place.category].label}
           </span>
           {onToggleFavorite ? (
@@ -104,7 +104,7 @@ export function PlaceCard({
               }
               aria-pressed={Boolean(place.favorite)}
               onClick={() => onToggleFavorite(place.id)}
-              className={`inline-flex size-9 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink ${
+              className={`inline-flex size-11 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink ${
                 place.favorite
                   ? "border-danger-ink/30 bg-danger-soft text-danger-ink"
                   : "border-line/70 bg-paper/90 text-muted hover:text-ink"
@@ -127,11 +127,15 @@ export function PlaceCard({
         >
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
-              <h3 className="text-[1.08rem] font-semibold leading-tight text-ink transition-colors group-hover/link:text-teal-ink">
+              <h3 className="text-h3 font-semibold leading-tight text-ink transition-colors group-hover/link:text-teal-ink">
                 {place.name}
               </h3>
-              {place.favorite ? (
-                <Chip tone="teal" className="px-2 py-0.5 text-[0.68rem]">
+              {place.seeded ? (
+                <Chip tone="warning" className="px-2 py-0.5 text-caption">
+                  Exemplo
+                </Chip>
+              ) : place.favorite ? (
+                <Chip tone="teal" className="px-2 py-0.5 text-caption">
                   Confiança
                 </Chip>
               ) : null}
@@ -139,8 +143,8 @@ export function PlaceCard({
             <p className="mt-1 flex flex-wrap items-center gap-1.5 text-meta text-muted">
               <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
               <span>
-                {place.neighborhood} · {place.distanceKm} km de distância
-                estimada
+                {place.neighborhood} · {formatKm(place.distanceKm)} de
+                distância estimada
               </span>
             </p>
             {place.openingHours ? (
@@ -172,7 +176,7 @@ export function PlaceCard({
               <a
                 href={callHref}
                 aria-label={`Ligar para ${place.name}`}
-                className="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-[0.8rem] font-semibold text-ink transition-colors hover:border-teal/50 hover:bg-paper"
+                className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-meta font-semibold text-ink transition-colors hover:border-teal/50 hover:bg-paper"
               >
                 <Phone aria-hidden="true" className="size-3.5 text-teal-ink" />
                 <span>Ligar</span>
@@ -184,7 +188,7 @@ export function PlaceCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`Conversar no WhatsApp com ${place.name}`}
-                className="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-full border border-success-ink/30 bg-success-soft px-3 py-1.5 text-[0.8rem] font-semibold text-success-ink transition-colors hover:border-success-ink/60"
+                className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-full border border-success-ink/30 bg-success-soft px-3 py-1.5 text-meta font-semibold text-success-ink transition-colors hover:border-success-ink/60"
               >
                 <MessageCircle aria-hidden="true" className="size-3.5" />
                 <span>WhatsApp</span>
@@ -194,7 +198,7 @@ export function PlaceCard({
         ) : null}
 
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-line/70 pt-2.5">
-          <span className="inline-flex min-w-0 items-center gap-1.5 text-[0.7rem] leading-4 text-muted">
+          <span className="inline-flex min-w-0 items-center gap-1.5 text-caption leading-4 text-muted">
             {place.source === "osm" ? (
               <Globe
                 aria-hidden="true"
@@ -213,12 +217,6 @@ export function PlaceCard({
             )}
             <span className="truncate">{sourceLabel}</span>
           </span>
-          <Link
-            href={`/explore/${place.id}`}
-            className="shrink-0 text-[0.72rem] font-semibold text-teal-ink hover:underline"
-          >
-            Detalhes
-          </Link>
         </div>
       </div>
     </article>

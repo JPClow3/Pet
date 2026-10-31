@@ -82,7 +82,7 @@ export default function NotificationsPage() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-[0.98rem] font-semibold text-ink">
+                        <p className="text-body font-semibold text-ink">
                           {item.title}
                         </p>
                         <Chip
@@ -91,9 +91,7 @@ export default function NotificationsPage() {
                           {notificationKindMeta[item.kind].label}
                         </Chip>
                       </div>
-                      <p className="text-[0.9rem] text-ink-soft/90">
-                        {item.body}
-                      </p>
+                      <p className="text-label text-ink-soft/90">{item.body}</p>
                       <p className="mt-0.5 text-meta text-muted">
                         {relativeTimeLabel(item.createdAt)}
                       </p>
@@ -122,7 +120,7 @@ export default function NotificationsPage() {
                             router.push(item.href!);
                           });
                         }}
-                        className="inline-flex min-h-9 items-center rounded-full bg-teal-ink px-3 text-[0.85rem] font-medium text-white"
+                        className="inline-flex min-h-11 items-center rounded-full bg-teal-ink px-3 text-label font-medium text-white"
                       >
                         Ver agora
                       </Link>

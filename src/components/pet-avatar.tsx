@@ -134,7 +134,7 @@ export function PetInitials({
   return (
     <span
       className={cn(
-        "inline-flex size-10 items-center justify-center rounded-full bg-mint text-[0.8rem] font-semibold text-teal-ink",
+        "inline-flex size-10 items-center justify-center rounded-full bg-mint text-meta font-semibold text-teal-ink",
         className,
       )}
     >

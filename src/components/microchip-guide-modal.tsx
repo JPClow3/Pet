@@ -161,7 +161,7 @@ export function MicrochipGuideModal({
                       href={targetUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-[12px] bg-teal-ink px-4 text-[0.85rem] font-semibold text-white transition-colors hover:bg-teal-deep"
+                      className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-control bg-teal-ink px-4 text-label font-semibold text-white transition-colors hover:bg-teal-deep"
                     >
                       <Search aria-hidden="true" className="size-3.5" />
                       Consultar
@@ -180,7 +180,7 @@ export function MicrochipGuideModal({
               Instruções para quem encontrou o pet
             </h3>
 
-            <div className="flex flex-col gap-3 text-[0.875rem]">
+            <div className="flex flex-col gap-3 text-label">
               {MICROCHIP_GUIDE_STEPS.map((step, idx) => (
                 <div key={idx} className="flex flex-col gap-0.5">
                   <span className="font-bold text-ink">{step.title}</span>

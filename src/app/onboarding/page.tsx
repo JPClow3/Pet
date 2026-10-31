@@ -107,7 +107,7 @@ export default function OnboardingPage() {
       step: 0,
       tutorName: "",
       email: "",
-      city: "São Paulo",
+      city: "",
       pet: { name: "", species: "cao", breed: null, birthDate: null },
       weightInput: "",
       careType: null,
@@ -259,7 +259,7 @@ export default function OnboardingPage() {
       await completeOnboarding({
         tutorName: tutorName.trim(),
         email: email.trim() || null,
-        city: city.trim() || "São Paulo",
+        city: city.trim(),
         focusAreas: ["saude", "rotina"],
         pet: {
           ...initialPet,
@@ -317,14 +317,27 @@ export default function OnboardingPage() {
     <main className="min-h-dvh bg-canvas">
       <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-5 pb-8 pt-5 sm:px-8 lg:py-8">
         <header className="flex items-center gap-3">
-          <ButtonLink
-            href="/welcome"
-            variant="ghost"
-            size="icon"
-            aria-label="Voltar para o início"
-          >
-            <ArrowLeft aria-hidden="true" className="size-5" />
-          </ButtonLink>
+          {/* One meaning for "back": the previous step, Welcome only from step 1. */}
+          {step === 0 ? (
+            <ButtonLink
+              href="/welcome"
+              variant="ghost"
+              size="icon"
+              aria-label="Voltar para o início"
+            >
+              <ArrowLeft aria-hidden="true" className="size-5" />
+            </ButtonLink>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setStep(step - 1)}
+              disabled={saving}
+              aria-label={`Voltar para a etapa anterior: ${steps[step - 1]}`}
+            >
+              <ArrowLeft aria-hidden="true" className="size-5" />
+            </Button>
+          )}
           <div className="flex-1">
             <div className="flex items-center justify-between gap-4">
               <p className="text-meta font-semibold text-blue-deep">
@@ -381,7 +394,7 @@ export default function OnboardingPage() {
                 : null}
               {step === 3 ? "Quer guardar um cuidado real?" : null}
             </h1>
-            <p className="mt-3 max-w-[42ch] text-[0.98rem] leading-relaxed text-ink-soft">
+            <p className="mt-3 max-w-[42ch] text-body leading-relaxed text-ink-soft">
               {step === 0
                 ? "Seu espaço fica salvo neste aparelho. Você pode completar o restante quando fizer sentido."
                 : step === 1
@@ -409,8 +422,8 @@ export default function OnboardingPage() {
                     required
                   />
                 </Field>
-                <details className="group rounded-3xl border border-line bg-paper p-4 open:shadow-card">
-                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-[0.95rem] font-semibold text-ink [&::-webkit-details-marker]:hidden">
+                <details className="group rounded-feature border border-line bg-paper p-4 open:shadow-card">
+                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-body font-semibold text-ink [&::-webkit-details-marker]:hidden">
                     <span>Adicionar detalhes opcionais</span>
                     <span className="text-meta font-medium text-teal-ink group-open:rotate-45 transition-transform">
                       +
@@ -437,10 +450,12 @@ export default function OnboardingPage() {
                     <Field
                       label="Cidade"
                       htmlFor="tutor-city"
-                      hint="Você pode ajustar isso no perfil"
+                      hint="Opcional. Usada só para mostrar locais perto de você."
                     >
                       <Input
                         id="tutor-city"
+                        autoComplete="address-level2"
+                        placeholder="Ex.: Recife"
                         value={city}
                         onChange={(event) =>
                           setDraftField("city", event.target.value)
@@ -485,7 +500,7 @@ export default function OnboardingPage() {
                 </Field>
 
                 <fieldset>
-                  <legend className="text-[0.85rem] font-semibold text-ink">
+                  <legend className="text-label font-semibold text-ink">
                     Espécie
                   </legend>
                   <div className="mt-2 grid grid-cols-3 gap-2">
@@ -501,7 +516,7 @@ export default function OnboardingPage() {
                             setOptionalPetField("species", option.value)
                           }
                           className={cn(
-                            "flex min-h-24 flex-col items-center justify-center gap-2 rounded-3xl border px-3 text-[0.9rem] font-semibold transition-[background-color,border-color] duration-150",
+                            "flex min-h-24 flex-col items-center justify-center gap-2 rounded-feature border px-3 text-label font-semibold transition-[background-color,border-color] duration-150",
                             selected
                               ? "border-blue bg-blue-soft text-blue-deep"
                               : "border-line bg-paper text-ink-soft hover:bg-surface",
@@ -655,7 +670,7 @@ export default function OnboardingPage() {
                           setError(null);
                         }}
                         className={cn(
-                          "flex min-h-28 flex-col items-start justify-between rounded-3xl border p-4 text-left transition-[background-color,border-color] duration-150",
+                          "flex min-h-28 flex-col items-start justify-between rounded-feature border p-4 text-left transition-[background-color,border-color] duration-150",
                           selected
                             ? "border-blue bg-blue-soft text-blue-deep"
                             : "border-line bg-paper text-ink-soft hover:bg-surface",
@@ -672,7 +687,7 @@ export default function OnboardingPage() {
                           <Icon aria-hidden="true" className="size-4" />
                         </span>
                         <span>
-                          <span className="block text-[0.95rem] font-semibold">
+                          <span className="block text-body font-semibold">
                             {choice.label}
                           </span>
                           <span

@@ -42,6 +42,8 @@ export function deriveNotifications(input: {
   places: Place[];
   products: Product[];
   enabled: NotificationSettings;
+  /** The tutor told us where they are (a city or device location). */
+  locationKnown?: boolean;
   now?: Date;
 }): AppNotification[] {
   const now = input.now ?? new Date();
@@ -140,8 +142,10 @@ export function deriveNotifications(input: {
     }
   }
 
-  if (input.enabled.local && input.places.length > 0) {
-    const highlights = input.places.slice(0, 3);
+  // "Near you" needs a real location and real places, never the demo catalogue.
+  const realPlaces = input.places.filter((place) => !place.seeded);
+  if (input.enabled.local && input.locationKnown && realPlaces.length > 0) {
+    const highlights = realPlaces.slice(0, 3);
     created.push(
       notification(
         `notif-local-${highlights.map((place) => place.id).join("-")}`,

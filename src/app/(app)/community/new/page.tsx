@@ -55,7 +55,7 @@ export default function NewPostPage() {
       <Card className="flex flex-col gap-5">
         <fieldset disabled={action.pending} className="contents">
           <fieldset className="flex flex-col gap-2">
-            <legend className="mb-1 text-[0.85rem] font-medium text-ink">
+            <legend className="mb-1 text-label font-medium text-ink">
               Tipo
             </legend>
             <div className="grid grid-cols-2 gap-2">
@@ -69,7 +69,7 @@ export default function NewPostPage() {
                     aria-pressed={selected}
                     onClick={() => setType(item)}
                     className={cn(
-                      "flex min-h-12 items-center gap-2 rounded-2xl border px-3 text-left text-[0.88rem] font-medium",
+                      "flex min-h-12 items-center gap-2 rounded-2xl border px-3 text-left text-label font-medium",
                       selected
                         ? "border-blue bg-blue-soft text-blue-deep"
                         : "border-line bg-paper text-ink-soft",

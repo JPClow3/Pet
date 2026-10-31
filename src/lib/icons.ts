@@ -22,6 +22,7 @@ import {
   Syringe,
   Users,
   Utensils,
+  Worm,
   type LucideIcon,
 } from "lucide-react";
 
@@ -34,7 +35,7 @@ import type {
 
 export const healthTypeIcons: Record<HealthRecordType, LucideIcon> = {
   vacina: Syringe,
-  vermifugo: Pill,
+  vermifugo: Worm,
   antiparasitario: ShieldCheck,
   medicamento: Pill,
   consulta: Stethoscope,

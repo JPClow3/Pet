@@ -185,8 +185,6 @@ export function ReminderForm({
           variant="danger"
           disabled={pending}
           onClick={async () => {
-            if (!window.confirm(`Excluir o lembrete "${initial?.title}"?`))
-              return;
             try {
               setPending(true);
               await onDelete();

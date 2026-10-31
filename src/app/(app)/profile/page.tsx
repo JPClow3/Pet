@@ -19,6 +19,7 @@ import { PageHeader } from "@/components/page-header";
 import { StoragePanel } from "@/components/storage-panel";
 import { PushSettingsPanel } from "@/components/push-settings-panel";
 import { Button, ButtonLink } from "@/components/ui/button";
+import { countLabel, useConfirm } from "@/components/ui/confirm-sheet";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
 import { CheckboxRow, Field, Input } from "@/components/ui/field";
@@ -62,6 +63,7 @@ function ProfileContent() {
   const [email, setEmail] = useState(tutor?.email ?? "");
   const [city, setCity] = useState(tutor?.city ?? settings.city);
   const action = useAsyncAction();
+  const [confirm, confirmSheet] = useConfirm();
 
   const recentEvents = useMemo(() => events.slice(0, 8), [events]);
 
@@ -156,13 +158,13 @@ function ProfileContent() {
                   />
                   <Link
                     href={`/pets/${pet.id}`}
-                    className="flex-1 text-[0.95rem] text-ink-soft"
+                    className="flex min-h-11 flex-1 items-center text-body text-ink-soft"
                   >
                     {pet.name}
                   </Link>
                   <Link
                     href={`/pets/${pet.id}/edit`}
-                    className="text-meta font-medium text-teal-ink"
+                    className="inline-flex min-h-11 items-center px-2 text-meta font-medium text-teal-ink"
                   >
                     Editar
                   </Link>
@@ -192,21 +194,19 @@ function ProfileContent() {
                 key={kind}
                 id={`notify-${kind}`}
                 label={notificationKindMeta[kind].label}
-                description={
-                  kind === "comercial"
-                    ? `${notificationKindMeta[kind].description} (conteúdo identificado como comercial)`
-                    : notificationKindMeta[kind].description
-                }
+                description={notificationKindMeta[kind].description}
                 checked={settings.notifications[kind]}
                 onChange={(checked) =>
-                  void action.run(() =>
-                    updateSettings({
+                  void action.run(async () => {
+                    await updateSettings({
                       notifications: {
                         ...settings.notifications,
                         [kind]: checked,
                       },
-                    }),
-                  )
+                    });
+                    if (kind === "comercial")
+                      await updateTutor({ marketingOptIn: checked });
+                  })
                 }
               />
             ))}
@@ -216,15 +216,6 @@ function ProfileContent() {
         <Card className="flex flex-col gap-3">
           <CardTitle>Privacidade</CardTitle>
           <div className="flex flex-col gap-1">
-            <CheckboxRow
-              id="marketing-opt-in"
-              label="Aceito receber ofertas de parceiros"
-              description="Opt-in explícito. Sem isso, nenhuma comunicação comercial é criada."
-              checked={tutor?.marketingOptIn ?? false}
-              onChange={(checked) =>
-                void action.run(() => updateTutor({ marketingOptIn: checked }))
-              }
-            />
             <CheckboxRow
               id="precise-location"
               label="Usar minha localização precisa"
@@ -268,9 +259,7 @@ function ProfileContent() {
                   key={authorId}
                   className="flex items-center justify-between gap-2"
                 >
-                  <span className="text-[0.9rem] text-ink-soft">
-                    {authorId}
-                  </span>
+                  <span className="text-label text-ink-soft">{authorId}</span>
                   <button
                     type="button"
                     onClick={() => {
@@ -308,57 +297,39 @@ function ProfileContent() {
           </p>
           <div className="flex flex-wrap gap-2">
             <BackupPanel onRestored={() => router.refresh()} />
-            <Button
-              variant="danger"
-              onClick={() => {
-                if (
-                  !window.confirm(
-                    "Apagar todos os dados deste aparelho? Essa ação não pode ser desfeita.",
-                  )
-                ) {
-                  return;
-                }
-                void action.run(async () => {
-                  await resetAll();
-                  toast.success("Dados apagados");
-                  router.replace("/welcome");
-                });
-              }}
-            >
-              <Trash2 aria-hidden="true" className="size-4" />
-              Apagar dados locais
-            </Button>
           </div>
         </Card>
 
-        <Card className="flex flex-col gap-2">
-          <CardTitle>Como o app está sendo usado</CardTitle>
-          <p className="text-meta text-muted">
-            Eventos guardados só neste aparelho, para entender o que faz sentido
-            manter.
-          </p>
-          <ul className="flex flex-col gap-1">
-            {recentEvents.map((event) => (
-              <li
-                key={`${event.name}-${event.at}`}
-                className="flex items-center justify-between gap-2 text-meta"
-              >
-                <span className="text-ink-soft">
-                  {ANALYTICS_EVENT_LABELS[event.name as AnalyticsEventName] ??
-                    event.name}
-                </span>
-                <span className="text-muted">
-                  {relativeTimeLabel(event.at)}
-                </span>
-              </li>
-            ))}
-            {recentEvents.length === 0 ? (
-              <li className="text-meta text-muted">
-                Nenhum evento registrado ainda.
-              </li>
-            ) : null}
-          </ul>
-        </Card>
+        {process.env.NODE_ENV !== "production" ? (
+          <Card className="flex flex-col gap-2">
+            <CardTitle>Como o app está sendo usado</CardTitle>
+            <p className="text-meta text-muted">
+              Eventos guardados só neste aparelho, para entender o que faz
+              sentido manter.
+            </p>
+            <ul className="flex flex-col gap-1">
+              {recentEvents.map((event) => (
+                <li
+                  key={`${event.name}-${event.at}`}
+                  className="flex items-center justify-between gap-2 text-meta"
+                >
+                  <span className="text-ink-soft">
+                    {ANALYTICS_EVENT_LABELS[event.name as AnalyticsEventName] ??
+                      event.name}
+                  </span>
+                  <span className="text-muted">
+                    {relativeTimeLabel(event.at)}
+                  </span>
+                </li>
+              ))}
+              {recentEvents.length === 0 ? (
+                <li className="text-meta text-muted">
+                  Nenhum evento registrado ainda.
+                </li>
+              ) : null}
+            </ul>
+          </Card>
+        ) : null}
 
         <Card className="flex items-start gap-3">
           <Smartphone
@@ -371,7 +342,57 @@ function ProfileContent() {
             Início. No Android: menu → Instalar aplicativo.
           </p>
         </Card>
+
+        <Card className="flex flex-col gap-3 border-danger/30">
+          <CardTitle className="text-danger-ink">Zona de perigo</CardTitle>
+          <p className="text-meta text-muted">
+            Apaga pets, registros e documentos deste aparelho. Baixe um backup
+            antes.
+          </p>
+          <Button
+            variant="danger"
+            onClick={async () => {
+              const state = useAppStore.getState();
+              const confirmed = await confirm({
+                title: "Apagar todos os dados deste aparelho?",
+                description:
+                  "Não dá para desfazer. Baixe um backup antes, se quiser guardar.",
+                consequences: [
+                  countLabel(state.pets.length, "pet", "pets"),
+                  countLabel(
+                    state.records.length,
+                    "registro de saúde",
+                    "registros de saúde",
+                  ),
+                  countLabel(state.reminders.length, "lembrete", "lembretes"),
+                  countLabel(
+                    state.diary.length,
+                    "momento do diário",
+                    "momentos do diário",
+                  ),
+                  countLabel(
+                    state.documents.filter((document) => !document.deletedAt)
+                      .length,
+                    "documento",
+                    "documentos",
+                  ),
+                ],
+                confirmLabel: "Apagar tudo",
+              });
+              if (!confirmed) return;
+              void action.run(async () => {
+                await resetAll();
+                toast.success("Dados apagados");
+                router.replace("/welcome");
+              });
+            }}
+          >
+            <Trash2 aria-hidden="true" className="size-4" />
+            Apagar dados locais
+          </Button>
+        </Card>
       </fieldset>
+      {confirmSheet}
     </div>
   );
 }

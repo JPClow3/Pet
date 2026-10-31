@@ -33,7 +33,7 @@ export function ManagedCardPanel(props: Props) {
       <CardTitle>Link público gerenciado</CardTitle>
       <p className="text-meta text-muted">
         Publique somente os campos escolhidos. Você decide quando atualizar,
-        encerrar ou trocar o link. A imagem PNG continua disponível sem conta.
+        encerrar ou trocar o link. A imagem da carteirinha funciona sem conta.
       </p>
       {user?.emailVerified ? (
         <CardControls

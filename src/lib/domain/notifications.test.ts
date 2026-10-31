@@ -119,6 +119,37 @@ describe("deriveNotifications", () => {
     expect(result).toHaveLength(0);
   });
 
+  it("não anuncia lugares 'perto de você' sem localização nem com exemplos", () => {
+    const base = {
+      pets: [pet],
+      records: [],
+      reminders: [],
+      products: [],
+      enabled,
+      now: NOW,
+    };
+    const realPlace = { ...seedPlaces[0], id: "place-mine", seeded: false };
+    // A new user: demo catalogue, no city, no device location.
+    expect(deriveNotifications({ ...base, places: seedPlaces })).toHaveLength(
+      0,
+    );
+    // City known, but only demo places.
+    expect(
+      deriveNotifications({ ...base, places: seedPlaces, locationKnown: true }),
+    ).toHaveLength(0);
+    // Real place, but no location yet.
+    expect(deriveNotifications({ ...base, places: [realPlace] })).toHaveLength(
+      0,
+    );
+    const [local] = deriveNotifications({
+      ...base,
+      places: [...seedPlaces, realPlace],
+      locationKnown: true,
+    });
+    expect(local.kind).toBe("local");
+    expect(local.body).toBe(realPlace.name);
+  });
+
   it("mantém conteúdo comercial desligado por padrão e identificado quando ligado", () => {
     const off = deriveNotifications({
       pets: [pet],

@@ -140,8 +140,8 @@ export function StoragePanel({ documentsHref }: { documentsHref?: string }) {
           </p>
         )}
         <p className="text-meta text-muted">
-          Estimativa para este endereço, incluindo arquivos e cache do app. O
-          limite pode mudar; espaço disponível não é garantido.
+          Estimativa do espaço usado pela Zelupi neste aparelho, incluindo fotos
+          e documentos. O limite pode mudar.
         </p>
         <p className="text-sm text-ink-soft">
           {persistenceMessages[info.persistence]}

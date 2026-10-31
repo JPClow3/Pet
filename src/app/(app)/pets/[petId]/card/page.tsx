@@ -107,47 +107,14 @@ export default function PetCardPage() {
         backHref="/pets"
       />
 
-      <ManagedCardPanel petId={pet.id} card={publicCard} onLink={setUrl} />
-      <PetShareStudio
-        card={publicCard}
-        photo={pet.photo}
-        publicUrl={url}
-        onTrack={(action) => track("qr_shared", { petId: pet.id, action })}
-      />
-
-      {url ? (
-        <Card className="flex flex-col gap-3 border-blue/20 bg-blue-soft/45 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-blue text-white">
-              <Eye aria-hidden="true" className="size-5" />
-            </span>
-            <div>
-              <CardTitle>Página pública</CardTitle>
-              <p className="mt-1 text-meta leading-relaxed text-muted">
-                Confira a experiência de quem escanear a carteirinha.
-              </p>
-            </div>
-          </div>
-          <ButtonLink
-            href={url}
-            variant="secondary"
-            size="sm"
-            className="w-full sm:w-auto"
-            onClick={() =>
-              track("qr_shared", { petId: pet.id, action: "preview" })
-            }
-          >
-            Ver página pública
-            <ChevronRight aria-hidden="true" className="size-4" />
-          </ButtonLink>
-        </Card>
-      ) : null}
-
-      <Card className="flex flex-col gap-3">
-        <CardTitle>Modo perdido</CardTitle>
+      {/* Lost mode is the urgent path, so it leads the page. */}
+      <Card
+        className={`flex flex-col gap-3 ${pet.lostMode.active ? "border-danger/35 bg-danger-soft/50" : ""}`}
+      >
+        <CardTitle>{pet.name} se perdeu?</CardTitle>
         <p className="text-meta text-muted">
-          O aviso muda no PNG local. Para alterar um link gerenciado, atualize a
-          publicação acima após salvar. Links antigos de cópia não mudam.
+          O aviso aparece na imagem da carteirinha. Se você publicou um link,
+          atualize a publicação depois de salvar.
         </p>
         <Button
           variant={pet.lostMode.active ? "danger" : "secondary"}
@@ -228,11 +195,55 @@ export default function PetCardPage() {
             role="status"
             className="text-meta leading-relaxed text-warning-ink"
           >
-            Nenhum contato foi compartilhado. Adicione um telefone em Ajustar
-            privacidade para que quem encontrar o pet consiga falar com você.
+            Nenhum contato foi compartilhado. Sem ele, quem encontrar{" "}
+            {pet.name} não consegue falar com você.{" "}
+            <Link
+              href={`/pets/${pet.id}/edit`}
+              className="font-semibold underline"
+            >
+              Adicionar contato
+            </Link>
           </p>
         ) : null}
       </Card>
+
+
+      <PetShareStudio
+        card={publicCard}
+        photo={pet.photo}
+        publicUrl={url}
+        onTrack={(action) => track("qr_shared", { petId: pet.id, action })}
+      />
+
+      {url ? (
+        <Card className="flex flex-col gap-3 border-blue/20 bg-blue-soft/45 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-blue text-white">
+              <Eye aria-hidden="true" className="size-5" />
+            </span>
+            <div>
+              <CardTitle>Página pública</CardTitle>
+              <p className="mt-1 text-meta leading-relaxed text-muted">
+                Confira a experiência de quem escanear a carteirinha.
+              </p>
+            </div>
+          </div>
+          <ButtonLink
+            href={url}
+            variant="secondary"
+            size="sm"
+            className="w-full sm:w-auto"
+            onClick={() =>
+              track("qr_shared", { petId: pet.id, action: "preview" })
+            }
+          >
+            Ver página pública
+            <ChevronRight aria-hidden="true" className="size-4" />
+          </ButtonLink>
+        </Card>
+      ) : null}
+
+      <ManagedCardPanel petId={pet.id} card={publicCard} onLink={setUrl} />
 
       <Card className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
@@ -286,18 +297,18 @@ export default function PetCardPage() {
           <CardTitle>O que aparece em cada versão</CardTitle>
         </div>
         <p className="text-meta leading-relaxed text-muted">
-          Nome e espécie identificam o pet na página pública e no PNG. A foto
-          permanece local e entra somente na imagem exportada. Os demais dados
-          seguem suas escolhas de privacidade.
+          Nome e espécie identificam o pet na página pública e na imagem. A
+          foto fica neste aparelho e só entra na imagem baixada. Os demais
+          dados seguem suas escolhas de privacidade.
         </p>
-        <ul className="flex flex-col gap-1 text-[0.9rem] text-ink-soft">
+        <ul className="flex flex-col gap-1 text-label text-ink-soft">
           <li className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             Nome e espécie do pet
             <Chip tone="teal">Sempre visível</Chip>
           </li>
           <li className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             Foto do pet
-            <Chip tone="teal">Somente no PNG</Chip>
+            <Chip tone="teal">Só na imagem</Chip>
           </li>
           <li className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             Raça

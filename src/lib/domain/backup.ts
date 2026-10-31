@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { reconcileWeights } from "./weight";
 import { petDocumentSchema } from "./document";
+import { sanitizeSeededPlace } from "./places";
 
 import {
   analyticsEventSchema,
@@ -97,8 +98,24 @@ export const persistedStateSchema = z
 
 export type PersistedState = z.infer<typeof persistedStateSchema>;
 export function normalizePersistedState(state: PersistedState): PersistedState {
+  const seedById = new Map(seedPlaces.map((place) => [place.id, place]));
   return {
     ...state,
+    // Demo entries follow the current catalogue (older builds named some
+    // "24 horas"); a demo the tutor gave their own number to is kept as theirs.
+    places: state.places.map((stored) => {
+      const place = sanitizeSeededPlace(stored);
+      const seed = place.seeded ? seedById.get(place.id) : undefined;
+      return seed ? { ...seed, favorite: place.favorite } : place;
+    }),
+    // Older builds announced demo places as "perto de você".
+    notifications: state.notifications.filter(
+      (notification) =>
+        !(
+          notification.kind === "local" &&
+          seedPlaces.some((place) => notification.id.includes(place.id))
+        ),
+    ),
     ...reconcileWeights(
       state,
       {},

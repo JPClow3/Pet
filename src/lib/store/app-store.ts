@@ -52,8 +52,8 @@ import {
 } from "@/lib/domain/notifications";
 import type { ReminderItem } from "@/lib/domain/reminders";
 import { snoozeUntil } from "@/lib/domain/reminders";
+import { sanitizeSeededPlace } from "@/lib/domain/places";
 import {
-  PILOT_CITY,
   seedComments,
   seedGroups,
   seedPlaces,
@@ -111,6 +111,11 @@ export type AppState = {
   ready: boolean;
 };
 
+export type DeletedItem =
+  | { collection: "records"; item: HealthRecord }
+  | { collection: "reminders"; item: Reminder }
+  | { collection: "diary"; item: DiaryEntry };
+
 export type SyncActions = {
   completeOnboarding: (input: {
     tutorName: string;
@@ -158,6 +163,8 @@ export type SyncActions = {
   addDiaryEntry: (input: NewDiaryInput) => string;
   updateDiaryEntry: (entryId: string, patch: Partial<DiaryEntry>) => void;
   removeDiaryEntry: (entryId: string) => void;
+  /** Undo for a single-item delete: puts the item back and drops its tombstone. */
+  restoreDeleted: (deleted: DeletedItem) => void;
   updateDocument: (id: string, patch: Partial<DocumentPatch>) => void;
   trashDocument: (id: string) => void;
   restoreDocument: (id: string) => void;
@@ -273,7 +280,8 @@ export type NewCommentInput = Omit<
 >;
 
 export const defaultSettings: Settings = {
-  city: PILOT_CITY,
+  // Unknown until the tutor says so: no silent pilot-city default.
+  city: "",
   reminderLeadDays: 30,
   notifications: {
     prevencao: true,
@@ -429,6 +437,9 @@ function carePatch(
     places: updated.places,
     products: updated.products,
     enabled: updated.settings.notifications,
+    locationKnown:
+      Boolean(updated.settings.city.trim()) ||
+      updated.settings.usePreciseLocation,
   });
   const activeIds = new Set(incoming.map((notification) => notification.id));
   const retained = state.notifications.filter(
@@ -492,14 +503,14 @@ const boundStore = create<AppState & AppActions>()(
                   tutor: {
                     name: tutorName.trim(),
                     email: email?.trim() || null,
-                    city: city.trim() || PILOT_CITY,
+                    city: city.trim(),
                     focusAreas,
                     marketingOptIn: false,
                     createdAt: nowIso(),
                   },
                   settings: {
                     ...state.settings,
-                    city: city.trim() || PILOT_CITY,
+                    city: city.trim(),
                   },
                   pets: [created],
                   activePetId: created.id,
@@ -519,9 +530,10 @@ const boundStore = create<AppState & AppActions>()(
         updateTutor: (patch) =>
           set((state) => ({
             tutor: state.tutor ? { ...state.tutor, ...patch } : state.tutor,
-            settings: patch.city
-              ? { ...state.settings, city: patch.city }
-              : state.settings,
+            settings:
+              patch.city !== undefined
+                ? { ...state.settings, city: patch.city }
+                : state.settings,
           })),
 
         updateSettings: (patch) =>
@@ -1299,6 +1311,48 @@ const boundStore = create<AppState & AppActions>()(
           );
         },
 
+        restoreDeleted: (deleted) =>
+          set((state) => {
+            const syncTombstones = (state.syncTombstones ?? []).filter(
+              (tombstone) =>
+                !(
+                  tombstone.collection === deleted.collection &&
+                  tombstone.id === deleted.item.id
+                ),
+            );
+            const petIds = [deleted.item.petId];
+            if (deleted.collection === "records") {
+              if (state.records.some((item) => item.id === deleted.item.id))
+                return {};
+              return carePatch(
+                state,
+                reconcileWeights(
+                  state,
+                  {
+                    records: [deleted.item, ...state.records],
+                    syncTombstones,
+                  },
+                  petIds,
+                ),
+              );
+            }
+            if (deleted.collection === "reminders") {
+              if (state.reminders.some((item) => item.id === deleted.item.id))
+                return {};
+              return carePatch(state, {
+                reminders: [deleted.item, ...state.reminders],
+                syncTombstones,
+              });
+            }
+            if (state.diary.some((item) => item.id === deleted.item.id))
+              return {};
+            return reconcileWeights(
+              state,
+              { diary: [deleted.item, ...state.diary], syncTombstones },
+              petIds,
+            );
+          }),
+
         removeDiaryEntry: (entryId) =>
           set((state) =>
             reconcileWeights(
@@ -1371,12 +1425,14 @@ const boundStore = create<AppState & AppActions>()(
         updatePlace: (placeId, patch) => {
           const existing = get().places.find((item) => item.id === placeId);
           if (!existing) throw new Error("Local não encontrado.");
-          const updated = placeSchema.parse({
-            ...existing,
-            ...patch,
-            id: existing.id,
-            updatedAt: nowIso(),
-          });
+          const updated = sanitizeSeededPlace(
+            placeSchema.parse({
+              ...existing,
+              ...patch,
+              id: existing.id,
+              updatedAt: nowIso(),
+            }),
+          );
           set((state) => ({
             places: state.places.map((item) =>
               item.id === placeId ? updated : item,

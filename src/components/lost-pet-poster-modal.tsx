@@ -233,7 +233,7 @@ export function LostPetPosterModal({
               ) : (
                 <Download aria-hidden="true" className="size-4" />
               )}
-              Baixar Imagem A4 (PNG)
+              Baixar cartaz para imprimir
             </Button>
 
             <Button

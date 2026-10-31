@@ -60,7 +60,7 @@ describe("LostPetPosterModal component", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Baixar Imagem A4 \(PNG\)/i }),
+      screen.getByRole("button", { name: /Baixar cartaz para imprimir/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Baixar para WhatsApp \(Feed\)/i }),

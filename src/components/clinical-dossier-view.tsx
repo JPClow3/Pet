@@ -106,7 +106,7 @@ export function ClinicalDossierView({
   return (
     <div className="flex flex-col gap-5 pb-16">
       {/* Top action header for Vet Clinic */}
-      <div className="flex flex-col gap-3 rounded-[24px] border border-teal-ink/20 bg-mint/40 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-feature border border-teal-ink/20 bg-mint/40 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
           <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-teal-ink text-white shadow-sm">
             <Stethoscope aria-hidden="true" className="size-6" />
@@ -142,7 +142,7 @@ export function ClinicalDossierView({
       </div>
 
       {/* Identificação Rápida */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-line bg-paper px-5 py-3 shadow-card">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-paper px-5 py-3 shadow-card">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-medium text-ink">
           <span className="font-bold text-base text-ink">{pet.name}</span>
           <span>{speciesLabels[pet.species]}</span>

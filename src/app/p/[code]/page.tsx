@@ -62,7 +62,7 @@ export default async function PublicCardPage({ params }: { params: Params }) {
             ? "Carteirinha temporariamente indisponível"
             : "Carteirinha não encontrada"}
         </h1>
-        <p className="text-[0.95rem] text-muted">
+        <p className="text-body text-muted">
           {unavailable
             ? "Não foi possível consultar a publicação. Tente novamente quando estiver conectado."
             : "Este link pode estar incompleto, ter expirado ou ter sido encerrado pelo tutor. Peça um novo compartilhamento."}
@@ -98,13 +98,13 @@ export default async function PublicCardPage({ params }: { params: Params }) {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-5 py-10">
       <Brand href="/welcome" className="mb-2 self-center" />
-      <section className="flex flex-col items-center gap-3 rounded-[24px] border border-line/80 bg-paper p-6 text-center shadow-card">
+      <section className="flex flex-col items-center gap-3 rounded-feature border border-line/80 bg-paper p-6 text-center shadow-card">
         <span className="flex size-20 items-center justify-center rounded-2xl bg-blue-soft text-blue-deep">
           <PawPrint aria-hidden="true" className="size-9" />
         </span>
         <div>
           <h1 className="text-2xl font-semibold text-ink">{card.name}</h1>
-          <p className="text-[0.95rem] text-muted">
+          <p className="text-body text-muted">
             {[speciesLabels[card.species], card.breed, card.city]
               .filter(Boolean)
               .join(" · ")}
@@ -134,7 +134,7 @@ export default async function PublicCardPage({ params }: { params: Params }) {
                 : ""}
             </p>
             {card.lost.neighborhood ? (
-              <p className="text-[0.9rem] font-semibold text-danger-ink">
+              <p className="text-label font-semibold text-danger-ink">
                 Visto por último no bairro: {card.lost.neighborhood}
               </p>
             ) : null}
@@ -143,7 +143,7 @@ export default async function PublicCardPage({ params }: { params: Params }) {
                 RECOMPENSA OFERECIDA: {card.lost.reward}
               </div>
             ) : null}
-            <p className="text-[0.9rem] text-danger-ink/90">
+            <p className="text-label text-danger-ink/90">
               {card.lost.note ??
                 (card.contact
                   ? "Se você encontrou este pet, use o contato compartilhado abaixo."
@@ -189,7 +189,7 @@ export default async function PublicCardPage({ params }: { params: Params }) {
         {card.contact && canCall ? (
           <a
             href={`tel:${phone}`}
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-teal-ink px-5 font-semibold text-white transition-colors hover:bg-teal-deep"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-control bg-teal-ink px-5 font-semibold text-white transition-colors hover:bg-teal-deep"
           >
             <Phone aria-hidden="true" className="size-4" />
             Falar com o tutor
@@ -214,7 +214,7 @@ export default async function PublicCardPage({ params }: { params: Params }) {
 
       <Link
         href="/welcome"
-        className="mx-auto inline-flex min-h-11 items-center justify-center rounded-[14px] border border-line px-5 text-[0.9rem] font-semibold text-ink transition-colors hover:bg-surface"
+        className="mx-auto inline-flex min-h-11 items-center justify-center rounded-control border border-line px-5 text-label font-semibold text-ink transition-colors hover:bg-surface"
       >
         Criar a carteirinha do meu pet
       </Link>

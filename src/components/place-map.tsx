@@ -6,7 +6,11 @@ import { useMemo, useState } from "react";
 
 import { Chip } from "@/components/ui/chip";
 import { placeAttributeLabels, placeCategoryMeta } from "@/lib/domain/labels";
-import type { Coordinates, PlaceWithDistance } from "@/lib/domain/places";
+import {
+  formatKm,
+  type Coordinates,
+  type PlaceWithDistance,
+} from "@/lib/domain/places";
 
 export function PlaceMap({
   places,
@@ -63,7 +67,7 @@ export function PlaceMap({
   return (
     <div className={className}>
       <section
-        className="overflow-hidden rounded-[24px] border border-line/80 bg-surface-subtle shadow-none"
+        className="overflow-hidden rounded-feature border border-line/80 bg-surface-subtle shadow-none"
         aria-label="Mapa esquemático dos locais encontrados"
       >
         <div className="relative h-72 overflow-hidden bg-lime-soft/40">
@@ -110,7 +114,7 @@ export function PlaceMap({
                 key={place.id}
                 type="button"
                 aria-pressed={active}
-                aria-label={`${place.name}, ${placeCategoryMeta[place.category].label}, ${place.distanceKm} km de distância estimada`}
+                aria-label={`${place.name}, ${placeCategoryMeta[place.category].label}, ${formatKm(place.distanceKm)} de distância estimada`}
                 onClick={() => handleSelect(place.id)}
                 className={`absolute flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-transform duration-200 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 ${active ? "scale-110" : "hover:scale-105"}`}
                 style={{ left: `${point.x}%`, top: `${point.y}%` }}
@@ -127,7 +131,7 @@ export function PlaceMap({
             );
           })}
 
-          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-paper/90 px-3 py-1.5 text-[0.7rem] font-semibold text-ink-soft shadow-sm backdrop-blur-sm">
+          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-paper/90 px-3 py-1.5 text-caption font-semibold text-ink-soft shadow-sm backdrop-blur-sm">
             <LocateFixed
               aria-hidden="true"
               className="size-3.5 text-teal-ink"
@@ -140,7 +144,7 @@ export function PlaceMap({
           <p className="text-meta text-muted">
             Mapa esquemático · {places.length} locais
           </p>
-          <p className="text-[0.68rem] font-semibold text-warning-ink">
+          <p className="text-caption font-semibold text-warning-ink">
             Dados do catálogo
           </p>
         </div>
@@ -166,12 +170,12 @@ export function PlaceMap({
                 <MapPin aria-hidden="true" className="size-4" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[0.88rem] font-semibold text-ink">
+                <span className="block truncate text-label font-semibold text-ink">
                   {place.name}
                 </span>
                 <span className="block truncate text-meta text-muted">
-                  {placeCategoryMeta[place.category].label} · {place.distanceKm}{" "}
-                  km estimados
+                  {placeCategoryMeta[place.category].label} ·{" "}
+                  {formatKm(place.distanceKm)} estimados
                 </span>
               </span>
               <ChevronRight
@@ -184,18 +188,18 @@ export function PlaceMap({
       </div>
 
       {selected ? (
-        <div className="mt-3 rounded-[20px] border border-line/80 bg-paper p-4 shadow-card">
+        <div className="mt-3 rounded-card border border-line/80 bg-paper p-4 shadow-card">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[1rem] font-semibold text-ink">
+              <p className="text-body font-semibold text-ink">
                 {selected.name}
               </p>
               <p className="mt-1 text-meta text-muted">
-                {selected.address} · {selected.distanceKm} km de distância
+                {selected.address} · {formatKm(selected.distanceKm)} de distância
                 estimada
               </p>
             </div>
-            <span className="rounded-full bg-warning/15 px-2.5 py-1 text-[0.68rem] font-semibold text-warning-ink">
+            <span className="rounded-full bg-warning/15 px-2.5 py-1 text-caption font-semibold text-warning-ink">
               Catálogo
             </span>
           </div>
@@ -208,7 +212,7 @@ export function PlaceMap({
           </div>
           <Link
             href={`/explore/${selected.id}`}
-            className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[14px] bg-teal-ink px-4 text-[0.9rem] font-semibold text-white transition-colors hover:bg-teal-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
+            className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-control bg-teal-ink px-4 text-label font-semibold text-white transition-colors hover:bg-teal-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink focus-visible:ring-offset-2"
           >
             Ver detalhes e avaliações
             <ChevronRight aria-hidden="true" className="size-4" />

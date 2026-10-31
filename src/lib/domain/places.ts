@@ -18,6 +18,77 @@ export function distanceKm(from: Coordinates, to: Coordinates): number {
 
 export type PlaceWithDistance = Place & { distanceKm: number };
 
+const kmFormatter = new Intl.NumberFormat("pt-BR", {
+  maximumFractionDigits: 1,
+});
+
+/** "1,6 km": distances follow pt-BR decimal notation. */
+export function formatKm(km: number): string {
+  return `${kmFormatter.format(km)} km`;
+}
+
+// Numbers and hours that older builds shipped on fictional demo places.
+const LEGACY_DEMO_NUMBERS = new Set([
+  "1130620100",
+  "5511990000100",
+  "1130810240",
+  "5511990000240",
+  "1130640310",
+  "5511990000310",
+  "1130610450",
+  "5511990000450",
+]);
+const LEGACY_DEMO_HOURS = new Set([
+  "Plantão 24h todos os dias",
+  "Emergência 24h",
+]);
+
+function isLegacyDemoNumber(value?: string | null): boolean {
+  return LEGACY_DEMO_NUMBERS.has(normalizePhoneDigits(value));
+}
+
+/**
+ * Demo catalogue entries are fictional: they never claim to be verified or
+ * open, never advertise emergency service and never carry callable numbers.
+ * A demo place the tutor gave their own number to becomes their place.
+ */
+export function sanitizeSeededPlace(place: Place): Place {
+  if (!place.seeded) return place;
+  const phone = isLegacyDemoNumber(place.phone) ? null : (place.phone ?? null);
+  const whatsapp = isLegacyDemoNumber(place.whatsapp)
+    ? null
+    : (place.whatsapp ?? null);
+  if (phone || whatsapp) {
+    return { ...place, phone, whatsapp, seeded: false, source: "local" };
+  }
+  return {
+    ...place,
+    verified: false,
+    openNow: null,
+    attributes: place.attributes.filter(
+      (attribute) => attribute !== "emergencia_24h",
+    ),
+    phone: null,
+    whatsapp: null,
+    openingHours:
+      place.openingHours && LEGACY_DEMO_HOURS.has(place.openingHours)
+        ? null
+        : (place.openingHours ?? null),
+  };
+}
+
+/** Only places the tutor saved (or imported) may expose call/WhatsApp actions. */
+export function placeContactLinks(
+  place: Pick<Place, "seeded" | "phone" | "whatsapp">,
+  message?: string,
+): { callHref: string | null; waHref: string | null } {
+  if (place.seeded) return { callHref: null, waHref: null };
+  return {
+    callHref: phoneCallUrl(place.phone),
+    waHref: whatsappUrl(place.whatsapp ?? place.phone, message),
+  };
+}
+
 export type PlaceFilters = {
   categories: PlaceCategory[];
   attributes: PlaceAttribute[];
@@ -39,6 +110,7 @@ export const emptyFilters: PlaceFilters = {
 };
 
 export function isEmergency24hPlace(place: Place): boolean {
+  if (place.seeded) return false;
   if (place.attributes.includes("emergencia_24h")) return true;
   if (place.openingHours && /24\s*h|24\/7/i.test(place.openingHours)) {
     return true;
@@ -271,7 +343,7 @@ export function parseOverpassResponse(
     const number = (tags["addr:housenumber"] ?? "").trim();
     const address =
       [street, number].filter(Boolean).join(", ").slice(0, 160) ||
-      (tags["addr:full"] ?? "Endereço informado no OpenStreetMap").slice(0, 160);
+      (tags["addr:full"] ?? "Endereço não informado").slice(0, 160);
 
     const neighborhood = (
       tags["addr:suburb"] ??
@@ -346,7 +418,7 @@ export async function fetchNearbyOsmPlaces(options: {
   });
   if (!response.ok) {
     throw new Error(
-      `Não foi possível consultar o OpenStreetMap agora (status ${response.status}).`,
+      `Não foi possível buscar clínicas agora (erro ${response.status}). Tente de novo em instantes.`,
     );
   }
   const payload = await response.json();

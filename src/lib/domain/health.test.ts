@@ -85,13 +85,23 @@ describe("healthStatus", () => {
     expect(status.headline).toBe("Vacina V10 é hoje");
   });
 
-  it("mostra tranquilidade quando tudo está em dia", () => {
+  it("diz até quando nada está pendente, sem prometer que está tudo em dia", () => {
     const status = healthStatus(
       [record({ title: "Vacina V10", nextDueDate: "2027-01-10" })],
       NOW,
     );
     expect(status.state).toBe("em_dia");
-    expect(status.detail).toContain("10/01/2027");
+    expect(status.headline).toBe("Nada pendente até 10/01/2027");
+    expect(status.headline).not.toMatch(/tudo em dia/i);
+  });
+
+  it("não tranquiliza quando há registros mas nenhuma próxima data", () => {
+    const status = healthStatus(
+      [record({ title: "Vacina V10", nextDueDate: null })],
+      NOW,
+    );
+    expect(status.state).toBe("sem_agenda");
+    expect(status.headline).toBe("Nenhuma próxima data marcada");
   });
 });
 

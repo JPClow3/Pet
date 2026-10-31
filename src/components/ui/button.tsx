@@ -5,7 +5,7 @@ import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
 export const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-[14px] font-semibold transition-[background-color,box-shadow,opacity] duration-150 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-control font-semibold transition-[background-color,box-shadow,opacity] duration-150 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -20,8 +20,8 @@ export const buttonVariants = cva(
         danger: "bg-danger-ink text-white hover:bg-danger",
       },
       size: {
-        md: "min-h-12 px-4 text-[0.95rem]",
-        sm: "min-h-11 px-3 text-[0.85rem]",
+        md: "min-h-12 px-4 text-body",
+        sm: "min-h-11 px-3 text-label",
         lg: "min-h-13 px-6 text-base",
         icon: "size-12 p-0",
       },

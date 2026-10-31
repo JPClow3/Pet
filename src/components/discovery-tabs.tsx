@@ -13,9 +13,9 @@ const TABS = [
   },
   {
     id: "comunidade" as const,
-    label: "Socorros & Comunidade",
+    label: "Comunidade",
     href: "/community",
-    hint: "Guia offline e relatos",
+    hint: "Prévia de relatos",
   },
   {
     id: "produtos" as const,
@@ -45,8 +45,8 @@ export function DiscoveryTabs({ active }: { active: DiscoveryTabId }) {
                 : "text-muted hover:bg-paper/70 hover:text-ink"
             }`}
           >
-            <span className="text-[0.82rem] font-semibold">{tab.label}</span>
-            <span className="hidden text-[0.65rem] leading-4 opacity-80 sm:block">
+            <span className="text-label font-semibold">{tab.label}</span>
+            <span className="hidden text-caption opacity-80 sm:block">
               {tab.hint}
             </span>
           </Link>

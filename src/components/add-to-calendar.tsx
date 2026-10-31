@@ -63,7 +63,7 @@ export function AddToCalendarButton({
 
     downloadText(icsContent, filename, "text/calendar;charset=utf-8");
     setOpen(false);
-    toast.success("Arquivo de calendário (.ics) baixado!", {
+    toast.success("Lembrete pronto para a agenda do celular!", {
       description:
         "Abra o arquivo para adicionar ao Apple Calendar, Outlook ou calendário padrão do seu celular com alarmes nativos.",
       duration: 6000,
@@ -92,7 +92,7 @@ export function AddToCalendarButton({
         description={`${event.title} · ${formatShortDate(event.startDate)}`}
       >
         <div className="flex flex-col gap-4">
-          <p className="text-[0.92rem] leading-relaxed text-muted">
+          <p className="text-body leading-relaxed text-muted">
             Garanta que você receba alarmes nativos no celular mesmo com o
             aplicativo fechado. Escolha onde salvar o lembrete:
           </p>
@@ -126,14 +126,14 @@ export function AddToCalendarButton({
             <button
               type="button"
               onClick={handleGoogleCalendar}
-              className="flex min-h-12 w-full items-center justify-between rounded-[14px] border border-line bg-paper px-4 py-3 text-left transition-colors hover:border-teal-ink/40 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink"
+              className="flex min-h-12 w-full items-center justify-between rounded-control border border-line bg-paper px-4 py-3 text-left transition-colors hover:border-teal-ink/40 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink"
             >
               <div className="flex items-center gap-3">
                 <span className="flex size-9 items-center justify-center rounded-full bg-surface text-ink">
                   <Calendar aria-hidden="true" className="size-4 text-teal-ink" />
                 </span>
                 <div>
-                  <p className="text-[0.95rem] font-semibold text-ink">
+                  <p className="text-body font-semibold text-ink">
                     Google Agenda
                   </p>
                   <p className="text-meta text-muted">
@@ -147,18 +147,18 @@ export function AddToCalendarButton({
             <button
               type="button"
               onClick={handleIcsDownload}
-              className="flex min-h-12 w-full items-center justify-between rounded-[14px] border border-line bg-paper px-4 py-3 text-left transition-colors hover:border-teal-ink/40 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink"
+              className="flex min-h-12 w-full items-center justify-between rounded-control border border-line bg-paper px-4 py-3 text-left transition-colors hover:border-teal-ink/40 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-ink"
             >
               <div className="flex items-center gap-3">
                 <span className="flex size-9 items-center justify-center rounded-full bg-surface text-ink">
                   <Download aria-hidden="true" className="size-4 text-teal-ink" />
                 </span>
                 <div>
-                  <p className="text-[0.95rem] font-semibold text-ink">
-                    Apple Calendar / Outros (.ics)
+                  <p className="text-body font-semibold text-ink">
+                    Agenda do celular (iPhone, Android)
                   </p>
                   <p className="text-meta text-muted">
-                    Baixar arquivo com alarmes nativos para iPhone, iPad, Android ou Mac
+                    Abre na agenda do aparelho, com alarme
                   </p>
                 </div>
               </div>
@@ -175,7 +175,7 @@ export function BulkAddToCalendarButton({
   events,
   filename = "agenda-cuidados-zelupi.ics",
   calendarName = "Zelupi — Agenda de Cuidados",
-  label = "Exportar agenda (.ics)",
+  label = "Adicionar à agenda do celular",
   variant = "secondary",
   size = "sm",
 }: {

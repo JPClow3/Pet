@@ -13,7 +13,7 @@ import {
 } from "@/components/medication-plan-fields";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
-import { isValidDateKey, todayKey } from "@/lib/domain/dates";
+import { addMonthsToKey, isValidDateKey, todayKey } from "@/lib/domain/dates";
 import { HEALTH_TYPES, healthTypeMeta } from "@/lib/domain/labels";
 import { healthTypeIcons } from "@/lib/icons";
 import type { HealthRecord, HealthRecordType } from "@/lib/domain/schema";
@@ -39,6 +39,37 @@ const recurrenceOptions = [
   { value: 6, label: "A cada 6 meses" },
   { value: 12, label: "Todo ano" },
 ];
+
+// Preventive care is the core promise: the reminder starts on, at the usual interval.
+const PREVENTIVE_TYPES: HealthRecordType[] = [
+  "vacina",
+  "vermifugo",
+  "antiparasitario",
+];
+
+// Placeholders read as examples, never as a pre-filled answer.
+const titleExamples: Record<HealthRecordType, string> = {
+  vacina: "V10, antirrábica",
+  vermifugo: "Drontal",
+  antiparasitario: "Bravecto, coleira",
+  medicamento: "Antibiótico por 7 dias",
+  consulta: "Retorno, check-up anual",
+  exame: "Hemograma",
+  peso: "Pesagem mensal",
+  observacao: "Comeu pouco hoje",
+};
+
+function dueDefaults(type: HealthRecordType, date: string) {
+  const months = healthTypeMeta[type].defaultRecurrenceMonths;
+  const suggested =
+    PREVENTIVE_TYPES.includes(type) && months && isValidDateKey(date);
+  return {
+    hasDue: Boolean(suggested),
+    nextDueDate: suggested ? addMonthsToKey(date, months) : "",
+    recurrenceMonths: suggested ? months : 0,
+    leadDays: healthTypeMeta[type].defaultLeadDays,
+  };
+}
 
 const recordDraftSchema = z.object({
   type: healthRecordTypeSchema,
@@ -76,17 +107,19 @@ export function RecordForm({
   onDelete?: () => void | Promise<void>;
   onCancel?: () => void;
 }) {
-  const initialDraft = useMemo(
-    () => ({
-      type: initial?.type ?? initialType ?? "vacina",
+  const initialDraft = useMemo(() => {
+    const startType = initial?.type ?? initialType ?? "vacina";
+    const defaults = dueDefaults(startType, todayKey());
+    return {
+      type: startType,
       title: initial?.title ?? "",
       date: initial?.date ?? todayKey(),
-      hasDue: Boolean(initial?.nextDueDate),
-      nextDueDate: initial?.nextDueDate ?? "",
-      leadDays:
-        initial?.leadDays ??
-        healthTypeMeta[initialType ?? "vacina"].defaultLeadDays,
-      recurrenceMonths: initial?.recurrenceMonths ?? 0,
+      hasDue: initial ? Boolean(initial.nextDueDate) : defaults.hasDue,
+      nextDueDate: initial ? (initial.nextDueDate ?? "") : defaults.nextDueDate,
+      leadDays: initial?.leadDays ?? defaults.leadDays,
+      recurrenceMonths: initial
+        ? (initial.recurrenceMonths ?? 0)
+        : defaults.recurrenceMonths,
       professional: initial?.professional ?? "",
       manufacturer: initial?.manufacturer ?? "",
       batchNumber: initial?.batchNumber ?? "",
@@ -94,9 +127,8 @@ export function RecordForm({
       weight: initial?.weightKg ? String(initial.weightKg) : "",
       medicationEnabled: !initial && initialType === "medicamento",
       medicationPlan: medicationPlanDraft(),
-    }),
-    [initial, initialType],
-  );
+    };
+  }, [initial, initialType]);
   const { value, setValue, restored, storageError, ready, clearDraft } =
     useFormDraft({
       key: `record:${petId}:${initial?.id ?? initialType ?? "vacina"}`,
@@ -125,7 +157,22 @@ export function RecordForm({
   }
   const setType = (next: HealthRecordType) => setField("type", next);
   const setTitle = (next: string) => setField("title", next);
-  const setDate = (next: string) => setField("date", next);
+  const setDate = (next: string) =>
+    setValue((current) => {
+      // Keep an untouched suggestion in step with the care date.
+      const previous = dueDefaults(current.type, current.date);
+      const following = dueDefaults(current.type, next);
+      const untouched =
+        current.hasDue && current.nextDueDate === previous.nextDueDate;
+      return {
+        ...current,
+        date: next,
+        nextDueDate:
+          untouched && following.nextDueDate
+            ? following.nextDueDate
+            : current.nextDueDate,
+      };
+    });
   const setHasDue = (next: boolean) => setField("hasDue", next);
   const setNextDueDate = (next: string) => setField("nextDueDate", next);
   const setLeadDays = (next: number) => setField("leadDays", next);
@@ -140,8 +187,14 @@ export function RecordForm({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(Boolean(initial));
+  // The type was already chosen (picker or edit): show it once, with "Trocar".
+  const [typePickerOpen, setTypePickerOpen] = useState(
+    !initial && !initialType,
+  );
+  const typeLocked = Boolean(initial?.medication);
 
   const meta = healthTypeMeta[type];
+  const TypeIcon = healthTypeIcons[type];
   const today = todayKey();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -238,10 +291,10 @@ export function RecordForm({
       noValidate
     >
       <div className="flex flex-col gap-2">
-        <p className="text-[1rem] font-semibold text-ink">
+        <p className="text-body font-semibold text-ink">
           Registrar cuidado para {petName}
         </p>
-        <p className="text-[0.92rem] leading-relaxed text-muted">
+        <p className="text-body leading-relaxed text-muted">
           Salve o essencial agora. Os detalhes ficam disponíveis para editar
           depois.
         </p>
@@ -251,7 +304,7 @@ export function RecordForm({
         <p
           id="record-form-error"
           role="alert"
-          className="rounded-[14px] bg-danger/10 px-3 py-2 text-[0.85rem] font-semibold text-danger-ink"
+          className="rounded-control bg-danger/10 px-3 py-2 text-label font-semibold text-danger-ink"
         >
           {error}
         </p>
@@ -267,8 +320,29 @@ export function RecordForm({
         </p>
       ) : null}
 
+      {!typePickerOpen ? (
+        <div className="flex min-h-14 items-center justify-between gap-3 rounded-card border border-line bg-paper px-4">
+          <span className="flex min-w-0 items-center gap-2.5 text-body font-semibold text-ink">
+            <TypeIcon
+              aria-hidden="true"
+              className="size-5 shrink-0 text-teal-ink"
+            />
+            {meta.label}
+          </span>
+          {!typeLocked ? (
+            <button
+              type="button"
+              onClick={() => setTypePickerOpen(true)}
+              aria-label={`Trocar tipo de registro (atual: ${meta.label})`}
+              className="inline-flex min-h-11 items-center px-2 text-label font-semibold text-teal-ink"
+            >
+              Trocar
+            </button>
+          ) : null}
+        </div>
+      ) : (
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-[0.85rem] font-semibold text-ink">
+        <legend className="mb-1 text-label font-semibold text-ink">
           O que aconteceu com {petName}?
         </legend>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -285,16 +359,18 @@ export function RecordForm({
                 }
                 onClick={() => {
                   setType(item);
-                  setLeadDays(healthTypeMeta[item].defaultLeadDays);
-                  setHasDue(false);
-                  setNextDueDate("");
-                  setRecurrenceMonths(0);
+                  const defaults = dueDefaults(item, date);
+                  setLeadDays(defaults.leadDays);
+                  setHasDue(defaults.hasDue);
+                  setNextDueDate(defaults.nextDueDate);
+                  setRecurrenceMonths(defaults.recurrenceMonths);
                   if (!initial)
                     setField("medicationEnabled", item === "medicamento");
                   if (!initial) setTitle("");
+                  if (initialType || initial) setTypePickerOpen(false);
                 }}
                 className={cn(
-                  "flex min-h-16 items-center gap-2 rounded-[16px] border px-3 text-left text-[0.85rem] font-semibold transition-[background-color,border-color,transform] active:scale-[0.98] sm:min-h-20 sm:flex-col sm:items-start sm:justify-center sm:gap-1",
+                  "flex min-h-16 items-center gap-2 rounded-control border px-3 text-left text-label font-semibold transition-[background-color,border-color,transform] active:scale-[0.98] sm:min-h-20 sm:flex-col sm:items-start sm:justify-center sm:gap-1",
                   selected
                     ? "border-teal-ink bg-mint text-teal-ink"
                     : "border-line bg-paper text-ink-soft hover:bg-surface",
@@ -310,6 +386,7 @@ export function RecordForm({
           })}
         </div>
       </fieldset>
+      )}
 
       {type === "medicamento" ? (
         initial?.medication ? (
@@ -364,13 +441,13 @@ export function RecordForm({
       <Field
         label="Nome do cuidado"
         htmlFor="record-title"
-        hint="Ex.: Vacina V10, consulta de retorno, peso mensal"
+        hint="Opcional"
       >
         <Input
           id="record-title"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder={meta.label}
+          placeholder={`Ex.: ${titleExamples[type]}`}
           maxLength={80}
           aria-describedby={error ? "record-form-error" : undefined}
         />
@@ -399,7 +476,7 @@ export function RecordForm({
               inputMode="decimal"
               value={weight}
               onChange={(event) => setWeight(event.target.value)}
-              placeholder="12,4"
+              placeholder="Ex.: 12,4"
             />
           </Field>
         ) : null}
@@ -410,8 +487,8 @@ export function RecordForm({
         type === "medicamento" &&
         (initial?.medication || value.medicationEnabled)
       ) ? (
-        <fieldset className="flex flex-col gap-3 rounded-[20px] border border-warning/40 bg-warning-soft/70 p-4">
-          <legend className="px-1 text-[0.85rem] font-bold text-ink">
+        <fieldset className="flex flex-col gap-3 rounded-card border border-warning/40 bg-warning-soft/70 p-4">
+          <legend className="px-1 text-label font-bold text-ink">
             Próximo cuidado
           </legend>
           <label className="flex min-h-11 items-center gap-3">
@@ -424,7 +501,7 @@ export function RecordForm({
                 setError(null);
               }}
             />
-            <span className="text-[0.95rem] font-semibold text-ink">
+            <span className="text-body font-semibold text-ink">
               Quero um aviso antes da próxima data
             </span>
           </label>
@@ -445,7 +522,7 @@ export function RecordForm({
                 />
               </Field>
               <div className="flex flex-col gap-2">
-                <span className="text-[0.85rem] font-semibold text-ink">
+                <span className="text-label font-semibold text-ink">
                   Quando avisar
                 </span>
                 <div className="flex flex-wrap gap-2">
@@ -456,7 +533,7 @@ export function RecordForm({
                       aria-pressed={leadDays === option.value}
                       onClick={() => setLeadDays(option.value)}
                       className={cn(
-                        "min-h-11 rounded-full border px-3 text-[0.85rem] font-semibold transition-colors",
+                        "min-h-11 rounded-full border px-3 text-label font-semibold transition-colors",
                         leadDays === option.value
                           ? "border-teal-ink bg-teal-ink text-white"
                           : "border-line bg-paper text-ink-soft hover:bg-surface",
@@ -468,7 +545,7 @@ export function RecordForm({
                 </div>
               </div>
               <div className="flex flex-col gap-2">
-                <span className="text-[0.85rem] font-semibold text-ink">
+                <span className="text-label font-semibold text-ink">
                   Repetir depois de concluir?
                 </span>
                 <div className="flex flex-wrap gap-2">
@@ -479,7 +556,7 @@ export function RecordForm({
                       aria-pressed={recurrenceMonths === option.value}
                       onClick={() => setRecurrenceMonths(option.value)}
                       className={cn(
-                        "min-h-11 rounded-full border px-3 text-[0.85rem] font-semibold transition-colors",
+                        "min-h-11 rounded-full border px-3 text-label font-semibold transition-colors",
                         recurrenceMonths === option.value
                           ? "border-info-ink bg-info-ink text-white"
                           : "border-line bg-paper text-ink-soft hover:bg-surface",
@@ -502,9 +579,9 @@ export function RecordForm({
       <details
         open={detailsOpen}
         onToggle={(event) => setDetailsOpen(event.currentTarget.open)}
-        className="group rounded-[18px] border border-line/80 bg-surface/45"
+        className="group rounded-card border border-line/80 bg-surface/45"
       >
-        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 text-[0.9rem] font-semibold text-ink [&::-webkit-details-marker]:hidden">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 text-label font-semibold text-ink [&::-webkit-details-marker]:hidden">
           <span>
             Adicionar detalhes{" "}
             <span className="font-normal text-muted">(opcional)</span>
@@ -581,7 +658,7 @@ export function RecordForm({
           </Field>
 
           <div className="flex flex-col gap-2">
-            <span className="text-[0.85rem] font-semibold text-ink">Anexo</span>
+            <span className="text-label font-semibold text-ink">Anexo</span>
             <PhotoPicker
               photo={attachment}
               name={title || meta.label}

@@ -63,7 +63,12 @@ export function sortByDateDesc(records: HealthRecord[]): HealthRecord[] {
   );
 }
 
-export type HealthState = "vazio" | "em_dia" | "atencao" | "vencido";
+/**
+ * "em_dia" only means nothing is due before a known next date; "sem_agenda"
+ * means there are records but no next date, so the app can't vouch for it.
+ */
+export type HealthState =
+  "vazio" | "sem_agenda" | "em_dia" | "atencao" | "vencido";
 
 export type HealthStatus = {
   state: HealthState;
@@ -143,16 +148,27 @@ export function healthStatus(
     };
   }
 
+  if (!next) {
+    return {
+      state: "sem_agenda",
+      headline: "Nenhuma próxima data marcada",
+      detail:
+        "Ao registrar uma vacina ou vermífugo com a próxima dose, ela aparece aqui.",
+      nextRecord: null,
+      nextDays: null,
+      overdueCount: 0,
+      soonCount: 0,
+    };
+  }
+
   return {
     state: "em_dia",
-    headline: "Tudo em dia por aqui",
-    detail: next
-      ? `Próximo cuidado: ${next.record.title.toLowerCase()} em ${formatShortDate(
-          next.record.nextDueDate ?? "",
-        )}.`
-      : "Nenhum cuidado com data marcada.",
-    nextRecord: next?.record ?? null,
-    nextDays: next?.days ?? null,
+    headline: next.record.nextDueDate
+      ? `Nada pendente até ${formatShortDate(next.record.nextDueDate)}`
+      : "Nada pendente agora",
+    detail: `Próximo cuidado: ${next.record.title.toLowerCase()}.`,
+    nextRecord: next.record,
+    nextDays: next.days,
     overdueCount: 0,
     soonCount: 0,
   };

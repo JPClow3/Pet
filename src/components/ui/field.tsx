@@ -24,7 +24,7 @@ export function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={htmlFor} className="text-[0.85rem] font-medium text-ink">
+      <label htmlFor={htmlFor} className="text-label font-medium text-ink">
         {label}
       </label>
       {Children.map(children, (child) =>
@@ -64,7 +64,7 @@ export function Field({
 }
 
 const controlClasses =
-  "w-full min-h-12 rounded-[14px] border border-line bg-paper px-3.5 text-base text-ink-soft placeholder:text-muted/75 focus:border-teal-ink focus-visible:ring-2 focus-visible:ring-teal-ink/20 aria-invalid:border-danger-ink transition-colors";
+  "w-full min-h-12 rounded-control border border-line bg-paper px-3.5 text-base text-ink-soft placeholder:text-muted/75 focus:border-teal-ink focus-visible:ring-2 focus-visible:ring-teal-ink/20 aria-invalid:border-danger-ink transition-colors";
 
 export function Input({ className, ...props }: ComponentProps<"input">) {
   return <input className={cn(controlClasses, className)} {...props} />;
@@ -130,7 +130,7 @@ export function CheckboxRow({
         className="mt-0.5 size-5 shrink-0 accent-teal-ink"
       />
       <span className="flex flex-col">
-        <span className="text-[0.95rem] font-medium text-ink">{label}</span>
+        <span className="text-body font-medium text-ink">{label}</span>
         {description ? (
           <span className="text-meta text-muted">{description}</span>
         ) : null}

@@ -67,6 +67,37 @@ describe("onboarding", () => {
     expect(router.replace).not.toHaveBeenCalled();
   });
 
+  it("a seta do topo volta uma etapa em vez de sair do cadastro", async () => {
+    const user = userEvent.setup();
+    render(<OnboardingPage />);
+    expect(
+      await screen.findByRole("link", { name: "Voltar para o início" }),
+    ).toHaveAttribute("href", "/welcome");
+    await reachDetails(user);
+    await user.click(
+      screen.getByRole("button", {
+        name: "Voltar para a etapa anterior: Seu pet",
+      }),
+    );
+    expect(await screen.findByLabelText("Nome do pet")).toHaveValue("Luna");
+    expect(router.replace).not.toHaveBeenCalled();
+  });
+
+  it("não assume uma cidade que o tutor não informou", async () => {
+    const user = userEvent.setup();
+    render(<OnboardingPage />);
+    await reachDetails(user);
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Criar meu espaço" }));
+    await waitFor(() => expect(useAppStore.getState().tutor).not.toBeNull());
+    expect(useAppStore.getState().settings.city).toBe("");
+    expect(
+      useAppStore
+        .getState()
+        .notifications.some((notification) => notification.kind === "local"),
+    ).toBe(false);
+  });
+
   it("guarda peso decimal sem perder a vírgula enquanto digita", async () => {
     const user = userEvent.setup();
     render(<OnboardingPage />);

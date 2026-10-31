@@ -130,7 +130,7 @@ export function BatchCareModal({
       <div className="flex flex-col gap-5">
         {/* Presets Grid */}
         <div>
-          <label className="text-[0.85rem] font-bold uppercase tracking-wider text-muted">
+          <label className="text-label font-bold uppercase tracking-wider text-muted">
             1. Escolha o cuidado
           </label>
           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -144,7 +144,7 @@ export function BatchCareModal({
                     setSelectedPreset(preset.label);
                     setIsCustom(false);
                   }}
-                  className={`flex flex-col items-start gap-1 rounded-[16px] border p-3 text-left transition-[border-color,background-color] ${
+                  className={`flex flex-col items-start gap-1 rounded-control border p-3 text-left transition-[border-color,background-color] ${
                     selected
                       ? "border-teal-ink bg-mint/55 text-teal-deep font-semibold"
                       : "border-line bg-paper hover:bg-surface/60 text-ink"
@@ -153,10 +153,10 @@ export function BatchCareModal({
                   <span className="text-xl" aria-hidden="true">
                     {preset.icon}
                   </span>
-                  <span className="text-[0.9rem] leading-tight font-semibold">
+                  <span className="text-label leading-tight font-semibold">
                     {preset.label}
                   </span>
-                  <span className="text-[11px] text-muted leading-tight">
+                  <span className="text-caption text-muted leading-tight">
                     {preset.hint}
                   </span>
                 </button>
@@ -166,17 +166,17 @@ export function BatchCareModal({
             <button
               type="button"
               onClick={() => setIsCustom(true)}
-              className={`flex flex-col items-start gap-1 rounded-[16px] border p-3 text-left transition-[border-color,background-color] ${
+              className={`flex flex-col items-start gap-1 rounded-control border p-3 text-left transition-[border-color,background-color] ${
                 isCustom
                   ? "border-teal-ink bg-mint/55 text-teal-deep font-semibold"
                   : "border-dashed border-line bg-paper hover:bg-surface/60 text-ink"
               }`}
             >
               <Sparkles aria-hidden="true" className="size-5 text-teal-ink" />
-              <span className="text-[0.9rem] leading-tight font-semibold">
+              <span className="text-label leading-tight font-semibold">
                 Outro cuidado
               </span>
-              <span className="text-[11px] text-muted leading-tight">
+              <span className="text-caption text-muted leading-tight">
                 Personalizado
               </span>
             </button>
@@ -191,7 +191,7 @@ export function BatchCareModal({
                 placeholder="Ex.: Banho de sol, Petisco especial..."
                 maxLength={60}
                 autoFocus
-                className="min-h-11 w-full rounded-[14px] border border-line bg-paper px-3.5 text-base text-ink placeholder:text-muted focus:border-teal-ink focus:outline-none"
+                className="min-h-11 w-full rounded-control border border-line bg-paper px-3.5 text-base text-ink placeholder:text-muted focus:border-teal-ink focus:outline-none"
               />
             </div>
           ) : null}
@@ -200,7 +200,7 @@ export function BatchCareModal({
         {/* Pet Selection */}
         <div>
           <div className="flex items-center justify-between gap-2">
-            <label className="text-[0.85rem] font-bold uppercase tracking-wider text-muted">
+            <label className="text-label font-bold uppercase tracking-wider text-muted">
               2. Selecione os pets ({selectedPetIds.length} de {pets.length})
             </label>
             <div className="flex items-center gap-2">
@@ -233,7 +233,7 @@ export function BatchCareModal({
                   type="button"
                   onClick={() => togglePet(pet.id)}
                   aria-pressed={checked}
-                  className={`flex items-center justify-between gap-3 rounded-[16px] border p-2.5 text-left transition-colors ${
+                  className={`flex items-center justify-between gap-3 rounded-control border p-2.5 text-left transition-colors ${
                     checked
                       ? "border-teal-ink/60 bg-mint/30"
                       : "border-line bg-paper opacity-70 hover:opacity-100"
@@ -242,7 +242,7 @@ export function BatchCareModal({
                   <div className="flex items-center gap-3">
                     <PetAvatar pet={pet} size="sm" />
                     <div>
-                      <p className="font-semibold text-ink text-[0.92rem]">
+                      <p className="font-semibold text-ink text-body">
                         {pet.name}
                       </p>
                       <p className="text-meta text-muted capitalize">

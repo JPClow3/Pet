@@ -67,7 +67,7 @@ export function MedicationPlanFields({
   const field = (key: keyof MedicationPlanDraft, next: string) =>
     onChange({ ...value, [key]: next });
   return (
-    <fieldset className="flex min-w-0 flex-col gap-4 rounded-[18px] border border-line bg-surface/50 p-4">
+    <fieldset className="flex min-w-0 flex-col gap-4 rounded-card border border-line bg-surface/50 p-4">
       <legend className="px-1 text-sm font-bold text-ink">
         Plano informado na prescrição
       </legend>

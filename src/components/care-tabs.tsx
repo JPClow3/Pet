@@ -3,15 +3,19 @@ import Link from "next/link";
 import type { Pet } from "@/lib/domain/schema";
 import { cn } from "@/lib/utils";
 
-type CareTab = "agenda" | "historico" | "diario";
+type CareTab = "perfil" | "agenda" | "historico" | "diario";
 
 const tabLabels: Record<CareTab, string> = {
+  perfil: "Perfil",
   agenda: "Agenda",
   historico: "Histórico",
   diario: "Diário",
 };
 
-/** A predictable, link-backed sub-navigation for the trusted care surfaces. */
+/**
+ * A predictable, link-backed sub-navigation for the trusted care surfaces.
+ * Every tab is scoped to the active pet; Agenda opens on that pet too.
+ */
 export function CareTabs({
   active,
   pet,
@@ -22,6 +26,7 @@ export function CareTabs({
   className?: string;
 }) {
   const tabs = [
+    { key: "perfil" as const, href: "/pets" },
     { key: "agenda" as const, href: "/reminders" },
     {
       key: "historico" as const,
@@ -47,7 +52,7 @@ export function CareTabs({
                 href={tab.href}
                 aria-current={selected ? "page" : undefined}
                 className={cn(
-                  "inline-flex min-h-12 items-center border-b-2 px-3 text-[0.9rem] font-semibold transition-colors",
+                  "inline-flex min-h-12 items-center border-b-2 px-3 text-label font-semibold transition-colors",
                   selected
                     ? "border-teal-ink text-teal-ink"
                     : "border-transparent text-muted hover:border-line hover:text-ink",

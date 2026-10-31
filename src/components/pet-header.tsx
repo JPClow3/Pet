@@ -80,6 +80,24 @@ export function PetContextSwitcher({
     });
   }
 
+  // A chooser with a single option is noise: show the pet, not a control.
+  if (pets.length < 2) {
+    if (!selectedPet) return null;
+    return (
+      <span
+        className={cn(
+          "inline-flex min-h-11 max-w-full items-center gap-2 text-left",
+          className,
+        )}
+      >
+        {showAvatar ? <PetAvatar pet={selectedPet} size="sm" /> : null}
+        <span className="min-w-0 truncate whitespace-nowrap text-label font-semibold text-ink">
+          {selectedPet.name}
+        </span>
+      </span>
+    );
+  }
+
   return (
     <>
       <button
@@ -95,7 +113,7 @@ export function PetContextSwitcher({
       >
         {showAvatar ? (
           selectedScope === "todos" ? (
-            <span className="flex size-8 items-center justify-center rounded-full bg-mint text-[0.78rem] font-bold text-teal-ink">
+            <span className="flex size-8 items-center justify-center rounded-full bg-mint text-meta font-bold text-teal-ink">
               {pets.length}
             </span>
           ) : selectedPet ? (
@@ -107,7 +125,7 @@ export function PetContextSwitcher({
             />
           )
         ) : null}
-        <span className="min-w-0 truncate whitespace-nowrap text-[0.9rem] font-semibold text-ink">
+        <span className="min-w-0 truncate whitespace-nowrap text-label font-semibold text-ink">
           {selectedLabel ?? "Escolher pet"}
         </span>
         <ChevronDown
@@ -214,7 +232,7 @@ export function PetContextSwitcher({
               if (action.pending) event.preventDefault();
               else setOpen(false);
             }}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[14px] border border-line bg-paper px-3 text-[0.85rem] font-semibold text-ink transition-colors hover:bg-surface"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-line bg-paper px-3 text-label font-semibold text-ink transition-colors hover:bg-surface"
           >
             <Plus aria-hidden="true" className="size-4" />
             Adicionar pet
@@ -226,7 +244,7 @@ export function PetContextSwitcher({
               if (action.pending) event.preventDefault();
               else setOpen(false);
             }}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[14px] bg-mint px-3 text-[0.85rem] font-semibold text-teal-ink transition-colors hover:bg-mint/70"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-mint px-3 text-label font-semibold text-teal-ink transition-colors hover:bg-mint/70"
           >
             <Settings2 aria-hidden="true" className="size-4" />
             Gerenciar pets
@@ -270,12 +288,12 @@ export function PetHeader({
         </div>
         <Link
           href={`/pets/${pet.id}/card`}
-          className="flex size-12 shrink-0 items-center justify-center rounded-[14px] border border-line bg-paper text-ink transition-colors hover:bg-surface"
+          className="flex size-12 shrink-0 items-center justify-center rounded-control border border-line bg-paper text-ink transition-colors hover:bg-surface"
           aria-label={`Abrir carteirinha de ${pet.name}`}
         >
           <span
             aria-hidden="true"
-            className="text-[0.7rem] font-bold leading-none"
+            className="text-caption font-bold leading-none"
           >
             QR
           </span>
@@ -284,7 +302,7 @@ export function PetHeader({
 
       <p
         className={cn(
-          "max-w-[54ch] text-[1rem] font-medium leading-relaxed text-ink",
+          "max-w-[54ch] text-body font-medium leading-relaxed text-ink",
           compact && "sr-only",
         )}
       >

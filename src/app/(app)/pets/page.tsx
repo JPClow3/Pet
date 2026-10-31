@@ -7,10 +7,13 @@ import {
   Pencil,
   Printer,
   QrCode,
+  Scale,
   ShieldCheck,
   Siren,
   Sparkles,
   Stethoscope,
+  Syringe,
+  Users,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -32,6 +35,7 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
+import { BottomSheet } from "@/components/ui/sheet";
 import { SkeletonScreen } from "@/components/ui/skeleton";
 import { formatShortDate, todayKey } from "@/lib/domain/dates";
 import { petWeightMeasurements } from "@/lib/domain/weight";
@@ -74,6 +78,7 @@ export default function MyPetPage() {
   const action = useAsyncAction();
   const router = useRouter();
   const [showSitterModal, setShowSitterModal] = useState(false);
+  const [showShareSheet, setShowShareSheet] = useState(false);
 
   const petDiary = useMemo(
     () => diary.filter((entry) => entry.petId === pet?.id),
@@ -106,24 +111,46 @@ export default function MyPetPage() {
 
   const age = petAge(pet.birthDate);
   const completion = petCompletion(pet);
+  const nextDetail = !pet.card.contact
+    ? "Adicione um contato para deixar a carteirinha útil"
+    : completion.missing.length > 0
+      ? `Adicione ${completion.missing[0]} ao perfil de ${pet.name}`
+      : null;
+  const startItems = [
+    records.length === 0 && {
+      href: `/pets/${pet.id}/health/new?type=vacina`,
+      label: "Registrar a vacina mais recente",
+      icon: Syringe,
+    },
+    weightMeasurements.length === 0 && {
+      href: `/pets/${pet.id}/health/new?type=peso`,
+      label: "Registrar o peso",
+      icon: Scale,
+    },
+    petDiary.length === 0 && {
+      href: `/pets/${pet.id}/diary`,
+      label: "Guardar um momento no diário",
+      icon: Camera,
+    },
+  ].filter((item) => item !== false);
 
   return (
-    <div className="flex flex-col gap-5 pb-6">
+    <div className="flex flex-col gap-5 pb-24">
       <div className="flex items-end justify-between gap-3">
         <div>
           <p className="text-meta font-bold uppercase tracking-[0.14em] text-muted">
             Cuidados
           </p>
-          <h1 className="mt-1 font-editorial text-[2.25rem] font-semibold leading-none tracking-tight text-ink">
+          <h1 className="mt-1 font-editorial text-h1 font-semibold leading-none tracking-tight text-ink">
             Perfil do pet
           </h1>
         </div>
         <PetContextSwitcher scope={pet.id} />
       </div>
 
-      <CareTabs active={null} pet={pet} />
+      <CareTabs active="perfil" pet={pet} />
 
-      <section className="flex flex-col items-center gap-3 rounded-[24px] border border-line bg-paper p-6 text-center">
+      <section className="flex flex-col items-center gap-3 rounded-feature border border-line bg-paper p-6 text-center">
         <CareHalo
           pet={pet}
           records={records}
@@ -134,7 +161,7 @@ export default function MyPetPage() {
           <h2 className="font-editorial text-3xl font-semibold text-ink">
             {pet.name}
           </h2>
-          <p className="text-[0.92rem] text-muted">
+          <p className="text-body text-muted">
             {[
               speciesLabels[pet.species],
               pet.breed,
@@ -162,15 +189,6 @@ export default function MyPetPage() {
 
         <div className="flex w-full flex-wrap justify-center gap-2 pt-1">
           <ButtonLink
-            href={`/pets/${pet.id}/vet`}
-            size="sm"
-            variant="secondary"
-            className="font-semibold text-teal-ink"
-          >
-            <Stethoscope aria-hidden="true" className="size-4" />
-            Modo Consulta
-          </ButtonLink>
-          <ButtonLink
             href={`/pets/${pet.id}/card`}
             size="sm"
             variant="secondary"
@@ -178,14 +196,14 @@ export default function MyPetPage() {
             <QrCode aria-hidden="true" className="size-4" />
             Carteirinha
           </ButtonLink>
-          <Button
+          <ButtonLink
+            href={`/pets/${pet.id}/vet`}
             size="sm"
             variant="secondary"
-            onClick={() => setShowSitterModal(true)}
           >
-            <ShieldCheck aria-hidden="true" className="size-4" />
-            Modo Cuidador
-          </Button>
+            <Stethoscope aria-hidden="true" className="size-4" />
+            Modo consulta
+          </ButtonLink>
           <ButtonLink
             href={`/pets/${pet.id}/edit`}
             size="sm"
@@ -229,7 +247,7 @@ export default function MyPetPage() {
                 );
               });
             }}
-            className={`inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-[0.85rem] font-medium ${
+            className={`inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-label font-medium ${
               pet.lostMode.active
                 ? "bg-danger-ink text-white"
                 : "border border-line text-danger-ink hover:bg-danger/5"
@@ -247,70 +265,91 @@ export default function MyPetPage() {
               className="border-danger-ink/40 text-danger-ink hover:bg-danger/10 font-bold"
             >
               <Printer aria-hidden="true" className="size-4" />
-              Baixar Cartaz A4
+              Baixar cartaz
             </ButtonLink>
           ) : null}
         </div>
       </section>
 
-      {completion.missing.length > 0 ? (
+      {/* The single most useful missing detail, not a count. */}
+      {nextDetail ? (
         <Link
           href={`/pets/${pet.id}/edit`}
-          className="flex items-center gap-3 rounded-3xl border border-dashed border-line bg-surface/60 p-4"
+          className="flex min-h-14 items-center gap-3 rounded-card border border-dashed border-line bg-surface/60 p-4"
         >
           <Sparkles
             aria-hidden="true"
             className="size-5 shrink-0 text-teal-ink"
           />
-          <p className="flex-1 text-[0.92rem] text-ink-soft">
-            Faltam {completion.missing.length} detalhes para completar a
-            carteirinha: {completion.missing.slice(0, 3).join(", ")}.
-          </p>
+          <p className="flex-1 text-label text-ink-soft">{nextDetail}</p>
           <ChevronRight aria-hidden="true" className="size-4 text-muted" />
         </Link>
       ) : null}
 
-      <HealthStatusCard records={records} href={`/pets/${pet.id}/health`} />
+      {/* Empty modules collapse into one checklist instead of stacked empty states. */}
+      {startItems.length > 0 ? (
+        <Card className="flex flex-col gap-1 p-4">
+          <CardTitle className="mb-1">Comece por aqui</CardTitle>
+          <ul className="flex flex-col">
+            {startItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="flex min-h-12 items-center gap-3 border-b border-line/70 py-2 text-label font-semibold text-ink last:border-b-0"
+                  >
+                    <Icon
+                      aria-hidden="true"
+                      className="size-5 shrink-0 text-teal-ink"
+                    />
+                    <span className="flex-1">{item.label}</span>
+                    <ChevronRight
+                      aria-hidden="true"
+                      className="size-4 text-muted"
+                    />
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      ) : null}
 
-      <Card className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle>Curva de peso</CardTitle>
-          <Link
-            href={`/pets/${pet.id}/health/new?type=peso`}
-            className="text-meta font-medium text-teal-ink"
-          >
-            Registrar novo peso
-          </Link>
-        </div>
-        <WeightChart
-          measurements={weightMeasurements}
-          targetWeightKg={pet.targetWeightKg}
-          petName={pet.name}
-        />
-      </Card>
+      {records.length > 0 ? (
+        <HealthStatusCard records={records} href={`/pets/${pet.id}/health`} />
+      ) : null}
 
-      <section>
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <CardTitle>Últimos registros</CardTitle>
-          <Link
-            href={`/pets/${pet.id}/health`}
-            className="text-meta font-medium text-teal-ink"
-          >
-            Ver saúde
-          </Link>
-        </div>
-        {records.length === 0 ? (
-          <EmptyState
-            icon={<Camera aria-hidden="true" className="size-5" />}
-            title="Histórico vazio"
-            description="Cada vacina, consulta ou pesagem registrada aparece aqui na linha do tempo."
-            action={
-              <ButtonLink href={`/pets/${pet.id}/health/new`} size="sm">
-                Adicionar registro
-              </ButtonLink>
-            }
+      {weightMeasurements.length > 0 ? (
+        <Card className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle>Curva de peso</CardTitle>
+            <Link
+              href={`/pets/${pet.id}/health/new?type=peso`}
+              className="inline-flex min-h-11 items-center text-meta font-medium text-teal-ink"
+            >
+              Registrar peso
+            </Link>
+          </div>
+          <WeightChart
+            measurements={weightMeasurements}
+            targetWeightKg={pet.targetWeightKg}
+            petName={pet.name}
           />
-        ) : (
+        </Card>
+      ) : null}
+
+      {records.length > 0 ? (
+        <section>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <CardTitle>Últimos registros</CardTitle>
+            <Link
+              href={`/pets/${pet.id}/health`}
+              className="inline-flex min-h-11 items-center text-meta font-medium text-teal-ink"
+            >
+              Ver histórico
+            </Link>
+          </div>
           <ul className="flex flex-col gap-3">
             {sortedRecords(records)
               .slice(0, 4)
@@ -318,34 +357,20 @@ export default function MyPetPage() {
                 <RecordTimelineItem key={record.id} record={record} />
               ))}
           </ul>
-        )}
-      </section>
+        </section>
+      ) : null}
 
-      <section>
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <CardTitle>Diário</CardTitle>
-          <Link
-            href={`/pets/${pet.id}/diary`}
-            className="text-meta font-medium text-teal-ink"
-          >
-            Abrir diário
-          </Link>
-        </div>
-        {petDiary.length === 0 ? (
-          <EmptyState
-            title="Nenhum momento guardado"
-            description="Guarde seus momentos neste aparelho. O diário não publica conteúdo na comunidade."
-            action={
-              <ButtonLink
-                href={`/pets/${pet.id}/diary`}
-                size="sm"
-                variant="secondary"
-              >
-                Adicionar primeiro momento
-              </ButtonLink>
-            }
-          />
-        ) : (
+      {petDiary.length > 0 ? (
+        <section>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <CardTitle>Diário</CardTitle>
+            <Link
+              href={`/pets/${pet.id}/diary`}
+              className="inline-flex min-h-11 items-center text-meta font-medium text-teal-ink"
+            >
+              Abrir diário
+            </Link>
+          </div>
           <ul className="flex gap-2 overflow-x-auto no-scrollbar">
             {petDiary.slice(0, 6).map((entry) => (
               <li key={entry.id} className="w-32 shrink-0">
@@ -366,65 +391,89 @@ export default function MyPetPage() {
               </li>
             ))}
           </ul>
-        )}
-      </section>
+        </section>
+      ) : null}
 
-      <Card className="flex items-center gap-3">
-        <span className="flex size-10 items-center justify-center rounded-2xl bg-surface text-ink-soft">
-          <FileText aria-hidden="true" className="size-5" />
-        </span>
-        <div className="flex-1">
-          <CardTitle>Documentos</CardTitle>
-          <p className="text-meta text-muted">
-            {documentCount === 0
-              ? "Guarde PDFs, exames, receitas e carteirinhas."
-              : `${documentCount} arquivo${documentCount > 1 ? "s" : ""} guardado${documentCount > 1 ? "s" : ""}`}
-          </p>
-        </div>
+      <Card className="flex flex-col p-2">
         <Link
           href={`/pets/${pet.id}/documents`}
-          className="text-meta font-medium text-teal-ink"
+          className="flex min-h-14 items-center gap-3 rounded-control px-2"
         >
-          Abrir
-        </Link>
-      </Card>
-
-      {/* Colaboração Familiar e Multi-Tutor */}
-      <PetCollaboratorsPanel pet={pet} />
-
-      {/* Modo Cuidador / Pet Sitter */}
-      <Card className="flex flex-col gap-3 border-teal-ink/20 bg-teal-ink/5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-teal-ink text-white">
-              <ShieldCheck aria-hidden="true" className="size-5" />
+          <FileText
+            aria-hidden="true"
+            className="size-5 shrink-0 text-ink-soft"
+          />
+          <span className="flex-1">
+            <span className="block text-label font-semibold text-ink">
+              Documentos
             </span>
-            <div>
-              <CardTitle>Modo Cuidador / Pet Sitter</CardTitle>
-              <p className="mt-0.5 text-meta text-muted">
-                Para quando o pet fica em hotelzinho, creche ou com passeador.
-              </p>
-            </div>
-          </div>
-        </div>
-        <p className="text-sm leading-relaxed text-ink-soft">
-          Gere um link temporário protegido por PIN que mostra apenas a rotina
-          alimentar, horários de remédios, alergias e botão de emergência 24h,
-          sem expor dados particulares.
-        </p>
-        <div className="flex flex-wrap gap-2 pt-1">
-          <Button size="sm" onClick={() => setShowSitterModal(true)}>
-            Configurar link do cuidador
-          </Button>
-          <ButtonLink
-            href={`/pets/${pet.id}/sitter`}
-            variant="secondary"
-            size="sm"
-          >
-            Ativar neste aparelho
-          </ButtonLink>
-        </div>
+            <span className="block text-meta text-muted">
+              {documentCount === 0
+                ? "Exames, receitas e carteirinhas"
+                : `${documentCount} arquivo${documentCount > 1 ? "s" : ""}`}
+            </span>
+          </span>
+          <ChevronRight aria-hidden="true" className="size-4 text-muted" />
+        </Link>
+        <button
+          type="button"
+          onClick={() => setShowShareSheet(true)}
+          className="flex min-h-14 items-center gap-3 rounded-control border-t border-line/70 px-2 text-left"
+        >
+          <Users aria-hidden="true" className="size-5 shrink-0 text-ink-soft" />
+          <span className="flex-1">
+            <span className="block text-label font-semibold text-ink">
+              Compartilhar cuidados
+            </span>
+            <span className="block text-meta text-muted">
+              Família, cuidadores e modo cuidador
+            </span>
+          </span>
+          <ChevronRight aria-hidden="true" className="size-4 text-muted" />
+        </button>
       </Card>
+
+      <BottomSheet
+        open={showShareSheet}
+        onClose={() => setShowShareSheet(false)}
+        title="Compartilhar cuidados"
+        description={`Quem mais cuida de ${pet.name}?`}
+      >
+        <div className="flex flex-col gap-4">
+          <PetCollaboratorsPanel pet={pet} />
+          <Card className="flex flex-col gap-3">
+            <div className="flex items-center gap-2.5">
+              <ShieldCheck
+                aria-hidden="true"
+                className="size-5 shrink-0 text-teal-ink"
+              />
+              <CardTitle>Modo cuidador</CardTitle>
+            </div>
+            <p className="text-label leading-relaxed text-ink-soft">
+              Um link com PIN para hotelzinho, creche ou passeador. Mostra só
+              rotina, remédios, alergias e contato de emergência.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                onClick={() => {
+                  setShowShareSheet(false);
+                  setShowSitterModal(true);
+                }}
+              >
+                Criar link do cuidador
+              </Button>
+              <ButtonLink
+                href={`/pets/${pet.id}/sitter`}
+                variant="secondary"
+                size="sm"
+              >
+                Usar neste aparelho
+              </ButtonLink>
+            </div>
+          </Card>
+        </div>
+      </BottomSheet>
 
       <PetSitterConfigModal
         pet={pet}

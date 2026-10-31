@@ -188,8 +188,12 @@ describe("fluxo de medicação", () => {
         useAppStore.getState().records[0].medication?.schedules,
       ).toHaveLength(2),
     );
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     await user.click(screen.getByRole("button", { name: "Encerrar plano" }));
+    await user.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Encerrar plano",
+      }),
+    );
     await screen.findByText("Plano encerrado");
     expect(useAppStore.getState().records[0].medication?.events).toHaveLength(
       2,

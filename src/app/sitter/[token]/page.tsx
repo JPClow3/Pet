@@ -206,7 +206,7 @@ export default function SitterAccessPage() {
       <main className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center px-5 py-8 text-center">
         <Brand className="mb-4" />
 
-        <div className="w-full rounded-[24px] border border-line bg-paper p-6 shadow-sm">
+        <div className="w-full rounded-feature border border-line bg-paper p-6 shadow-sm">
           <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-teal-ink/10 text-teal-ink">
             <Lock aria-hidden="true" className="size-7" />
           </span>
@@ -393,7 +393,7 @@ export default function SitterAccessPage() {
                 <span className="text-xs font-semibold text-danger-ink">
                   Veterinário 24h
                 </span>
-                <span className="rounded bg-danger-soft px-1.5 py-0.5 text-[10px] font-bold text-danger-ink">
+                <span className="rounded bg-danger-soft px-1.5 py-0.5 text-caption font-bold text-danger-ink">
                   EMERGÊNCIA
                 </span>
               </div>

@@ -50,7 +50,7 @@ export default function QuickRecordPage() {
 
       {pets.length > 1 ? (
         <Card className="flex flex-col gap-2">
-          <p className="text-[0.85rem] font-medium text-ink">Para qual pet?</p>
+          <p className="text-label font-medium text-ink">Para qual pet?</p>
           <div className="flex flex-wrap gap-2">
             {pets.map((item) => (
               <button
@@ -59,7 +59,7 @@ export default function QuickRecordPage() {
                 aria-pressed={item.id === pet.id}
                 disabled={action.pending}
                 onClick={() => void action.run(() => setActivePet(item.id))}
-                className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-3 text-[0.9rem] font-medium ${
+                className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-3 text-label font-medium ${
                   item.id === pet.id
                     ? "border-teal-ink bg-mint text-teal-ink"
                     : "border-line bg-paper text-ink-soft"
@@ -90,10 +90,10 @@ export default function QuickRecordPage() {
               onClick={() =>
                 router.push(`/pets/${pet.id}/health/new?type=${type}`)
               }
-              className="flex min-h-20 flex-col items-start justify-center gap-1.5 rounded-3xl border border-line bg-paper p-4 text-left hover:bg-surface"
+              className="flex min-h-20 flex-col items-start justify-center gap-1.5 rounded-feature border border-line bg-paper p-4 text-left hover:bg-surface"
             >
               <Icon aria-hidden="true" className="size-5 text-teal-ink" />
-              <span className="text-[0.92rem] font-medium text-ink">
+              <span className="text-body font-medium text-ink">
                 {healthTypeMeta[type].label}
               </span>
             </button>

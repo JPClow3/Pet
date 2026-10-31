@@ -98,7 +98,7 @@ export function PublicMicrochipSection({
                   >
                     <div>
                       <strong className="text-ink">{db.name}</strong>
-                      <p className="text-[0.7rem] text-muted line-clamp-1">
+                      <p className="text-caption text-muted line-clamp-1">
                         {db.description}
                       </p>
                     </div>
@@ -106,7 +106,7 @@ export function PublicMicrochipSection({
                       href={targetUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-teal-ink px-2.5 py-1 text-[0.75rem] font-semibold text-white hover:bg-teal-deep"
+                      className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-teal-ink px-2.5 py-1 text-caption font-semibold text-white hover:bg-teal-deep"
                     >
                       <Search aria-hidden="true" className="size-3" />
                       Consultar

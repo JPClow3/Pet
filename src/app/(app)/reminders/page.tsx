@@ -61,7 +61,10 @@ export default function RemindersPage() {
   const pets = useAppStore((state) => state.pets);
   const reminders = useAppStore((state) => state.reminders);
   const records = useAppStore((state) => state.records);
-  const [scope, setScope] = useState<PetScope>("todos");
+  // Opens on the active pet like the other care tabs; "Todos" is an explicit choice.
+  const [requestedScope, setScope] = useState<PetScope | null>(null);
+  const scope: PetScope =
+    requestedScope ?? (pets.length > 1 ? (activePet?.id ?? "todos") : "todos");
   const [filter, setFilter] = useState<Filter>("todos");
   const [creating, setCreating] = useState(false);
 
@@ -176,10 +179,10 @@ export default function RemindersPage() {
           <p className="text-meta font-bold uppercase tracking-[0.14em] text-muted">
             Cuidados
           </p>
-          <h1 className="mt-1 font-editorial text-[2.25rem] font-semibold leading-none tracking-tight text-ink">
+          <h1 className="mt-1 font-editorial text-h1 font-semibold leading-none tracking-tight text-ink">
             Agenda
           </h1>
-          <p className="mt-2 max-w-[48ch] text-[0.92rem] leading-relaxed text-muted">
+          <p className="mt-2 max-w-[48ch] text-body leading-relaxed text-muted">
             Um cuidado, uma chamada para ação. Datas e histórico ficam ligados
             ao pet certo.
           </p>
@@ -200,7 +203,7 @@ export default function RemindersPage() {
           </ButtonLink>
           <BulkAddToCalendarButton
             events={upcomingCalendarEvents}
-            label="Exportar (.ics)"
+            label="Adicionar à agenda do celular"
             size="sm"
           />
         </div>
@@ -208,11 +211,11 @@ export default function RemindersPage() {
 
       <div className="flex items-center justify-between gap-3">
         <PetContextSwitcher scope={scope} allowAll onScopeChange={setScope} />
-        <span className="text-meta text-muted">
-          {scope === "todos"
-            ? `${pets.length} ${pets.length === 1 ? "pet" : "pets"}`
-            : activePet?.name}
-        </span>
+        {pets.length > 1 ? (
+          <span className="text-meta text-muted">
+            {scope === "todos" ? `${pets.length} pets` : activePet?.name}
+          </span>
+        ) : null}
       </div>
 
       <CareTabs
@@ -224,30 +227,32 @@ export default function RemindersPage() {
         }
       />
 
-      <div className="grid grid-cols-3 gap-2" aria-label="Resumo da agenda">
-        <Card className="border-accent/25 bg-accent-soft/65 p-3 sm:p-4">
-          <span className="block text-2xl font-bold tabular-nums text-accent-ink">
-            {summary.overdue}
-          </span>
-          <span className="text-meta font-semibold text-accent-ink">
-            Atrasados
-          </span>
-        </Card>
-        <Card className="border-warning/35 bg-warning-soft/70 p-3 sm:p-4">
-          <span className="block text-2xl font-bold tabular-nums text-warning-ink">
-            {summary.today}
-          </span>
-          <span className="text-meta font-semibold text-warning-ink">Hoje</span>
-        </Card>
-        <Card className="border-info-ink/25 bg-info-soft/75 p-3 sm:p-4">
-          <span className="block text-2xl font-bold tabular-nums text-info-ink">
-            {summary.soon}
-          </span>
-          <span className="text-meta font-semibold text-info-ink">
-            Próximos
-          </span>
-        </Card>
-      </div>
+      {summary.overdue + summary.today + summary.soon > 0 ? (
+        <div className="grid grid-cols-3 gap-2" aria-label="Resumo da agenda">
+          <Card className="border-accent/25 bg-accent-soft/65 p-3 sm:p-4">
+            <span className="block text-2xl font-bold tabular-nums text-accent-ink">
+              {summary.overdue}
+            </span>
+            <span className="text-meta font-semibold text-accent-ink">
+              Atrasados
+            </span>
+          </Card>
+          <Card className="border-warning/35 bg-warning-soft/70 p-3 sm:p-4">
+            <span className="block text-2xl font-bold tabular-nums text-warning-ink">
+              {summary.today}
+            </span>
+            <span className="text-meta font-semibold text-warning-ink">Hoje</span>
+          </Card>
+          <Card className="border-info-ink/25 bg-info-soft/75 p-3 sm:p-4">
+            <span className="block text-2xl font-bold tabular-nums text-info-ink">
+              {summary.soon}
+            </span>
+            <span className="text-meta font-semibold text-info-ink">
+              Próximos
+            </span>
+          </Card>
+        </div>
+      ) : null}
 
       <div
         className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 no-scrollbar"
@@ -285,7 +290,7 @@ export default function RemindersPage() {
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-canvas text-success-ink">
                     <Check aria-hidden="true" className="size-4" />
                   </span>
-                  <div className="min-w-0 flex-1 text-[0.95rem] font-semibold text-ink">
+                  <div className="min-w-0 flex-1 text-body font-semibold text-ink">
                     {entry.href ? (
                       <Link
                         href={entry.href}
@@ -341,7 +346,7 @@ export default function RemindersPage() {
           icon={<ClipboardList aria-hidden="true" className="size-5" />}
           title={
             filter === "todos"
-              ? "Tudo organizado por enquanto"
+              ? "Nenhuma próxima data na agenda"
               : "Nada neste filtro"
           }
           description={
@@ -396,7 +401,7 @@ export default function RemindersPage() {
         </div>
       )}
 
-      <Card className="border-line bg-surface/65 text-[0.82rem] leading-relaxed text-muted">
+      <Card className="border-line bg-surface/65 text-meta leading-relaxed text-muted">
         Avisos aparecem dentro da Zelupi a partir das datas que você registra. O
         app ainda não envia notificações com a tela fechada.
       </Card>
@@ -446,7 +451,7 @@ function AgendaGroup({
       <div className="mb-2 flex items-center gap-2">
         <h2
           id={`agenda-${tone}-title`}
-          className={`text-[0.78rem] font-bold uppercase tracking-[0.14em] ${toneClasses[tone]}`}
+          className={`text-meta font-bold uppercase tracking-[0.14em] ${toneClasses[tone]}`}
         >
           {title}
         </h2>

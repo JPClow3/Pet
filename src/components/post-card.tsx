@@ -62,7 +62,7 @@ export function PostCard({ post, comments }: { post: Post; comments: number }) {
 
   return (
     <article
-      className={`group flex flex-col gap-3 rounded-[20px] border border-line/80 border-l-4 bg-paper p-4 shadow-none transition-[border-color,background-color] duration-150 hover:bg-surface/30 focus-within:border-line ${accent.border}`}
+      className={`group flex flex-col gap-3 rounded-card border border-line/80 border-l-4 bg-paper p-4 shadow-none transition-[border-color,background-color] duration-150 hover:bg-surface/30 focus-within:border-line ${accent.border}`}
     >
       <div className="flex items-start gap-3">
         <span
@@ -76,7 +76,7 @@ export function PostCard({ post, comments }: { post: Post; comments: number }) {
               {postTypeMeta[post.type].label}
             </Chip>
             {isDemoPost(post) ? (
-              <span className="rounded-full bg-sun-soft px-2.5 py-1 text-[0.68rem] font-bold text-warning-ink">
+              <span className="rounded-full bg-sun-soft px-2.5 py-1 text-caption font-bold text-warning-ink">
                 Exemplo local
               </span>
             ) : null}
@@ -107,10 +107,10 @@ export function PostCard({ post, comments }: { post: Post; comments: number }) {
         href={`/community/${post.id}`}
         className="flex flex-col gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
       >
-        <h3 className="text-[1.08rem] font-semibold leading-tight text-ink transition-colors group-hover:text-blue-deep">
+        <h3 className="text-h3 font-semibold leading-tight text-ink transition-colors group-hover:text-blue-deep">
           {post.title}
         </h3>
-        <p className="line-clamp-3 text-[0.92rem] leading-relaxed text-ink-soft/90">
+        <p className="line-clamp-3 text-body leading-relaxed text-ink-soft/90">
           {post.body}
         </p>
       </Link>
@@ -140,7 +140,7 @@ export function PostCard({ post, comments }: { post: Post; comments: number }) {
         </Button>
         <Link
           href={`/community/${post.id}`}
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-[14px] px-3 text-[0.85rem] font-semibold text-ink transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-control px-3 text-label font-semibold text-ink transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
         >
           <MessageCircle aria-hidden="true" className="size-4" />
           {comments > 0 ? comments : "Responder"}

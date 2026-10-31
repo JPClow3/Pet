@@ -41,12 +41,10 @@ export function PageHeader({
     <div className="mb-7 flex flex-wrap items-start gap-2">
       {backHref ? <BackLink fallbackHref={backHref} /> : null}
       <div className="min-w-0 basis-48 flex-1 pt-0.5">
-        <h1 className="break-words text-[28px] font-bold leading-tight tracking-tight text-ink lg:text-3xl">
+        <h1 className="break-words text-h1 font-bold leading-tight tracking-tight text-ink lg:text-3xl">
           {title}
         </h1>
-        {subtitle ? (
-          <p className="text-[0.9rem] text-muted">{subtitle}</p>
-        ) : null}
+        {subtitle ? <p className="text-label text-muted">{subtitle}</p> : null}
       </div>
       {action}
     </div>
@@ -64,9 +62,7 @@ export function SectionHeader({
 }) {
   return (
     <div className="mb-3 flex items-center justify-between gap-3">
-      <h2 className="text-[1.05rem] font-semibold tracking-tight text-ink">
-        {title}
-      </h2>
+      <h2 className="text-h3 font-semibold tracking-tight text-ink">{title}</h2>
       {actionLabel && actionHref ? (
         <Link
           href={actionHref}

@@ -87,17 +87,17 @@ export function QuickAddButton({
                 key={action.label}
                 href={action.href}
                 onClick={() => setOpen(false)}
-                className="group flex min-h-28 flex-col items-start justify-between rounded-[20px] border border-line bg-paper p-4 transition-[background-color,transform] hover:bg-surface active:scale-[0.98]"
+                className="group flex min-h-28 flex-col items-start justify-between rounded-card border border-line bg-paper p-4 transition-[background-color,transform] hover:bg-surface active:scale-[0.98]"
               >
                 <span
                   className={cn(
-                    "flex size-10 items-center justify-center rounded-[14px]",
+                    "flex size-10 items-center justify-center rounded-control",
                     action.tone,
                   )}
                 >
                   <Icon aria-hidden="true" className="size-5" />
                 </span>
-                <span className="flex items-center gap-1 text-[0.88rem] font-semibold text-ink">
+                <span className="flex items-center gap-1 text-label font-semibold text-ink">
                   {action.label}
                   <FilePlus2
                     aria-hidden="true"
